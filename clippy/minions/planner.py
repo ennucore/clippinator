@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from dataclasses import dataclass, field
+
 from .base_minion import BaseMinion
-from dataclasses import dataclass
 from .planner_prompt import update_planning, initial_planning
 from clippy.project import Project
 
@@ -10,6 +11,8 @@ from clippy.project import Project
 class Plan:
     milestones: list[str]
     first_milestone_tasks: list[str]
+    completed_milestones: list[str] = field(default_factory=list)
+    completed_tasks: list[str] = field(default_factory=list)
 
     @classmethod
     def parse(cls, plan: str) -> Plan:
@@ -27,18 +30,24 @@ class Plan:
         for line in plan.splitlines():
             line = line.strip()
             if line.startswith('- '):
-                first_milestone_tasks.append(line[2:])
+                first_milestone_tasks.append(line[2:].removeprefix('[ ]').strip())
             elif line and '.' in line[:5]:
                 milestones.append(line.split('.', 1)[1].strip())
         return cls(milestones, first_milestone_tasks)
 
     def __str__(self) -> str:
         res = ''
+        if self.completed_milestones:
+            res += f'Completed milestones:\n'
+            for milestone in self.completed_milestones:
+                res += f'    - {milestone}\n'
         for i, milestone in enumerate(self.milestones):
             res += f'{i + 1}. {milestone}\n'
             if i == 0:
+                for completed_task in self.completed_tasks:
+                    res += f'    - [x] {completed_task}\n'
                 for task in self.first_milestone_tasks:
-                    res += f'    - {task}\n'
+                    res += f'    - [ ] {task}\n'
         return res
 
 

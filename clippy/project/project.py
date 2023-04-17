@@ -1,3 +1,4 @@
+from __future__ import annotations
 from dataclasses import dataclass
 import os
 
@@ -7,6 +8,10 @@ class Project:
     path: str
     objective: str
     state: str = ''
+
+    @classmethod
+    def create(cls, path: str, objective: str) -> Project:
+        return cls(path, objective)
 
     def get_file_summary(self, file_path: str, ident: str = '') -> str:
         pass

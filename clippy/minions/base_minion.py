@@ -3,4 +3,5 @@ from dataclasses import dataclass
 
 @dataclass
 class BaseMinion:
-    pass
+    def run(self, **kwargs):
+        pass  # todo

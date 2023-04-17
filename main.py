@@ -8,7 +8,7 @@ app = typer.Typer(help='Clippy is an AI coding assistant.')
 
 
 @app.command()
-def run(objective: str):
+def run(objective: str, project_path: str = '.'):
     """
     Run Clippy on the current project with a given objective.
     """
@@ -16,7 +16,7 @@ def run(objective: str):
 
 
 @app.command()
-def new():
+def new(objective: str, project_path: str = '.'):
     """
     Create a new project using clippy.
     """

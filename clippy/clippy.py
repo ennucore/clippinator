@@ -22,10 +22,11 @@ class Clippy:
         executioner = Executioner()
         planner = Planner()
         plan = planner.create_initial_plan(project)
-        print('Created plan:', str(plan))
+        print('Created plan:', str(plan), sep='\n')
         return cls(project, qa, executioner, planner, plan)
 
     def execute_task(self, task: str) -> str:
+        print('Executing task:', task)
         return self.executioner.execute(task, self.project)
 
     def run_iteration(self):
@@ -40,6 +41,7 @@ class Clippy:
             # Later we can run checks here
         self.plan = self.planner.update_plan(self.plan, result, self.project)
         self.plan.completed_tasks, self.plan.completed_milestones = completed_tasks, completed_milestones
+        self.project.update()
 
     def run(self):
         while self.plan.milestones:

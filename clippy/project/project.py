@@ -1,6 +1,29 @@
 from __future__ import annotations
 from dataclasses import dataclass
 import os
+import subprocess
+
+
+def get_file_summary(file_path: str, ident: str = '') -> str:
+    """
+        | 72| class A:
+        | 80| def create(self, a: str) -> A:
+        |100| class B:
+    """
+    cmd = ['ctags', '-x', file_path]
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    out = ''
+
+    if result.returncode != 0:
+        raise RuntimeError(f"Error executing ctags: {result.stderr}")
+
+    lines = result.stdout.splitlines()
+    for line in lines:
+        parts = line.split()
+        line_number = parts[2]
+        definition = ' '.join(parts[4:])
+        out += f"{ident}|{line_number}| {definition}\n"
+    return out
 
 
 @dataclass
@@ -8,13 +31,13 @@ class Project:
     path: str
     objective: str
     state: str = ''
+    summary_cache: str = ''
 
     @classmethod
     def create(cls, path: str, objective: str) -> Project:
-        return cls(path, objective)
-
-    def get_file_summary(self, file_path: str, ident: str = '') -> str:
-        pass
+        self = cls(path, objective)
+        self.update()
+        return self
 
     @property
     def name(self) -> str:
@@ -36,16 +59,19 @@ class Project:
         res = ''
         for file in os.listdir(path):
             file_path = os.path.join(path, file)
+            if file in ('.git', '.idea', '__pycache__'):
+                continue
             if os.path.isdir(file_path):
                 res += f'{ident}{file}:\n'
                 res += self.get_folder_summary(file_path, ident + '  ')
             else:
                 res += f'{ident}{file}\n'
-                res += self.get_file_summary(file_path, ident + '  ')
+                res += get_file_summary(file_path, ident + '  ')
         return res
 
     def get_project_summary(self) -> str:
-        return self.get_folder_summary(self.path)
+        self.summary_cache = self.get_folder_summary(self.path)
+        return self.summary_cache
 
     def get_project_prompt(self) -> str:
         res = f'The project: {self.name}.\n'
@@ -54,3 +80,6 @@ class Project:
         if self.get_project_summary():
             res += f'Files:\n{self.get_project_summary()}\n'
         return res
+
+    def update(self):
+        self.get_project_summary()

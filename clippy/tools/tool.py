@@ -18,6 +18,16 @@ class Tool(ABC):
 
 
 @dataclass
+class SimpleTool(Tool):
+    name: str
+    description: str
+    func: callable
+
+    def run(self, args: str) -> str:
+        return self.func(args)
+
+
+@dataclass
 class Toolkit(Tool):
     name: str
     tools: list[Tool]

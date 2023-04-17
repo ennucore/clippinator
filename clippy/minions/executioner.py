@@ -1,4 +1,4 @@
-from base_minion import BaseMinion
+from .base_minion import BaseMinion
 from dataclasses import dataclass
 from clippy.project import Project
 
@@ -11,4 +11,4 @@ class Executioner(BaseMinion):
     """
 
     def execute(self, task: str, project: Project) -> str:
-        pass
+        raise NotImplementedError

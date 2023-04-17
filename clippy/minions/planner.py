@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from .base_minion import BaseMinion
-from .planner_prompt import update_planning, initial_planning
+from .prompts import update_planning, initial_planning
 from clippy.project import Project
 
 
@@ -61,7 +61,7 @@ class Planner(BaseMinion):
     """
 
     def create_initial_plan(self, project: Project) -> Plan:
-        pass
+        return Plan.parse(self.run(**project.prompt_fields()))
 
     def update_plan(self, plan: Plan, report: str, project: Project) -> Plan:
-        pass
+        return Plan.parse(self.run(**project.prompt_fields(), report=report, plan=str(plan)))

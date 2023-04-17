@@ -83,3 +83,11 @@ class Project:
 
     def update(self):
         self.get_project_summary()
+
+    def prompt_fields(self) -> dict:
+        return {
+            'objective': self.objective,
+            'state': self.state,
+            'project_name': self.name,
+            'project_summary': self.get_project_summary(),
+        }

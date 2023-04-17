@@ -18,8 +18,16 @@ Observation: the result of the action
 ... (this Thought/Action/Action Input/Observation can repeat N times)
 Thought: I am now ready to give the final result
 Final Result: the final result
-
 '''
+
+execution_prompt = '''
+You are the Executor. Your goal is to execute the task in a project.''' + common_part + '''
+You need to execute the task: **{task}**.
+Use the tools to do everything you need, then give the "Final result:" with the result of the task.
+If there's no question in the task, give a short summary of what you did. Don't just repeat the task, include some details like filenames, function names, etc.
+If there was something unexpected, you need to include it in your result.
+'''
+
 common_planning = '''
 You are The Planner. Your goal is to create a plan for the AI agents to follow.
 You need to think about the plan, gather all information you need, 
@@ -38,7 +46,7 @@ The plan (your final result) has to be in the following format:
 
 initial_planning = common_planning + '''
 You need to generate a plan to achieve the following objective: **{objective}**.
-Think about global things like project architecture, stack, and so on.
+Think about global things like project architecture, stack, and so on. Try to follow the TDD (test-driven development) methodology.
 Then come up with a notion (as a thought) of how it will look like in general, and then give the "Final result:" with the plan.
 
 Begin!
@@ -53,7 +61,7 @@ Here's the report from the last task:
 {report}
 
 You need to update the plan designed to achieve the following objective: **{objective}**.
-Think about global things like project architecture, stack, and so on.
+Think about global things like project architecture, stack, and so on. Try to follow the TDD (test-driven development) methodology.
 Then come up with a short notion (as a Thought) of what needs to be changed and create the plan.
 Remember that you need a full task list in the first milestone, and the tasks should be pretty simple.
 Make the first task very elaborate so that the execution agent can understand it.

@@ -32,5 +32,14 @@ def new(objective: str = '', project_path: str = '.'):
     clippy.run()
 
 
+@app.command()
+def continue_(clippy_path: str = 'clippy.pkl'):
+    """
+    Continue working on a project.
+    """
+    clippy = Clippy.load_from_file(clippy_path)
+    clippy.run()
+
+
 if __name__ == "__main__":
     app()

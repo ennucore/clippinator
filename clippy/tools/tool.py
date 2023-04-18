@@ -33,3 +33,13 @@ class Toolkit(SimpleTool):
         if tool is None:
             return f'error: no tool named "{tool_name}" in toolkit "{self.name}"'
         return tool.run(args)
+
+
+class HumanInputTool(SimpleTool):
+    name: str = 'HumanInput'
+    description: str = 'A tool that can be used to ask a human for something (only if it\'s required). ' \
+                       'For instance, it can be useful if you need some kind of API token.'
+
+    @staticmethod
+    def func(args: str) -> str:
+        return input(args)

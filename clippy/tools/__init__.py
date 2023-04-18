@@ -2,6 +2,7 @@ from langchain.agents import Tool
 from langchain.tools import BaseTool
 from .terminal import RunBash
 from .file_tools import WriteFile, ReadFile, PatchFile
+from .tool import HumanInputTool
 from langchain.utilities import PythonREPL
 from langchain.utilities import WolframAlphaAPIWrapper
 from langchain.utilities import SerpAPIWrapper
@@ -44,6 +45,7 @@ def get_tools(project: Project) -> list[BaseTool]:
                         "- to wait for the result of some process you ran."),
         WriteFile(project.path).get_tool(),
         ReadFile(project.path).get_tool(),
-        PatchFile(project.path).get_tool()
+        PatchFile(project.path).get_tool(),
+        HumanInputTool().get_tool()
     ]
     return tools

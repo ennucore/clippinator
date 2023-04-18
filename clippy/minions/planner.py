@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+import typing
+
 from .base_minion import BaseMinion
 from .prompts import update_planning, initial_planning
 from clippy.project import Project
@@ -31,6 +33,8 @@ class Plan:
         first_milestone_tasks = []
         for line in plan.splitlines():
             line = line.strip()
+            if '[x]' in line:
+                continue
             if line.startswith('- '):
                 first_milestone_tasks.append(line[2:].removeprefix('[ ]').strip())
             elif line and '.' in line[:5]:
@@ -39,9 +43,9 @@ class Plan:
 
     def display_progress(self):
         with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            transient=True,
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                transient=True,
         ) as progress:
             # Display completed milestones
             for milestone in self.completed_milestones:
@@ -79,8 +83,17 @@ class Plan:
                 for completed_task in self.completed_tasks:
                     res += f'    - [x] {completed_task}\n'
                 for task in self.first_milestone_tasks:
-                    res += f'    - [ ] {task}\n'
+                    res += f'    - {task}\n'
         return res
+
+
+def split_context(result: str) -> typing.Tuple[str, str]:
+    """
+    Parse the model output and return the context and the plan
+    """
+    result = result.strip().removeprefix('CONTEXT:').strip()
+    context, plan = result.split('\n', 1)
+    return context, plan
 
 
 class Planner:
@@ -91,14 +104,18 @@ class Planner:
     - Updating the context when there's the report from a task
     """
     initial_planner: BaseMinion
+    update_planner: BaseMinion
 
     def __init__(self, project: Project):
         self.initial_planner = BaseMinion(initial_planning, tools.get_tools(project))
+        self.update_planner = BaseMinion(update_planning, tools.get_tools(project))
 
-    def create_initial_plan(self, project: Project) -> Plan:
-        return Plan.parse(self.initial_planner.run(**project.prompt_fields()))
+    def create_initial_plan(self, project: Project) -> typing.Tuple[Plan, str]:
+        result = self.initial_planner.run(**project.prompt_fields())
+        context, plan = split_context(result)
+        return Plan.parse(plan), context
 
-    def update_plan(self, plan: Plan, report: str, project: Project) -> Plan:
-        return Plan.parse(self.initial_planner.run(**project.prompt_fields(), report=report, plan=str(plan)))
-    
-
+    def update_plan(self, plan: Plan, report: str, project: Project) -> typing.Tuple[Plan, str]:
+        result = self.update_planner.run(**project.prompt_fields(), report=report, plan=str(plan))
+        context, new_plan = split_context(result)
+        return Plan.parse(new_plan), context

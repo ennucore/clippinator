@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from langchain.agents import Tool, AgentExecutor, LLMSingleActionAgent, AgentOutputParser
 from langchain.prompts import StringPromptTemplate
-from langchain import OpenAI, SerpAPIWrapper, LLMChain
+from langchain import LLMChain
+from langchain.chat_models import ChatOpenAI
 from typing import List, Union
 from langchain.schema import AgentAction, AgentFinish
 import re
@@ -62,8 +63,8 @@ def extract_variable_names(prompt):
 
 @dataclass
 class BaseMinion:
-    def __init__(self, base_prompt, avaliable_tools) -> None:
-        llm = OpenAI(temperature=0)
+    def __init__(self, base_prompt, avaliable_tools, model: str = 'gpt-4') -> None:
+        llm = ChatOpenAI(temperature=0, model_name=model)
 
         variable_names = extract_variable_names(base_prompt)
 

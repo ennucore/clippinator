@@ -27,6 +27,7 @@ class WriteFile(SimpleTool):
             return "Invalid input. Please provide the file path in brackets."
 
         file_path = match.group(1)
+        original_file_path = file_path
         file_path = os.path.join(self.workdir, file_path)
 
         # Split the input by newline and remove the first line (the file path)
@@ -45,7 +46,7 @@ class WriteFile(SimpleTool):
             with open(file_path, 'w') as f:
                 f.write(content)
 
-            return f"Successfully written to {file_path}."
+            return f"Successfully written to {original_file_path}."
         except Exception as e:
             return f"Error writing to file: {str(e)}"
 
@@ -90,6 +91,7 @@ class PatchFile(SimpleTool):
             return "Invalid input. Please provide the file path in brackets."
 
         file_path = match.group(1)
+        original_file_path = file_path
         file_path = os.path.join(self.workdir, file_path)
 
         # Check if the file exists
@@ -112,7 +114,7 @@ class PatchFile(SimpleTool):
             with open(file_path, 'w') as f:
                 f.writelines(patched_content)
 
-            return f"Successfully applied patch to {file_path}."
+            return f"Successfully applied patch to {original_file_path}."
         except Exception as e:
             return f"Error applying patch: {str(e)}"
 

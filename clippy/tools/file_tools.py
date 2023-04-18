@@ -1,9 +1,10 @@
-from dataclasses import dataclass
 import re
 import os
 import difflib
+from dataclasses import dataclass
+from langchain.agents import Tool
 
-from .tool import Toolkit, Tool
+from .tool import Toolkit
 
 
 @dataclass
@@ -13,12 +14,13 @@ class WriteFile(Tool):
     """
     name = "WriteFile"
 
+    @property
     def description(self):
         return "A tool that can be used to write files. " \
                "The input format is [dir/filename.ext], and starting from the next line the desired content. " \
                "The tool will overwrite the entire file."
 
-    def run(self, args: str) -> str:
+    def func(self, args: str) -> str:
         # Use a regular expression to extract the file path from the input
         match = re.match(r'\[(.+)\]', args)
         if not match:
@@ -54,10 +56,11 @@ class ReadFile(Tool):
     """
     name = "ReadFile"
 
+    @property
     def description(self):
         return "A tool that can be used to read files. The input is just the file path."
 
-    def run(self, args: str) -> str:
+    def func(self, args: str) -> str:
         try:
             with open(args, 'r') as f:
                 return f.read()
@@ -72,13 +75,14 @@ class PatchFile(Tool):
     """
     name = "PatchFile"
 
+    @property
     def description(self) -> str:
         return "A tool that can be used to patch files. " \
                "The input format starts with the target file path in brackets [filename], " \
                "followed by a unified format diff without the file headers. " \
                "This tool applies the patch to the specified file."
 
-    def run(self, args: str) -> str:
+    def func(self, args: str) -> str:
         # Use a regular expression to extract the file path from the input
         match = re.match(r'\[(.+)\]', args)
         if not match:

@@ -7,7 +7,7 @@ import re
 from abc import ABC
 from dataclasses import dataclass
 
-from .tool import Tool
+from langchain.agents import Tool
 
 
 class BashSession(Tool):

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from .tool import Toolkit, Tool
+from .tool import Toolkit
+from langchain.agents import Tool
 
 
 @dataclass

@@ -1,4 +1,6 @@
-from .tool import Tool, Toolkit
+from .tool import Toolkit
+from langchain.tools.base import BaseTool
+from langchain.agents import Tool
 from dataclasses import dataclass
 
 

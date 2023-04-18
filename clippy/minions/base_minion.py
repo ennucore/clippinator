@@ -67,7 +67,7 @@ class BaseMinion:
         prompt = CustomPromptTemplate(
             template=base_prompt,
             tools=avaliable_tools,
-            input_variables=[extract_variable_names(base_prompt)]
+            input_variables=extract_variable_names(base_prompt)
         )
 
         llm_chain = LLMChain(llm=llm, prompt=prompt)

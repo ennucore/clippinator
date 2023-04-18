@@ -59,7 +59,7 @@ class Project:
         res = ''
         for file in os.listdir(path):
             file_path = os.path.join(path, file)
-            if file in ('.git', '.idea', '__pycache__'):
+            if file in ('.git', '.idea', '__pycache__', 'venv'):
                 continue
             if os.path.isdir(file_path):
                 res += f'{ident}{file}:\n'
@@ -67,6 +67,9 @@ class Project:
             else:
                 res += f'{ident}{file}\n'
                 res += get_file_summary(file_path, ident + '  ')
+        if len(res) > 600:
+            print('Warning: long project summary, truncating to 600 chars')
+            res = res[:600] + '...'
         return res
 
     def get_project_summary(self) -> str:

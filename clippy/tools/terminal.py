@@ -31,7 +31,7 @@ class RunBash:
                 shell=True,
                 check=True,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
+                stderr=subprocess.PIPE,
                 cwd=self.workdir
             ).stdout.decode()
         except subprocess.CalledProcessError as error:

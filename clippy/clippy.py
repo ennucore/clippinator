@@ -56,9 +56,13 @@ class Clippy:
 
     def save_to_file(self, path: str = 'clippy.pkl'):
         with open(path, 'wb') as f:
-            pickle.dump(self, f)
+            pickle.dump((self.plan, self.project), f)
 
     @classmethod
     def load_from_file(cls, path: str = 'clippy.pkl'):
         with open(path, 'rb') as f:
-            return pickle.load(f)
+            plan, project = pickle.load(f)
+        qa = QA()
+        executioner = Executioner(project)
+        planner = Planner(project)
+        return cls(project, qa, executioner, planner, plan)

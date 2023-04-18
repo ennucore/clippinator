@@ -64,7 +64,7 @@ class ReadFile(SimpleTool):
 
     def func(self, args: str) -> str:
         try:
-            with open(os.path.join(self.workdir, args), 'r') as f:
+            with open(os.path.join(self.workdir, args.strip()), 'r') as f:
                 return f.read()
         except Exception as e:
             return f"Error reading file: {str(e)}"

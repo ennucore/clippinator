@@ -27,6 +27,7 @@ First, think through how you'll build the solution step-by-step. Draft the docum
 Use the tools to do everything you need, then give the "Final Result:" with the result of the task.
 If there's no question in the task, give a short summary of what you did. Don't just repeat the task, include some details like filenames, function names, etc.
 If there was something unexpected, you need to include it in your result.
+If the task is impossible and you cannot complete it, return the "Final Result:" with the reason why you cannot complete it.
 
 Begin!
 {agent_scratchpad}
@@ -53,7 +54,7 @@ The tasks in the first milestone are the tasks that the Executioner will execute
 They can be something like "Write the function `get_name()` in the class `Dog`", or anything else that's relatively straightforward.
 The plan (your final result) has to be in the following format:
 1. Example first milestone
-    - Example first task in the first milestone
+    - Example first task in the first milestone (**has** to contain all necessary information)
     - Example second task in the first milestone
     - ...
 2. Example second milestone
@@ -117,4 +118,8 @@ After that, give the "Final Result:" with "ACCEPT" if everything is fine, or "RE
 After that, in the final result, you need to indicate whether the result should be accepted or rejected/improved.
 That's why your next word after "Final Result:" should be either "ACCEPT" or "REJECT".
 After that, in the case of rejection, write the feedback for the Executor on the next line - what should be improved/fixed.
+If the execution agent came up with a valid reason why the task cannot be completed, you need to accept the result.
+
+Begin!
+{agent_scratchpad}
 '''

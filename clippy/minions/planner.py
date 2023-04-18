@@ -83,7 +83,7 @@ class Plan:
         return res
 
 
-class Planner():
+class Planner:
     """
     The minion responsible for:
     - Creating the initial plan
@@ -92,8 +92,8 @@ class Planner():
     """
     initial_planner: BaseMinion
 
-    def __init__(self):
-        self.initial_planner = BaseMinion(initial_planning, tools.get_tools())
+    def __init__(self, project: Project):
+        self.initial_planner = BaseMinion(initial_planning, tools.get_tools(project))
 
     def create_initial_plan(self, project: Project) -> Plan:
         return Plan.parse(self.initial_planner.run(**project.prompt_fields()))

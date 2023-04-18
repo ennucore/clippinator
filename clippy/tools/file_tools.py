@@ -4,21 +4,21 @@ import difflib
 from dataclasses import dataclass
 from langchain.agents import Tool
 
-from .tool import Toolkit
+from .tool import Toolkit, SimpleTool
 
 
 @dataclass
-class WriteFile(Tool):
+class WriteFile(SimpleTool):
     """
     A tool that can be used to write files.
     """
     name = "WriteFile"
+    description = "A tool that can be used to write files. " \
+                  "The input format is [dir/filename.ext], and starting from the next line the desired content. " \
+                  "The tool will overwrite the entire file."
 
-    @property
-    def description(self):
-        return "A tool that can be used to write files. " \
-               "The input format is [dir/filename.ext], and starting from the next line the desired content. " \
-               "The tool will overwrite the entire file."
+    def __init__(self, wd: str = '.'):
+        self.workdir = wd
 
     def func(self, args: str) -> str:
         # Use a regular expression to extract the file path from the input
@@ -27,6 +27,7 @@ class WriteFile(Tool):
             return "Invalid input. Please provide the file path in brackets."
 
         file_path = match.group(1)
+        file_path = os.path.join(self.workdir, file_path)
 
         # Split the input by newline and remove the first line (the file path)
         input_lines = args.strip().split('\n')[1:]
@@ -50,37 +51,37 @@ class WriteFile(Tool):
 
 
 @dataclass
-class ReadFile(Tool):
+class ReadFile(SimpleTool):
     """
     A tool that can be used to read files.
     """
     name = "ReadFile"
+    description = "A tool that can be used to read files. The input is just the file path."
 
-    @property
-    def description(self):
-        return "A tool that can be used to read files. The input is just the file path."
+    def __init__(self, wd: str = '.'):
+        self.workdir = wd
 
     def func(self, args: str) -> str:
         try:
-            with open(args, 'r') as f:
+            with open(os.path.join(self.workdir, args), 'r') as f:
                 return f.read()
         except Exception as e:
             return f"Error reading file: {str(e)}"
 
 
 @dataclass
-class PatchFile(Tool):
+class PatchFile(SimpleTool):
     """
     A tool that can be used to patch files.
     """
     name = "PatchFile"
+    description = "A tool that can be used to patch files. " \
+                  "The input format starts with the target file path in brackets [filename], " \
+                  "followed by a unified format diff without the file headers. " \
+                  "This tool applies the patch to the specified file."
 
-    @property
-    def description(self) -> str:
-        return "A tool that can be used to patch files. " \
-               "The input format starts with the target file path in brackets [filename], " \
-               "followed by a unified format diff without the file headers. " \
-               "This tool applies the patch to the specified file."
+    def __init__(self, wd: str = '.'):
+        self.workdir = wd
 
     def func(self, args: str) -> str:
         # Use a regular expression to extract the file path from the input
@@ -89,6 +90,7 @@ class PatchFile(Tool):
             return "Invalid input. Please provide the file path in brackets."
 
         file_path = match.group(1)
+        file_path = os.path.join(self.workdir, file_path)
 
         # Check if the file exists
         if not os.path.exists(file_path):
@@ -121,12 +123,12 @@ class FileTools(Toolkit):
     A tool that can be used to read and write files.
     """
 
-    def __init__(self):
+    def __init__(self, wd: str = '.'):
         super().__init__(
             name="file tools",
             tools=[
-                WriteFile(),
-                ReadFile(),
-                PatchFile()
+                WriteFile(wd).get_tool(),
+                ReadFile(wd).get_tool(),
+                PatchFile(wd).get_tool()
             ]
         )

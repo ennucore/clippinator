@@ -6,6 +6,7 @@ from typing import List, Union
 from langchain.schema import AgentAction, AgentFinish
 import re
 
+
 class CustomOutputParser(AgentOutputParser):
     def parse(self, llm_output: str) -> Union[AgentAction, AgentFinish]:
         # Check if agent should finish
@@ -26,13 +27,13 @@ class CustomOutputParser(AgentOutputParser):
         # Return the action and action input
         return AgentAction(tool=action, tool_input=action_input.strip(" ").strip('"'), log=llm_output)
 
-# Set up a prompt template
+
 class CustomPromptTemplate(StringPromptTemplate):
     # The template to use
     template: str
     # The list of tools available
     tools: List[Tool]
-    
+
     def format(self, **kwargs) -> str:
         # Get the intermediate steps (AgentAction, Observation tuples)
         # Format them in a particular way
@@ -48,7 +49,8 @@ class CustomPromptTemplate(StringPromptTemplate):
         # Create a list of tool names for the tools provided
         kwargs["tool_names"] = ", ".join([tool.name for tool in self.tools])
         return self.template.format(**kwargs)
-    
+
+
 def extract_variable_names(prompt):
     variable_pattern = r"\{(\w+)\}"
     variable_names = re.findall(variable_pattern, prompt)
@@ -56,6 +58,7 @@ def extract_variable_names(prompt):
         variable_names.remove(name)
     variable_names.append('intermediate_steps')
     return variable_names
+
 
 @dataclass
 class BaseMinion:
@@ -77,16 +80,13 @@ class BaseMinion:
         tool_names = [tool.name for tool in avaliable_tools]
 
         agent = LLMSingleActionAgent(
-            llm_chain=llm_chain, 
+            llm_chain=llm_chain,
             output_parser=output_parser,
-            stop=["\nObservation:"], 
+            stop=["\nObservation:"],
             allowed_tools=tool_names
         )
 
         self.agent_executor = AgentExecutor.from_agent_and_tools(agent=agent, tools=avaliable_tools, verbose=True)
-        
 
     def run(self, **kwargs):
         return self.agent_executor.run(**kwargs)
-    
-

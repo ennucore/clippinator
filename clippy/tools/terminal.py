@@ -1,6 +1,7 @@
 import os
 import pty
 import subprocess
+from typing import List, Union
 import fcntl
 import select
 import re
@@ -8,6 +9,38 @@ from abc import ABC
 from dataclasses import dataclass
 
 from langchain.agents import Tool
+
+
+class RunBash:
+    """Executes bash commands and returns the output."""
+
+    def __init__(self, strip_newlines: bool = False, return_err_output: bool = False, workdir: str = '.'):
+        """Initialize with stripping newlines."""
+        self.strip_newlines = strip_newlines
+        self.return_err_output = return_err_output
+        self.workdir = workdir
+
+    def run(self, commands: Union[str, List[str]]) -> str:
+        """Run commands and return final output."""
+        if isinstance(commands, str):
+            commands = [commands]
+        commands = ";".join(commands)
+        try:
+            output = subprocess.run(
+                commands,
+                shell=True,
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                cwd=self.workdir
+            ).stdout.decode()
+        except subprocess.CalledProcessError as error:
+            if self.return_err_output:
+                return error.stdout.decode()
+            return str(error)
+        if self.strip_newlines:
+            output = output.strip()
+        return output
 
 
 class BashSession(Tool):

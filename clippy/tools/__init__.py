@@ -1,12 +1,16 @@
 from langchain.agents import Tool
-from langchain.utilities import BashProcess
+from langchain.tools import BaseTool
+from .terminal import RunBash
+from .file_tools import WriteFile, ReadFile, PatchFile
 from langchain.utilities import PythonREPL
 from langchain.utilities import WolframAlphaAPIWrapper
 from langchain.utilities import SerpAPIWrapper
 import time
 
+from clippy.project import Project
 
-def get_tools() -> list[Tool]:
+
+def get_tools(project: Project) -> list[BaseTool]:
     search = SerpAPIWrapper(params={"engine": "google"})
     tools = [
         Tool(
@@ -17,14 +21,15 @@ def get_tools() -> list[Tool]:
         ),
         Tool(
             name="Bash",
-            func=BashProcess().run,
+            func=RunBash(workdir=project.path).run,
             description="allows you to run bash commands in the base directory"
         ),
         Tool(
             name="Python",
             func=PythonREPL().run,
             description="allows you to run python code and get everything that's "
-                        "printed (e.g. print(2+2) will give you 4)"
+                        "printed (e.g. print(2+2) will give you 4) in order to compute something. "
+                        "The input is correct python code."
         ),
         Tool(
             name="Wolfram Alpha",
@@ -36,6 +41,9 @@ def get_tools() -> list[Tool]:
             name="Wait",
             func=lambda t: time.sleep(float(t)) or '',
             description="allows you to wait for a certain amount of time "
-                        "- to wait for the result of some process you ran.")
+                        "- to wait for the result of some process you ran."),
+        WriteFile(project.path).get_tool(),
+        ReadFile(project.path).get_tool(),
+        PatchFile(project.path).get_tool()
     ]
     return tools

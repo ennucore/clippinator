@@ -19,8 +19,8 @@ class Clippy:
     def create(cls, path: str, objective: str) -> Clippy:
         project = Project.create(path, objective)
         qa = QA()
-        executioner = Executioner()
-        planner = Planner()
+        executioner = Executioner(project)
+        planner = Planner(project)
         plan = planner.create_initial_plan(project)
         print('Created plan:', str(plan), sep='\n')
         return cls(project, qa, executioner, planner, plan)

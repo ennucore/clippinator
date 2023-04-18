@@ -6,6 +6,7 @@ from langchain.chat_models import ChatOpenAI
 from typing import List, Union
 from langchain.schema import AgentAction, AgentFinish
 import re
+import time
 
 
 class CustomOutputParser(AgentOutputParser):
@@ -21,7 +22,8 @@ class CustomOutputParser(AgentOutputParser):
         # Parse out the action and action input
         regex = r"Action\s*\d*\s*:(.*?)\nAction\s*\d*\s*Input\s*\d*\s*:[\s]*(.*)"
         match = re.search(regex, llm_output, re.DOTALL)
-        if not match and llm_output.split('\n')[-1].strip().startswith("Thought:"):
+        time.sleep(15)
+        if not match and llm_output.strip().split('\n')[-1].strip().startswith("Thought:"):
             return AgentAction(tool="Python", tool_input='', log=llm_output)
         if not match:
             raise ValueError(f"Could not parse LLM output: `{llm_output}`")
@@ -66,7 +68,7 @@ def extract_variable_names(prompt):
 @dataclass
 class BaseMinion:
     def __init__(self, base_prompt, avaliable_tools, model: str = 'gpt-4') -> None:
-        llm = ChatOpenAI(temperature=0, model_name=model)
+        llm = ChatOpenAI(temperature=0 if model != 'gpt-3.5-turbo' else 0.7, model_name=model, request_timeout=220)
 
         variable_names = extract_variable_names(base_prompt)
 

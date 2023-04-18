@@ -33,7 +33,7 @@ def new(objective: str = '', project_path: str = '.'):
 
 
 @app.command()
-def continue_(clippy_path: str = 'clippy.pkl'):
+def resume(clippy_path: str = 'clippy.pkl'):
     """
     Continue working on a project.
     """

@@ -1,10 +1,7 @@
 import re
 import os
 import subprocess
-import difflib
 from dataclasses import dataclass
-from langchain.agents import Tool
-import patch
 from clippy.tools.tool import Toolkit, SimpleTool
 
 
@@ -15,27 +12,21 @@ class WriteFile(SimpleTool):
     """
     name = "WriteFile"
     description = "A tool that can be used to write files. " \
-                  "The input format is [dir/filename.ext], and starting from the next line the desired content. " \
-                  "The tool will overwrite the entire file."
+                  "The input format is 'dir/filename' (the path is relative to the project directory) on the first " \
+                  "line, " \
+                  "and starting from the next line the desired content. " \
+                  "The tool will completely overwrite the entire file."
 
     def __init__(self, wd: str = '.'):
         self.workdir = wd
 
     def func(self, args: str) -> str:
         # Use a regular expression to extract the file path from the input
-        match = re.match(r'\[(.+)\]', args)
-        if not match:
-            return "Invalid input. Please provide the file path in brackets."
+        file_path, content = args.split('\n', 1)
+        file_path = file_path.strip().strip("'").strip()
 
-        file_path = match.group(1)
         original_file_path = file_path
         file_path = os.path.join(self.workdir, file_path)
-
-        # Split the input by newline and remove the first line (the file path)
-        input_lines = args.strip().split('\n')[1:]
-
-        # Join the remaining lines to form the content
-        content = '\n'.join(input_lines)
 
         try:
             # Check if the directory exists, if not create it
@@ -58,15 +49,29 @@ class ReadFile(SimpleTool):
     A tool that can be used to read files.
     """
     name = "ReadFile"
-    description = "A tool that can be used to read files. The input is just the file path."
+    description = "A tool that can be used to read files. The input is just the file path. " \
+                  "Optionally, you can add [l1:l2] to the end of the file path to specify a range of lines to read."
 
     def __init__(self, wd: str = '.'):
         self.workdir = wd
 
     def func(self, args: str) -> str:
         try:
+            if '[' not in args:
+                with open(os.path.join(self.workdir, args.strip()), 'r') as f:
+                    lines = f.readlines()
+                    lines = [f'{i + 1}. {line}' for i, line in enumerate(lines)]
+                    return ''.join(lines)
+            filename, line_range = args.split('[', 1)
+            line_ranges = line_range.strip(']').split(',')
+            line_ranges = [line_range.split(':') for line_range in line_ranges]
+            line_ranges = [(int(line_range[0]), int(line_range[1])) for line_range in line_ranges]
             with open(os.path.join(self.workdir, args.strip()), 'r') as f:
-                return f.read()
+                lines = f.readlines()
+                out = ''
+                for line_range in line_ranges:
+                    out += ''.join([f'{i + 1}. {lines[i]}' for i in range(line_range[0], line_range[1] + 1)])
+                return out
         except Exception as e:
             return f"Error reading file: {str(e)}"
 

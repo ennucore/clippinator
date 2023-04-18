@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import pickle
+import time
 from .project import Project
 from .minions.qa import QA
 from .minions.executioner import Executioner
@@ -33,6 +34,7 @@ class Clippy:
         return self.executioner.execute(task, self.project)
 
     def run_iteration(self):
+        time.sleep(5)
         result = self.execute_task(self.plan.first_milestone_tasks[0])
         self.plan.completed_tasks.append(self.plan.first_milestone_tasks[0])
         self.plan.first_milestone_tasks = self.plan.first_milestone_tasks[1:]
@@ -54,7 +56,8 @@ class Clippy:
             self.run_iteration()
         print('Done!')
 
-    def save_to_file(self, path: str = 'clippy.pkl'):
+    def save_to_file(self, path: str = ''):
+        path = path or f'clippy_{self.project.name}.pkl'
         with open(path, 'wb') as f:
             pickle.dump((self.plan, self.project), f)
 

@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from .base_minion import BaseMinion
 from .prompts import update_planning, initial_planning
 from clippy.project import Project
+import clippy.tools 
 
 
 @dataclass
@@ -51,17 +52,22 @@ class Plan:
         return res
 
 
-@dataclass
-class Planner(BaseMinion):
+class Planner():
     """
     The minion responsible for:
     - Creating the initial plan
     - Updating the plan when there's the report from a task
     - Updating the context when there's the report from a task
     """
+    initial_planner: BaseMinion
+
+    def __init__(self):
+        self.initial_planner = BaseMinion(initial_planning, tools.get_tools())
 
     def create_initial_plan(self, project: Project) -> Plan:
-        return Plan.parse(self.run(**project.prompt_fields()))
+        return Plan.parse(self.initial_planner.run(**project.prompt_fields()))
 
     def update_plan(self, plan: Plan, report: str, project: Project) -> Plan:
-        return Plan.parse(self.run(**project.prompt_fields(), report=report, plan=str(plan)))
+        return Plan.parse(self.initial_planner.run(**project.prompt_fields(), report=report, plan=str(plan)))
+    
+

@@ -10,7 +10,9 @@ from dataclasses import dataclass
 from .tool import Tool
 
 
-class BashSession:
+class BashSession(Tool):
+    name: str = 'Bash Session'
+
     def __init__(self, timeout: float | None = None):
         self.timeout = timeout
         self.master_fd, self.slave_fd = pty.openpty()
@@ -23,13 +25,16 @@ class BashSession:
 
     def input(self, command, timeout: float | None = None):
         os.write(self.master_fd, (command + "\n").encode())
-        output = self._read_output(timeout or self.timeout or 0.1)
+        output = self._read_output(timeout or self.timeout or 0.5)
 
         # Remove the echoed command and filter out control characters
         output = re.sub(re.escape(command) + r'\r\n', '', output)
         output = re.sub(r'\x1b\[[0-9;]*[a-zA-Z]', '', output)
 
         return output
+
+    def run(self, args: str) -> str:
+        return self.input(args)
 
     def _read_output(self, timeout=0.1):
         output = []
@@ -51,6 +56,13 @@ class BashSession:
         os.close(self.master_fd)
         os.close(self.slave_fd)
         self.bash_process.terminate()
+
+    @property
+    def description(self) -> str:
+        return f"a bash session that can be used to run commands in a single session, even in the background. " \
+               f"You can input something into bash's stdin, and then it will run for {self.timeout or 0.5} seconds " \
+               f"and return the output. If you want to simply run a standalone command in the project directory " \
+               f"and get the output, use the `Bash` tool instead."
 
 
 @dataclass

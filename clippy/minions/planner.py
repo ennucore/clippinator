@@ -6,6 +6,7 @@ from .base_minion import BaseMinion
 from .prompts import update_planning, initial_planning
 from clippy.project import Project
 from clippy import tools
+from rich.progress import Progress, SpinnerColumn, TextColumn
 
 
 @dataclass
@@ -35,6 +36,36 @@ class Plan:
             elif line and '.' in line[:5]:
                 milestones.append(line.split('.', 1)[1].strip())
         return cls(milestones, first_milestone_tasks)
+
+    def display_progress(self):
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            transient=True,
+        ) as progress:
+            # Display completed milestones
+            for milestone in self.completed_milestones:
+                progress.add_task(description=milestone, completed=True)
+
+            # Display current milestone with spinner
+            current_milestone = self.milestones[0]
+            _milestone_task = progress.add_task(description=current_milestone, total=None)
+
+            # Display completed tasks for current milestone
+            for task in self.completed_tasks:
+                progress.add_task(description="  " + task, completed=True)
+
+            # Display current task with spinner
+            current_task = self.first_milestone_tasks[0]
+            _task = progress.add_task(description="  " + current_task, total=None)
+
+            # Display next tasks for current milestone
+            for task in self.first_milestone_tasks[1:]:
+                progress.add_task(description="  " + task, completed=False, start=False)
+
+            # Display next milestones
+            for milestone in self.milestones[1:]:
+                progress.add_task(description=milestone, completed=False, start=False)
 
     def __str__(self) -> str:
         res = ''

@@ -1,3 +1,4 @@
+import typing
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
@@ -17,21 +18,37 @@ class Tool(ABC):
         pass
 
 
-@dataclass
 class SimpleTool(Tool):
     name: str
     description: str
-    func: callable
+    func: typing.Callable[[str], str]
+
+    def __init__(self, name: str, description: str, func: typing.Callable[[str], str]):
+        self.name_ = name
+        self.description_ = description
+        self.func = func
 
     def run(self, args: str) -> str:
         return self.func(args)
 
+    @property
+    def description(self) -> str:
+        return self.description_
 
-@dataclass
+    @property
+    def name(self) -> str:
+        return self.name_
+
+
 class Toolkit(Tool):
     name: str
     tools: list[Tool]
     custom_description: str = None
+
+    def __init__(self, name: str, tools: list[Tool], custom_description: str = None):
+        self.name = name
+        self.tools = tools
+        self.custom_description = custom_description or ''
 
     def description(self):
         return (self.custom_description.strip() or "a toolkit containing the following tools:") + '\n' + \

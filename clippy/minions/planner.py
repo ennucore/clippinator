@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from .base_minion import BaseMinion
 from .prompts import update_planning, initial_planning
 from clippy.project import Project
-import clippy.tools 
+from clippy import tools
 
 
 @dataclass

@@ -1,10 +1,11 @@
 import re
 import os
+import subprocess
 import difflib
 from dataclasses import dataclass
 from langchain.agents import Tool
-
-from .tool import Toolkit, SimpleTool
+import patch
+from clippy.tools.tool import Toolkit, SimpleTool
 
 
 @dataclass
@@ -76,48 +77,31 @@ class PatchFile(SimpleTool):
     A tool that can be used to patch files.
     """
     name = "PatchFile"
-    description = "A tool that can be used to patch files. " \
-                  "The input format starts with the target file path in brackets [filename], " \
-                  "followed by a unified format diff without the file headers. " \
-                  "This tool applies the patch to the specified file."
+    description = "A tool to patch files using the Linux patch command. " \
+                  "Provide the diff in unified or context format, and the tool will apply it to the specified files."
 
     def __init__(self, wd: str = '.'):
         self.workdir = wd
 
     def func(self, args: str) -> str:
-        # Use a regular expression to extract the file path from the input
-        match = re.match(r'\[(.+)\]', args)
-        if not match:
-            return "Invalid input. Please provide the file path in brackets."
+        """
+        Apply the given diff (in unified or context format) to the specified files in the working directory.
+        The diff should be provided as a string in the args parameter.
 
-        file_path = match.group(1)
-        original_file_path = file_path
-        file_path = os.path.join(self.workdir, file_path)
+        :param args: The diff to apply to the files.
+        :return: The result of the patch command as a string.
+        """
+        with open(os.path.join(self.workdir, 'temp_diff.patch'), 'w') as diff_file:
+            diff_file.write(args)
 
-        # Check if the file exists
-        if not os.path.exists(file_path):
-            return f"File not found: {file_path}"
-
-        # Read the original file content
-        with open(file_path, 'r') as f:
-            original_content = f.readlines()
-
-        # Remove the first line (the file path) and join the remaining lines to form the patch string
-        patch_string = '\n'.join(args.strip().split('\n')[1:])
-
-        # Apply the patch
+        command = ['patch', '-p1', '-i', 'temp_diff.patch']
         try:
-            patch = difflib.unified_diff(original_content, patch_string.split('\n'))
-            patched_content = list(difflib.restore(patch, 2))
-
-            # Write the patched content back to the file
-            with open(file_path, 'w') as f:
-                f.writelines(patched_content)
-
-            return f"Successfully applied patch to {original_file_path}."
-        except Exception as e:
-            return f"Error applying patch: {str(e)}"
-
+            result = subprocess.run(command, cwd=self.workdir, capture_output=True, text=True, check=True)
+            return result.stdout
+        except subprocess.CalledProcessError as e:
+            return e.stderr
+        finally:
+            os.remove(os.path.join(self.workdir, 'temp_diff.patch'))
 
 @dataclass
 class FileTools(Toolkit):
@@ -134,3 +118,4 @@ class FileTools(Toolkit):
                 PatchFile(wd).get_tool()
             ]
         )
+

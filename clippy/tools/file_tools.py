@@ -8,6 +8,7 @@ from clippy.tools.tool import SimpleTool
 from clippy.minions import BaseMinion
 from langchain import OpenAI
 from langchain.chains.summarize import load_summarize_chain
+from langchain.chains.combine_documents.base import BaseCombineDocumentsChain
 
 @dataclass
 class WriteFile(SimpleTool):

@@ -6,7 +6,8 @@ Here's some information for you: {state}
 You can use tools. Note that you can still use your knowledge - just because, for instance, you have Google doesn't mean you should Google everything
 Avoid reading and writing entire files, strive to specify ranges in reading and use patch instead of writing.
 You **need** to have a "Final Result:", even if the result is trivial. **Never** stop at "Thought:".
-"Observation:" always comes after "Action Input:" - it's the result of the action. There should always be an observation before anything else, any next thought or action.
+"Observation:" always comes after "Action Input:" - it's the result of the action. There should **always** be an observation before anything else, any next thought or action.
+"Observation:" even comes after Writing a file - it's the result of the action.
 
 You have access to the following tools:
 {tools}
@@ -29,6 +30,7 @@ You are the Executor. Your goal is to execute the task in a project."""
     + """
 You need to execute the task: **{task}**.
 First, think through how you'll build the solution step-by-step. Draft the documentation for it first, then implement it (write all the necessary files etc.).
+Note that usually you shouldn't just overwrite the files with WriteFile, you should use patch instead.
 Use the tools to do everything you need, then give the "Final Result:" with the result of the task.
 If there's no question in the task, give a short summary of what you did. Don't just repeat the task, include some details like filenames, function names, etc.
 If there was something unexpected, you need to include it in your result.
@@ -59,6 +61,7 @@ and then come up with the plan milestones and tasks in the first milestone (you 
 Do not do anything, do not create any files. You can do some very simple research (a couple of google/wolfram queries), but anything more complex should be made into a task.
 You should be the one making architectural decisions like the tech stack. You can use your knowledge.
 Note that you don't have admin access, so you should use things like poetry. If you need to install something on the system and it requires admin access, you can use the HumanInput tool.
+When creating a new project, you don't need to deploy it.
 After each milestone, the project has to be in a working state, it has to be something finished (a milestone can be adding a new feature, for instance).
 The tasks in the first milestone are the tasks that the Executioner will execute. They should be pretty simple, and the Executioner should be able to execute them.
 They can be something like "Write the function `get_name()` in the class `Dog`", or anything else that's relatively straightforward.

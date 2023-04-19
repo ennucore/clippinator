@@ -37,6 +37,7 @@ class Project:
 
     @classmethod
     def create(cls, path: str, objective: str) -> Project:
+        path = os.path.realpath(path)
         self = cls(path, objective)
         self.update()
         return self

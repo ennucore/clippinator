@@ -59,7 +59,7 @@ class SearchInFiles(SimpleTool):
     A tool that can be used to search for a string in all files.
     """
     name = "SearchInFiles"
-    description = "A tool that can be used to search for a string in all files. " \
+    description = "A tool that can be used to search for occurrences a string in all files. " \
                   "The input format is [search_directory] on the first line, " \
                   "and the search query on the second line. " \
                   "The tool will return the file paths and line numbers containing the search query."
@@ -80,7 +80,7 @@ class SearchInFiles(SimpleTool):
                         lines = f.readlines()
 
                     for line_number, line in enumerate(lines, start=1):
-                        if search_query in line:
+                        if search_query.lower() in line.lower():
                             results.append(f"{file_path}:{line_number}")
                 except Exception as e:
                     # Ignore errors related to file reading or encoding

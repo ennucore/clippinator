@@ -15,10 +15,10 @@ class RunBash:
     """Executes bash commands and returns the output."""
 
     def __init__(
-        self,
-        strip_newlines: bool = False,
-        return_err_output: bool = False,
-        workdir: str = ".",
+            self,
+            strip_newlines: bool = False,
+            return_err_output: bool = False,
+            workdir: str = ".",
     ):
         """Initialize with stripping newlines."""
         self.strip_newlines = strip_newlines
@@ -30,22 +30,28 @@ class RunBash:
         if isinstance(commands, str):
             commands = [commands]
         commands = ";".join(commands)
+
         try:
-            output = subprocess.run(
+            completed_process = subprocess.run(
                 commands,
                 shell=True,
-                check=True,
-                stdout=subprocess.STDOUT,
-                stderr=subprocess.STDOUT,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 cwd=self.workdir,
-            ).stdout.decode()
-        except subprocess.CalledProcessError as error:
-            if self.return_err_output:
-                return error.stdout.decode()
-            return str(error)
+                timeout=40,
+            )
+        except subprocess.TimeoutExpired as error:
+            return "Command timed out, possibly due to asking for input."
+
+        stdout_output = completed_process.stdout.decode()
+        stderr_output = completed_process.stderr.decode()
+
         if self.strip_newlines:
-            output = output.strip()
-        return output
+            stdout_output = stdout_output.strip()
+            stderr_output = stderr_output.strip()
+
+        combined_output = stdout_output + "\n" + stderr_output
+        return combined_output
 
 
 class BashSession(Tool):

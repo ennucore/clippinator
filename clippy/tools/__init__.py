@@ -25,7 +25,7 @@ def get_tools(project: Project) -> list[BaseTool]:
             name="Bash",
             func=RunBash(workdir=project.path).run,
             description="allows you to run bash commands in the project directory. "
-                        "The input must be a valid bash command that will terminate.",
+                        "The input must be a valid bash command that will not ask for input and will terminate.",
         ),
         Tool(
             name="Python",

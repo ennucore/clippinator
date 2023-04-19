@@ -18,7 +18,8 @@ class WriteFile(SimpleTool):
         "The input format is 'dir/filename' (the path is relative to the project directory) on the first "
         "line, "
         "and starting from the next line the desired content without any quotes or other formatting. "
-        "The tool will completely overwrite the entire file."
+        "The tool will completely overwrite the entire file, so be very careful with it, "
+        "avoid using it on non-empty files."
     )
 
     def __init__(self, wd: str = "."):
@@ -75,7 +76,7 @@ class ReadFile(SimpleTool):
             line_ranges = [
                 (int(line_range[0]), int(line_range[1])) for line_range in line_ranges
             ]
-            with open(os.path.join(self.workdir, args.strip()), "r") as f:
+            with open(os.path.join(self.workdir, filename.strip()), "r") as f:
                 lines = f.readlines()
                 out = ""
                 for line_range in line_ranges:
@@ -116,14 +117,12 @@ class PatchFile(SimpleTool):
         with open(os.path.join(self.workdir, "temp_diff.patch"), "w") as diff_file:
             diff_file.write(args)
 
-        print(os.path.join(self.workdir, "temp_diff.patch"))
-        print(args)
         command = ["/bin/bash", "-c", "patch -l -i temp_diff.patch"]
         try:
             result = subprocess.run(
                 command, cwd=self.workdir, capture_output=True, text=True, check=True
             )
-            return result.stdout
+            return result.stdout + result.stderr
         except subprocess.CalledProcessError as e:
             return e.stderr
         finally:

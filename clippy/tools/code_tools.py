@@ -64,8 +64,12 @@ class SearchInFiles(SimpleTool):
                   "and the search query on the second line. " \
                   "The tool will return the file paths and line numbers containing the search query."
 
+    def __init__(self, wd: str = "."):
+        self.workdir = wd
+
     def search_files(self, search_dir: str, search_query: str) -> list[str]:
         results = []
+        search_dir = os.path.join(self.workdir, search_dir)
 
         for root, _, files in os.walk(search_dir):
             for file in files:

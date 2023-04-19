@@ -2,6 +2,7 @@ from langchain.agents import Tool
 from langchain.tools import BaseTool
 from .terminal import RunBash
 from .file_tools import WriteFile, ReadFile, PatchFile, SummarizeFile
+from .code_tools import SearchInFiles, Pylint
 from .tool import HumanInputTool
 from langchain.utilities import PythonREPL
 from langchain.utilities import WolframAlphaAPIWrapper
@@ -23,7 +24,8 @@ def get_tools(project: Project) -> list[BaseTool]:
         Tool(
             name="Bash",
             func=RunBash(workdir=project.path).run,
-            description="allows you to run bash commands in the base directory",
+            description="allows you to run bash commands in the project directory. "
+                        "The input must be a valid bash command that will terminate.",
         ),
         Tool(
             name="Python",
@@ -50,5 +52,7 @@ def get_tools(project: Project) -> list[BaseTool]:
         PatchFile(project.path).get_tool(),
         SummarizeFile(project.path).get_tool(),
         HumanInputTool().get_tool(),
+        Pylint(project.path).get_tool(),
+        SearchInFiles(project.path).get_tool(),
     ]
     return tools

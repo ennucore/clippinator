@@ -1,14 +1,11 @@
-import re
 import os
 import subprocess
 from dataclasses import dataclass
 from clippy.tools.tool import SimpleTool
-from langchain.agents import Tool
-from clippy.tools.tool import SimpleTool
-from clippy.minions import BaseMinion
 from langchain import OpenAI
 from langchain.chains.summarize import load_summarize_chain
 from langchain.chains.combine_documents.base import BaseCombineDocumentsChain
+
 
 @dataclass
 class WriteFile(SimpleTool):
@@ -19,7 +16,7 @@ class WriteFile(SimpleTool):
     description = "A tool that can be used to write files. " \
                   "The input format is 'dir/filename' (the path is relative to the project directory) on the first " \
                   "line, " \
-                  "and starting from the next line the desired content. " \
+                  "and starting from the next line the desired content without any quotes or anything. " \
                   "The tool will completely overwrite the entire file."
 
     def __init__(self, wd: str = '.'):

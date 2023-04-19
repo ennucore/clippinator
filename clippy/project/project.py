@@ -59,7 +59,7 @@ class Project:
         res = ''
         for file in os.listdir(path):
             file_path = os.path.join(path, file)
-            if file in ('.git', '.idea', '__pycache__', 'venv'):
+            if file in ('.git', '.idea', '__pycache__', 'venv') or '_venv' in file:
                 continue
             if os.path.isdir(file_path):
                 res += f'{ident}{file}:\n'

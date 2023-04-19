@@ -10,11 +10,6 @@ class FindUsages(SimpleTool):
 
 
 @dataclass
-class Search(SimpleTool):
-    pass
-
-
-@dataclass
 class SearchAndReplace(SimpleTool):
     pass
 
@@ -55,3 +50,52 @@ class Pylint(SimpleTool):
         formatted_output = '\n'.join(pylint_output)
 
         return formatted_output
+
+
+class SearchInFiles(SimpleTool):
+    """
+    A tool that can be used to search for a string in all files.
+    """
+    name = "SearchInFiles"
+    description = "A tool that can be used to search for a string in all files. " \
+                  "The input format is [search_directory] on the first line, " \
+                  "and the search query on the second line. " \
+                  "The tool will return the file paths and line numbers containing the search query."
+
+    def search_files(self, search_dir: str, search_query: str) -> list[str]:
+        results = []
+
+        for root, _, files in os.walk(search_dir):
+            for file in files:
+                file_path = os.path.join(root, file)
+
+                try:
+                    with open(file_path, 'r') as f:
+                        lines = f.readlines()
+
+                    for line_number, line in enumerate(lines, start=1):
+                        if search_query in line:
+                            results.append(f"{file_path}:{line_number}")
+                except Exception as e:
+                    # Ignore errors related to file reading or encoding
+                    pass
+
+        return results
+
+    def func(self, args: str) -> str:
+        # Split the input by newline to separate the search directory and the search query
+        input_lines = args.strip().split('\n')
+
+        if len(input_lines) < 2:
+            return "Invalid input. Please provide search directory on the " \
+                   "first line and search query on the second line."
+
+        search_dir = os.path.join(self.workdir, input_lines[0])
+        search_query = input_lines[1]
+
+        results = self.search_files(search_dir, search_query)
+
+        if results:
+            return "\n".join(results)
+        else:
+            return "No matches found."

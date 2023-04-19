@@ -6,7 +6,7 @@ Here's some information for you: {state}
 You can use tools. Note that you can still use your knowledge - just because, for instance, you have Google doesn't mean you should Google everything
 Avoid reading and writing entire files, strive to specify ranges in reading and use patch instead of writing.
 You **need** to have a "Final Result:", even if the result is trivial. **Never** stop at "Thought:".
-"Observation:" always comes after "Action Input:" - it's the result of the action.
+"Observation:" always comes after "Action Input:" - it's the result of the action. There should always be an observation before anything else, any next thought or action.
 
 You have access to the following tools:
 {tools}

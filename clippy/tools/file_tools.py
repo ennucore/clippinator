@@ -3,7 +3,11 @@ import os
 import subprocess
 from dataclasses import dataclass
 from clippy.tools.tool import SimpleTool
-
+from langchain.agents import Tool
+from clippy.tools.tool import SimpleTool
+from clippy.minions import BaseMinion
+from langchain import OpenAI
+from langchain.chains.summarize import load_summarize_chain
 
 @dataclass
 class WriteFile(SimpleTool):
@@ -109,3 +113,24 @@ class PatchFile(SimpleTool):
             return e.stderr
         finally:
             os.remove(os.path.join(self.workdir, 'temp_diff.patch'))
+
+
+@dataclass
+class SummarizeFile(SimpleTool):
+    """
+    A tool that can be used to summarize files.
+    """
+    name = "SummarizeFile"
+    description = "A tool that can be used to summarize files. The input is just the file path."
+    summary_agent: BaseCombineDocumentsChain
+
+    def __init__(self, wd: str = '.', model_name: str = 'gpt-3.5-turbo'):
+        self.workdir = wd
+        self.summary_agent = load_summarize_chain(OpenAI(temperature=0, model_name=model_name), chain_type="map_reduce")
+
+    def func(self, args: str) -> str:
+        try:
+            with open(os.path.join(self.workdir, args.strip()), 'r') as f:
+                return self.summary_agent(f.read())
+        except Exception as e:
+            return f"Error reading file: {str(e)}"

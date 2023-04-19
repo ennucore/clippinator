@@ -30,7 +30,7 @@ You are the Executor. Your goal is to execute the task in a project."""
     + """
 You need to execute the task: **{task}**.
 First, think through how you'll build the solution step-by-step. Draft the documentation for it first, then implement it (write all the necessary files etc.).
-Note that usually you shouldn't just overwrite the files with WriteFile, you should use patch instead.
+Note that usually you shouldn't just overwrite the files with WriteFile, you should use patch instead. Do not create patch files, provide diffs as strings. 
 Use the tools to do everything you need, then give the "Final Result:" with the result of the task.
 If there's no question in the task, give a short summary of what you did. Don't just repeat the task, include some details like filenames, function names, etc.
 If there was something unexpected, you need to include it in your result.

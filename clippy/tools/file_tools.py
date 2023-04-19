@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 from dataclasses import dataclass
 from clippy.tools.tool import SimpleTool
@@ -94,6 +95,44 @@ class ReadFile(SimpleTool):
             return f"Error reading file: {str(e)}"
 
 
+def update_line_counts(diff_input):
+    hunks = re.split(r"(@@.*?@@)", diff_input)
+    new_diff = []
+
+    for i in range(len(hunks)):
+        if i % 2 == 0:
+            new_diff.append(hunks[i])
+        else:
+            hunk_header = hunks[i]
+            hunk_body = hunks[i + 1]
+
+            # Calculate new line counts
+            old_lines = len(
+                [
+                    line
+                    for line in hunk_body.split("\n")
+                    if line.startswith("-") or line.startswith(" ")
+                ]
+            )
+            new_lines = len(
+                [
+                    line
+                    for line in hunk_body.split("\n")
+                    if line.startswith("+") or line.startswith(" ")
+                ]
+            )
+
+            # Update hunk header with new line counts
+            hunk_header_parts = re.match(r"@@ -(\d+),\d+ \+(\d+),\d+ @@", hunk_header)
+            old_start = hunk_header_parts.group(1)
+            new_start = hunk_header_parts.group(2)
+
+            new_hunk_header = f"@@ -{old_start},{old_lines} +{new_start},{new_lines} @@"
+            new_diff.append(new_hunk_header)
+
+    return "".join(new_diff)
+
+
 @dataclass
 class PatchFile(SimpleTool):
     """
@@ -103,7 +142,10 @@ class PatchFile(SimpleTool):
     name = "PatchFile"
     description = (
         "A tool to patch files using the Linux patch command. "
-        "Provide the diff in unified or context format, and the tool will apply it to the specified files."
+        "Provide the diff in unified format, and the tool will apply it to the specified files."
+        "The entire diff must be provided as the action input, you must not create a separate file."
+        "Don't forget about hunk headers in the format @@ -start_old,count_old +start_new,count_new @@"
+        "These numbers are important, don't mess them up"
     )
 
     def __init__(self, wd: str = "."):
@@ -117,10 +159,15 @@ class PatchFile(SimpleTool):
         :param args: The diff to apply to the files.
         :return: The result of the patch command as a string.
         """
+        args = update_line_counts(args.strip("'''").strip("```"))
         with open(os.path.join(self.workdir, "temp_diff.patch"), "w") as diff_file:
             diff_file.write(args)
 
-        command = ["/bin/bash", "-c", "patch -l -i temp_diff.patch"]
+        command = [
+            "/bin/bash",
+            "-c",
+            "git apply temp_diff.patch --ignore-whitespace --inaccurate-eof",
+        ]
         try:
             result = subprocess.run(
                 command, cwd=self.workdir, capture_output=True, text=True, check=True

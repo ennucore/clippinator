@@ -5,6 +5,8 @@ from clippy.tools.tool import SimpleTool
 from langchain import OpenAI
 from langchain.chains.summarize import load_summarize_chain
 from langchain.chains.combine_documents.base import BaseCombineDocumentsChain
+from langchain.docstore.document import Document
+from langchain.text_splitter import CharacterTextSplitter
 
 
 @dataclass
@@ -12,6 +14,7 @@ class WriteFile(SimpleTool):
     """
     A tool that can be used to write files.
     """
+
     name = "WriteFile"
     description = (
         "A tool that can be used to write files. "
@@ -140,16 +143,20 @@ class SummarizeFile(SimpleTool):
         "A tool that can be used to summarize files. The input is just the file path."
     )
     summary_agent: BaseCombineDocumentsChain
+    text_splitter: CharacterTextSplitter
 
     def __init__(self, wd: str = ".", model_name: str = "gpt-3.5-turbo"):
         self.workdir = wd
         self.summary_agent = load_summarize_chain(
             OpenAI(temperature=0, model_name=model_name), chain_type="map_reduce"
         )
+        self.text_splitter = CharacterTextSplitter()
 
     def func(self, args: str) -> str:
         try:
             with open(os.path.join(self.workdir, args.strip()), "r") as f:
-                return self.summary_agent.run(f.read())
+                texts = self.text_splitter.split_text(f.read())
+                docs = [Document(page_content=t) for t in texts]
+                return self.summary_agent.run(docs)
         except Exception as e:
             return f"Error reading file: {str(e)}"

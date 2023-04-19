@@ -4,15 +4,17 @@ import os
 import subprocess
 
 
-def get_file_summary(file_path: str, ident: str = '') -> str:
+def get_file_summary(file_path: str, ident: str = "") -> str:
     """
-        | 72| class A:
-        | 80| def create(self, a: str) -> A:
-        |100| class B:
+    | 72| class A:
+    | 80| def create(self, a: str) -> A:
+    |100| class B:
     """
-    cmd = ['ctags', '-x', file_path]
-    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    out = ''
+    cmd = ["ctags", "-x", file_path]
+    result = subprocess.run(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
+    out = ""
 
     if result.returncode != 0:
         raise RuntimeError(f"Error executing ctags: {result.stderr}")
@@ -21,7 +23,7 @@ def get_file_summary(file_path: str, ident: str = '') -> str:
     for line in lines:
         parts = line.split()
         line_number = parts[2]
-        definition = ' '.join(parts[4:])
+        definition = " ".join(parts[4:])
         out += f"{ident}|{line_number}| {definition}\n"
     return out
 
@@ -30,8 +32,8 @@ def get_file_summary(file_path: str, ident: str = '') -> str:
 class Project:
     path: str
     objective: str
-    state: str = ''
-    summary_cache: str = ''
+    state: str = ""
+    summary_cache: str = ""
 
     @classmethod
     def create(cls, path: str, objective: str) -> Project:
@@ -43,7 +45,7 @@ class Project:
     def name(self) -> str:
         return os.path.basename(self.path)
 
-    def get_folder_summary(self, path: str, ident: str = '') -> str:
+    def get_folder_summary(self, path: str, ident: str = "") -> str:
         """
         Get the summary of a folder in the project, recursively, file-by-file, using self.get_file_summary()
         path:
@@ -56,20 +58,20 @@ class Project:
             dir2:
                 file3.py
         """
-        res = ''
+        res = ""
         for file in os.listdir(path):
             file_path = os.path.join(path, file)
             if file in ('.git', '.idea', '__pycache__', 'venv') or '_venv' in file:
                 continue
             if os.path.isdir(file_path):
-                res += f'{ident}{file}:\n'
-                res += self.get_folder_summary(file_path, ident + '  ')
+                res += f"{ident}{file}:\n"
+                res += self.get_folder_summary(file_path, ident + "  ")
             else:
-                res += f'{ident}{file}\n'
-                res += get_file_summary(file_path, ident + '  ')
+                res += f"{ident}{file}\n"
+                res += get_file_summary(file_path, ident + "  ")
         if len(res) > 600:
-            print('Warning: long project summary, truncating to 600 chars')
-            res = res[:600] + '...'
+            print("Warning: long project summary, truncating to 600 chars")
+            res = res[:600] + "..."
         return res
 
     def get_project_summary(self) -> str:
@@ -77,11 +79,11 @@ class Project:
         return self.summary_cache
 
     def get_project_prompt(self) -> str:
-        res = f'The project: {self.name}.\n'
-        res += f'Objective: {self.objective}\n'
-        res += f'Current state: {self.state}\n'
+        res = f"The project: {self.name}.\n"
+        res += f"Objective: {self.objective}\n"
+        res += f"Current state: {self.state}\n"
         if self.get_project_summary():
-            res += f'Files:\n{self.get_project_summary()}\n'
+            res += f"Files:\n{self.get_project_summary()}\n"
         return res
 
     def update(self):
@@ -89,8 +91,8 @@ class Project:
 
     def prompt_fields(self) -> dict:
         return {
-            'objective': self.objective,
-            'state': self.state,
-            'project_name': self.name,
-            'project_summary': self.get_project_summary(),
+            "objective": self.objective,
+            "state": self.state,
+            "project_name": self.name,
+            "project_summary": self.get_project_summary(),
         }

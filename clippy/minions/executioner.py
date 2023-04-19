@@ -10,6 +10,7 @@ class Executioner:
     The minion responsible for executing a task.
     Can be specialized for different types of tasks (research, operations, code writing).
     """
+
     execution_agent: BaseMinion
 
     def __init__(self, project: Project):

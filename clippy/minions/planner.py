@@ -33,19 +33,19 @@ class Plan:
         first_milestone_tasks = []
         for line in plan.splitlines():
             line = line.strip()
-            if '[x]' in line:
+            if "[x]" in line:
                 continue
-            if line.startswith('- '):
-                first_milestone_tasks.append(line[2:].removeprefix('[ ]').strip())
-            elif line and '.' in line[:5]:
-                milestones.append(line.split('.', 1)[1].strip())
+            if line.startswith("- "):
+                first_milestone_tasks.append(line[2:].removeprefix("[ ]").strip())
+            elif line and "." in line[:5]:
+                milestones.append(line.split(".", 1)[1].strip())
         return cls(milestones, first_milestone_tasks)
 
     def display_progress(self):
         with Progress(
-                SpinnerColumn(),
-                TextColumn("[progress.description]{task.description}"),
-                transient=True,
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            transient=True,
         ) as progress:
             # Display completed milestones
             for milestone in self.completed_milestones:
@@ -53,7 +53,9 @@ class Plan:
 
             # Display current milestone with spinner
             current_milestone = self.milestones[0]
-            _milestone_task = progress.add_task(description=current_milestone, total=None)
+            _milestone_task = progress.add_task(
+                description=current_milestone, total=None
+            )
 
             # Display completed tasks for current milestone
             for task in self.completed_tasks:
@@ -72,18 +74,18 @@ class Plan:
                 progress.add_task(description=milestone, completed=False, start=False)
 
     def __str__(self) -> str:
-        res = ''
+        res = ""
         if self.completed_milestones:
-            res += f'Completed milestones:\n'
+            res += f"Completed milestones:\n"
             for milestone in self.completed_milestones:
-                res += f'    - {milestone}\n'
+                res += f"    - {milestone}\n"
         for i, milestone in enumerate(self.milestones):
-            res += f'{i + 1}. {milestone}\n'
+            res += f"{i + 1}. {milestone}\n"
             if i == 0:
                 for completed_task in self.completed_tasks:
-                    res += f'    - [x] {completed_task}\n'
+                    res += f"    - [x] {completed_task}\n"
                 for task in self.first_milestone_tasks:
-                    res += f'    - {task}\n'
+                    res += f"    - {task}\n"
         return res
 
 
@@ -91,8 +93,8 @@ def split_context(result: str) -> typing.Tuple[str, str]:
     """
     Parse the model output and return the context and the plan
     """
-    result = result.strip().removeprefix('CONTEXT:').strip()
-    context, plan = result.split('\n', 1)
+    result = result.strip().removeprefix("CONTEXT:").strip()
+    context, plan = result.split("\n", 1)
     return context, plan
 
 
@@ -103,6 +105,7 @@ class Planner:
     - Updating the plan when there's the report from a task
     - Updating the context when there's the report from a task
     """
+
     initial_planner: BaseMinion
     update_planner: BaseMinion
 
@@ -115,7 +118,11 @@ class Planner:
         context, plan = split_context(result)
         return Plan.parse(plan), context
 
-    def update_plan(self, plan: Plan, report: str, project: Project) -> typing.Tuple[Plan, str]:
-        result = self.update_planner.run(**project.prompt_fields(), report=report, plan=str(plan))
+    def update_plan(
+        self, plan: Plan, report: str, project: Project
+    ) -> typing.Tuple[Plan, str]:
+        result = self.update_planner.run(
+            **project.prompt_fields(), report=report, plan=str(plan)
+        )
         context, new_plan = split_context(result)
         return Plan.parse(new_plan), context

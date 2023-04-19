@@ -13,9 +13,11 @@ class SimpleTool:
 
 
 class HumanInputTool(SimpleTool):
-    name: str = 'HumanInput'
-    description: str = 'A tool that can be used to ask a human for something (only if it\'s required). ' \
-                       'For instance, it can be useful if you need some kind of API token.'
+    name: str = "HumanInput"
+    description: str = (
+        "A tool that can be used to ask a human for something (only if it's required). "
+        "For instance, it can be useful if you need some kind of API token."
+    )
 
     @staticmethod
     def func(args: str) -> str:

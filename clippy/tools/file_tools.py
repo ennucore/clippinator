@@ -10,24 +10,28 @@ from langchain import OpenAI
 from langchain.chains.summarize import load_summarize_chain
 from langchain.chains.combine_documents.base import BaseCombineDocumentsChain
 
+
 @dataclass
 class WriteFile(SimpleTool):
     """
     A tool that can be used to write files.
     """
-    name = "WriteFile"
-    description = "A tool that can be used to write files. " \
-                  "The input format is 'dir/filename' (the path is relative to the project directory) on the first " \
-                  "line, " \
-                  "and starting from the next line the desired content. " \
-                  "The tool will completely overwrite the entire file."
 
-    def __init__(self, wd: str = '.'):
+    name = "WriteFile"
+    description = (
+        "A tool that can be used to write files. "
+        "The input format is 'dir/filename' (the path is relative to the project directory) on the first "
+        "line, "
+        "and starting from the next line the desired content. "
+        "The tool will completely overwrite the entire file."
+    )
+
+    def __init__(self, wd: str = "."):
         self.workdir = wd
 
     def func(self, args: str) -> str:
         # Use a regular expression to extract the file path from the input
-        file_path, content = args.split('\n', 1)
+        file_path, content = args.split("\n", 1)
         file_path = file_path.strip().strip("'").strip()
 
         original_file_path = file_path
@@ -40,7 +44,7 @@ class WriteFile(SimpleTool):
                 os.makedirs(directory)
 
             # Write the content to the file
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 f.write(content)
 
             return f"Successfully written to {original_file_path}."
@@ -53,29 +57,39 @@ class ReadFile(SimpleTool):
     """
     A tool that can be used to read files.
     """
-    name = "ReadFile"
-    description = "A tool that can be used to read files. The input is just the file path. " \
-                  "Optionally, you can add [l1:l2] to the end of the file path to specify a range of lines to read."
 
-    def __init__(self, wd: str = '.'):
+    name = "ReadFile"
+    description = (
+        "A tool that can be used to read files. The input is just the file path. "
+        "Optionally, you can add [l1:l2] to the end of the file path to specify a range of lines to read."
+    )
+
+    def __init__(self, wd: str = "."):
         self.workdir = wd
 
     def func(self, args: str) -> str:
         try:
-            if '[' not in args:
-                with open(os.path.join(self.workdir, args.strip()), 'r') as f:
+            if "[" not in args:
+                with open(os.path.join(self.workdir, args.strip()), "r") as f:
                     lines = f.readlines()
-                    lines = [f'{i + 1}. {line}' for i, line in enumerate(lines)]
-                    return ''.join(lines)
-            filename, line_range = args.split('[', 1)
-            line_ranges = line_range.strip(']').split(',')
-            line_ranges = [line_range.split(':') for line_range in line_ranges]
-            line_ranges = [(int(line_range[0]), int(line_range[1])) for line_range in line_ranges]
-            with open(os.path.join(self.workdir, args.strip()), 'r') as f:
+                    lines = [f"{i + 1}. {line}" for i, line in enumerate(lines)]
+                    return "".join(lines)
+            filename, line_range = args.split("[", 1)
+            line_ranges = line_range.strip("]").split(",")
+            line_ranges = [line_range.split(":") for line_range in line_ranges]
+            line_ranges = [
+                (int(line_range[0]), int(line_range[1])) for line_range in line_ranges
+            ]
+            with open(os.path.join(self.workdir, args.strip()), "r") as f:
                 lines = f.readlines()
-                out = ''
+                out = ""
                 for line_range in line_ranges:
-                    out += ''.join([f'{i + 1}. {lines[i]}' for i in range(line_range[0], line_range[1] + 1)])
+                    out += "".join(
+                        [
+                            f"{i + 1}. {lines[i]}"
+                            for i in range(line_range[0], line_range[1] + 1)
+                        ]
+                    )
                 return out
         except Exception as e:
             return f"Error reading file: {str(e)}"
@@ -86,11 +100,14 @@ class PatchFile(SimpleTool):
     """
     A tool that can be used to patch files.
     """
-    name = "PatchFile"
-    description = "A tool to patch files using the Linux patch command. " \
-                  "Provide the diff in unified or context format, and the tool will apply it to the specified files."
 
-    def __init__(self, wd: str = '.'):
+    name = "PatchFile"
+    description = (
+        "A tool to patch files using the Linux patch command. "
+        "Provide the diff in unified or context format, and the tool will apply it to the specified files."
+    )
+
+    def __init__(self, wd: str = "."):
         self.workdir = wd
 
     def func(self, args: str) -> str:
@@ -101,19 +118,21 @@ class PatchFile(SimpleTool):
         :param args: The diff to apply to the files.
         :return: The result of the patch command as a string.
         """
-        with open(os.path.join(self.workdir, 'temp_diff.patch'), 'w') as diff_file:
+        with open(os.path.join(self.workdir, "temp_diff.patch"), "w") as diff_file:
             diff_file.write(args)
 
-        print(os.path.join(self.workdir, 'temp_diff.patch'))
+        print(os.path.join(self.workdir, "temp_diff.patch"))
         print(args)
-        command = ['/bin/bash', '-c', 'patch -l -i temp_diff.patch']
+        command = ["/bin/bash", "-c", "patch -l -i temp_diff.patch"]
         try:
-            result = subprocess.run(command, cwd=self.workdir, capture_output=True, text=True, check=True)
+            result = subprocess.run(
+                command, cwd=self.workdir, capture_output=True, text=True, check=True
+            )
             return result.stdout
         except subprocess.CalledProcessError as e:
             return e.stderr
         finally:
-            os.remove(os.path.join(self.workdir, 'temp_diff.patch'))
+            os.remove(os.path.join(self.workdir, "temp_diff.patch"))
 
 
 @dataclass
@@ -121,17 +140,22 @@ class SummarizeFile(SimpleTool):
     """
     A tool that can be used to summarize files.
     """
+
     name = "SummarizeFile"
-    description = "A tool that can be used to summarize files. The input is just the file path."
+    description = (
+        "A tool that can be used to summarize files. The input is just the file path."
+    )
     summary_agent: BaseCombineDocumentsChain
 
-    def __init__(self, wd: str = '.', model_name: str = 'gpt-3.5-turbo'):
+    def __init__(self, wd: str = ".", model_name: str = "gpt-3.5-turbo"):
         self.workdir = wd
-        self.summary_agent = load_summarize_chain(OpenAI(temperature=0, model_name=model_name), chain_type="map_reduce")
+        self.summary_agent = load_summarize_chain(
+            OpenAI(temperature=0, model_name=model_name), chain_type="map_reduce"
+        )
 
     def func(self, args: str) -> str:
         try:
-            with open(os.path.join(self.workdir, args.strip()), 'r') as f:
+            with open(os.path.join(self.workdir, args.strip()), "r") as f:
                 return self.summary_agent(f.read())
         except Exception as e:
             return f"Error reading file: {str(e)}"

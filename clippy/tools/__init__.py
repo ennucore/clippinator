@@ -18,35 +18,37 @@ def get_tools(project: Project) -> list[BaseTool]:
             name="Google Search",
             func=search.run,
             description="useful for when you need to answer simple questions and get a simple answer. "
-                        "You cannot read websites or click on any links or read any articles."
+            "You cannot read websites or click on any links or read any articles.",
         ),
         Tool(
             name="Bash",
             func=RunBash(workdir=project.path).run,
-            description="allows you to run bash commands in the base directory"
+            description="allows you to run bash commands in the base directory",
         ),
         Tool(
             name="Python",
             func=PythonREPL().run,
             description="allows you to run python code and get everything that's "
-                        "printed (e.g. print(2+2) will give you 4) in order to compute something. "
-                        "The input is correct python code."
+            "printed (e.g. print(2+2) will give you 4) in order to compute something. "
+            "The input is correct python code.",
         ),
         Tool(
             name="Wolfram Alpha",
             func=WolframAlphaAPIWrapper().run,
             description="allows you to ask questions about math, science, solve equations, and more. "
-                        "The question should be strictly defined, like 'what is the derivative of x^2' or "
-                        "'what is the capital of France'"),
+            "The question should be strictly defined, like 'what is the derivative of x^2' or "
+            "'what is the capital of France'",
+        ),
         Tool(
             name="Wait",
-            func=lambda t: time.sleep(float(t)) or '',
+            func=lambda t: time.sleep(float(t)) or "",
             description="allows you to wait for a certain amount of time "
-                        "- to wait for the result of some process you ran."),
+            "- to wait for the result of some process you ran.",
+        ),
         WriteFile(project.path).get_tool(),
         ReadFile(project.path).get_tool(),
         PatchFile(project.path).get_tool(),
         SummarizeFile(project.path).get_tool(),
-        HumanInputTool().get_tool()
+        HumanInputTool().get_tool(),
     ]
     return tools

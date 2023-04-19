@@ -34,7 +34,6 @@ class Clippy:
         return self.executioner.execute(task, self.project)
 
     def run_iteration(self):
-        time.sleep(5)
         result = self.execute_task(self.plan.first_milestone_tasks[0])
         self.plan.completed_tasks.append(self.plan.first_milestone_tasks[0])
         self.plan.first_milestone_tasks = self.plan.first_milestone_tasks[1:]

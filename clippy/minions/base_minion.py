@@ -22,7 +22,6 @@ class CustomOutputParser(AgentOutputParser):
         # Parse out the action and action input
         regex = r"Action\s*\d*\s*:(.*?)\nAction\s*\d*\s*Input\s*\d*\s*:[\s]*(.*)"
         match = re.search(regex, llm_output, re.DOTALL)
-        time.sleep(15)
         if not match and llm_output.strip().split('\n')[-1].strip().startswith("Thought:"):
             return AgentAction(tool="Python", tool_input='', log=llm_output)
         if not match:

@@ -2,7 +2,7 @@ import re
 import os
 import subprocess
 from dataclasses import dataclass
-from clippy.tools.tool import Toolkit, SimpleTool
+from clippy.tools.tool import SimpleTool
 
 
 @dataclass
@@ -99,7 +99,9 @@ class PatchFile(SimpleTool):
         with open(os.path.join(self.workdir, 'temp_diff.patch'), 'w') as diff_file:
             diff_file.write(args)
 
-        command = ['patch', '-p1', '-i', 'temp_diff.patch']
+        print(os.path.join(self.workdir, 'temp_diff.patch'))
+        print(args)
+        command = ['/bin/bash', '-c', 'patch -l -i temp_diff.patch']
         try:
             result = subprocess.run(command, cwd=self.workdir, capture_output=True, text=True, check=True)
             return result.stdout
@@ -107,20 +109,3 @@ class PatchFile(SimpleTool):
             return e.stderr
         finally:
             os.remove(os.path.join(self.workdir, 'temp_diff.patch'))
-
-@dataclass
-class FileTools(Toolkit):
-    """
-    A tool that can be used to read and write files.
-    """
-
-    def __init__(self, wd: str = '.'):
-        super().__init__(
-            name="file tools",
-            tools=[
-                WriteFile(wd).get_tool(),
-                ReadFile(wd).get_tool(),
-                PatchFile(wd).get_tool()
-            ]
-        )
-

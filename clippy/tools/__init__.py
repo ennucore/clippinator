@@ -1,7 +1,7 @@
 from langchain.agents import Tool
 from langchain.tools import BaseTool
 from .terminal import RunBash
-from .file_tools import WriteFile, ReadFile, PatchFile
+from .file_tools import WriteFile, ReadFile, PatchFile, SummarizeFile
 from .tool import HumanInputTool
 from langchain.utilities import PythonREPL
 from langchain.utilities import WolframAlphaAPIWrapper
@@ -46,6 +46,7 @@ def get_tools(project: Project) -> list[BaseTool]:
         WriteFile(project.path).get_tool(),
         ReadFile(project.path).get_tool(),
         PatchFile(project.path).get_tool(),
+        SummarizeFile(project.path).get_tool(),
         HumanInputTool().get_tool()
     ]
     return tools

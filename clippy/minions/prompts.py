@@ -63,6 +63,7 @@ You should be the one making architectural decisions like the tech stack. You ca
 Note that you don't have admin access, so you should use things like poetry. If you need to install something on the system and it requires admin access, you can use the HumanInput tool.
 When creating a new project, you don't need to deploy it.
 After each milestone, the project has to be in a working state, it has to be something finished (a milestone can be adding a new feature, for instance).
+If there's nothing left to do, write "FINISHED" in the "Final Result:".
 The tasks in the first milestone are the tasks that the Executioner will execute. They should be pretty simple, and the Executioner should be able to execute them.
 They can be something like "Write the function `get_name()` in the class `Dog`", or anything else that's relatively straightforward.
 Note that if some information isn't added to the context or to the plan, it will be lost forever.
@@ -113,6 +114,7 @@ Then come up with a short notion (as a Thought) of what needs to be changed and 
 Think about how the global context needs to be updated
 Remember that you need a full task list in the first milestone, and the tasks should be pretty simple.
 Make the first task very elaborate so that the execution agent can understand it - it will be executed next. It should all the necessary information for completion.
+If a milestone was just completed, you should check that the project is in a working state.
 Return the updated context and the complete updated plan in the "Final Result:". You don't need to include the completed tasks and milestones.
 
 Begin!

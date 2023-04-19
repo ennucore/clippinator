@@ -124,5 +124,7 @@ class Planner:
         result = self.update_planner.run(
             **project.prompt_fields(), report=report, plan=str(plan)
         )
+        if 'FINISHED' in result:
+            return Plan([], []), project.state
         context, new_plan = split_context(result)
         return Plan.parse(new_plan), context

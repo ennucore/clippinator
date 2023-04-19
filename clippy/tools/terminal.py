@@ -51,7 +51,7 @@ class RunBash:
             stderr_output = stderr_output.strip()
 
         combined_output = stdout_output + "\n" + stderr_output
-        return combined_output
+        return combined_output if combined_output.strip() else "(empty)"
 
 
 class BashSession(Tool):

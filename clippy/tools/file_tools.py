@@ -156,6 +156,6 @@ class SummarizeFile(SimpleTool):
     def func(self, args: str) -> str:
         try:
             with open(os.path.join(self.workdir, args.strip()), "r") as f:
-                return self.summary_agent(f.read())
+                return self.summary_agent.run(f.read())
         except Exception as e:
             return f"Error reading file: {str(e)}"

@@ -21,7 +21,7 @@ def run(objective: str = '', project_path: str = '.'):
 
 
 @app.command()
-def new(objective: str = '', project_path: str = '.'):
+def new(project_path: str, objective: str = ''):
     """
     Create a new project using clippy.
     """
@@ -33,7 +33,7 @@ def new(objective: str = '', project_path: str = '.'):
 
 
 @app.command()
-def resume(clippy_path: str = 'clippy.pkl'):
+def resume(clippy_path: str):
     """
     Continue working on a project.
     """

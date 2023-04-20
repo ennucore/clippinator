@@ -24,11 +24,22 @@ class CustomOutputParser(AgentOutputParser):
         if not match and llm_output.strip().split('\n')[-1].strip().startswith("Thought:"):
             return AgentAction(tool="Python", tool_input='', log=llm_output)
         if not match:
+            if 'Action:' in llm_output and 'Action Input:' not in llm_output:
+                return AgentAction(tool="Python", tool_input='print("No Action Input specified.")', log=llm_output)
+            return AgentAction(tool="Python", tool_input='print("*Continue with thoughts and actions*")',
+                               log=llm_output)
+        if not match:
             raise ValueError(f"Could not parse LLM output: `{llm_output}`")
-        action = match.group(1).strip()
+        action = match.group(1).strip().strip('`').strip('"').strip("'").strip()
         action_input = match.group(2)
+        if '\nThought: ' in action_input or '\nAction: ' in action_input:
+            return AgentAction(tool="Python",
+                               tool_input='print("Error: Write \'Observation: \' after each '
+                                          'action. Execute the actions again.")',
+                               log=llm_output)
         # Return the action and action input
-        return AgentAction(tool=action, tool_input=action_input.strip(" ").strip('"'), log=llm_output)
+        return AgentAction(tool=action, tool_input=action_input.strip(" ").strip('"').split('\nThought: ')[0],
+                           log=llm_output)
 
 
 class CustomPromptTemplate(StringPromptTemplate):
@@ -85,7 +96,7 @@ class BaseMinion:
         agent = LLMSingleActionAgent(
             llm_chain=llm_chain,
             output_parser=output_parser,
-            stop=["\nObservation:"],
+            stop=["Observation:"],
             allowed_tools=tool_names
         )
 

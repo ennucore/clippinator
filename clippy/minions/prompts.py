@@ -6,10 +6,11 @@ Here's some information for you: {state}
 You can use tools. Note that you can still use your knowledge - just because, for instance, you have Google doesn't mean you should Google everything. Also, if you don't find something from the first try, you will probably never find what you need on Google.
 Avoid reading and writing entire files, strive to specify ranges in reading and use patch instead of writing.
 You **need** to have a "Final Result:", even if the result is trivial. **Never** stop at "Thought:".
-"Observation:" always comes after "Action Input:" - it's the result of the action. There should **always** be an observation before anything else, any next thought or action.
+"Observation:" **always** comes after "Action Input:" - it's the result of the action. There should **always** be an observation before anything else, any next thought or action.
+"Action Input:" can only come after action (you need to choose the tool you want to use).
 "Observation:" even comes after Writing a file - it's the result of the action. A Thought always follows an Observation.
 **Everything** is either a Thought, an Action, an Action Input, an Observation, or a Final Result.
-After you get an Observation, you have to write Thought.
+After you get an Observation, you **have** to write Thought.
 
 You have access to the following tools:
 {tools}
@@ -20,7 +21,9 @@ Thought: you should always think about what to do
 Action: the action to take, should be one of [{tool_names}]. You have to write "Action: <tool name>".
 Action Input: the input to the action
 Observation: the result of the action
-... (this Thought/Action/Action Input/Observation/Thought can repeat N times)
+Thought: ...
+Action: ...
+... (this Thought/Action/Action Input/Observation/Thought can repeat N times, Stop only when you have the Final Result or an Action)
 Thought: I am now ready to give the final result
 Final Result: the final result
 """
@@ -42,7 +45,7 @@ Action Input: filename
 +37|    updater.start_polling()
 +38|    updater.idle()
 
-You will use it often, so don't forget it. Pay attention to the indentation, too: it starts from the |.
+You will use it often, so don't forget it. Pay attention to the indentation, too: it starts from the |. +12| means that line will be inserted as the new 12th line, -12| means that the previous 12th line will be removed.
 
 Use the tools to do everything you need, then give the "Final Result:" with the result of the task.
 If there's no question in the task, give a short summary of what you did. Don't just repeat the task, include some details like filenames, function names, etc.
@@ -77,11 +80,11 @@ Note that you don't have admin access, so you should use things like poetry. If 
 When working on a project, you shouldn't deploy it. Just write the instructions for running it to README.md at the end.
 After each milestone, the project has to be in a working state, it has to be something finished (a milestone can be adding a new feature, for instance).
 When appropriate, incorporate some TDD methodology: write some tests before implementing the feature.
-If the milestone consists of many tasks, you should insert some testing tasks in the middle (running tasks, etc.).
+If the milestone consists of many tasks, you should insert some testing tasks in the middle (running tasks, pylint, etc.).
 Try not to make the architecture too complex. When doing frontend, try to make design relatively simple yet modern and professional. You can use CSS frameworks like Tailwind.
 If there's nothing left to do, write "FINISHED" in the "Final Result:".
 The tasks in the first milestone are the tasks that the Executioner will execute. The Executioner should be able to execute them.
-They should be not as simple as "create a folder", but not as complex as "implement the whole feature". More like "Write this class".
+They should be more complex than "create a folder", but not too complex. More like "Write this class".
 They can be something like "Write the function `get_name()` in the class `Dog`", or anything else that's relatively straightforward.
 Note that if some information isn't added to the context or to the plan, it will be lost forever.
 You need to generate the global context and the plan. The context should be a couple of sentences about the project and its current state. For instance, the tech stack, what's working and what isn't right now, and so on.

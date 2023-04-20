@@ -11,6 +11,12 @@ from langchain.docstore.document import Document
 from langchain.text_splitter import CharacterTextSplitter, RecursiveCharacterTextSplitter
 
 
+def strip_quotes(inp: str) -> str:
+    inp = inp.strip()
+    inp = inp.removeprefix('```').removeprefix("'''").removeprefix('"""').strip()
+    inp = inp.removesuffix('\n```').removesuffix("\n'''").removesuffix('\n"""')
+    return inp
+
 @dataclass
 class WriteFile(SimpleTool):
     """
@@ -40,8 +46,7 @@ class WriteFile(SimpleTool):
                 return 'Created an empty file.'
         file_path, content = args.split("\n", 1)
         file_path = file_path.strip().strip("'").strip()
-        # strip ```, ''', """ from the content using strip
-        content = content.strip().strip("'").strip('"').strip("`").removeprefix('\n')
+        content = strip_quotes(content)
 
         original_file_path = file_path
         file_path = os.path.join(self.workdir, file_path)
@@ -81,7 +86,7 @@ class ReadFile(SimpleTool):
             if "[" not in args:
                 with open(os.path.join(self.workdir, args.strip()), "r") as f:
                     lines = f.readlines()
-                    lines = [f"{i + 1}| {line}" for i, line in enumerate(lines)]
+                    lines = [f"{i + 1}|{line}" for i, line in enumerate(lines)]
                     out = '```\n' + "".join(lines) + '\n```'
                     if len(out) > 5000:
                         return out[:5000] + '\n...\n```\nFile too long, use the summarizer or ' \
@@ -91,7 +96,7 @@ class ReadFile(SimpleTool):
             line_ranges = line_range.strip("]").split(",")
             line_ranges = [line_range.split(":") for line_range in line_ranges]
             line_ranges = [
-                (int(line_range[0]), int(line_range[1])) for line_range in line_ranges
+                (int(line_range[0]) - 1, int(line_range[1])) for line_range in line_ranges
             ]
             with open(os.path.join(self.workdir, filename.strip()), "r") as f:
                 lines = f.readlines()
@@ -108,15 +113,18 @@ class ReadFile(SimpleTool):
             return f"Error reading file: {str(e)}"
 
 
-def apply_patch(patch_str: str, file_path: str) -> str:
+def apply_patch(patch_str: str, file_path: str) -> (str, int, int):
     # Split the patch string into lines and remove the filename
     patch_lines = patch_str.strip().split('\n')  # [1:]
-    with open(file_path, 'r') as file:
+    with open(file_path.strip(), 'r') as file:
         file_lines = file.readlines()
 
+    plus_lines, minus_lines = 0, 0
     # Loop through the patch lines
     for patch_line in patch_lines:
-        if '|' not in patch_line:
+        if '|' not in patch_line and patch_line.strip():
+            raise ValueError(f"Invalid patch line: {patch_line}. Has to have the format +N|line or -N|line.")
+        if not patch_line.strip():
             continue
         # Parse the patch line
         action, index, content = patch_line[0], int(patch_line[1:].split('|')[0]) - 1, patch_line.split('|', 1)[1]
@@ -124,9 +132,11 @@ def apply_patch(patch_str: str, file_path: str) -> str:
         # Apply the patch line to the file content
         if action == '-' and 0 <= index < len(file_lines):
             del file_lines[index]
+            minus_lines += 1
         elif action == '+' and 0 <= index <= len(file_lines) and content.strip():
-            file_lines.insert(index, content)
-    return '\n'.join(file_lines)
+            file_lines.insert(index, content + '\n')
+            plus_lines += 1
+    return ''.join(file_lines), plus_lines, minus_lines
 
 
 @dataclass
@@ -159,12 +169,16 @@ class PatchFile(SimpleTool):
         :param args: The diff to apply to the files.
         :return: The result of the patch command as a string.
         """
-        filename, patch = args.strip("'''").strip("```").strip('"').split('\n', 1)
-        patch = patch.strip().strip("'").strip('"').strip("`")
+        filename, patch = strip_quotes(args).split('\n', 1)
+        patch = strip_quotes(patch)
         filename = os.path.join(self.workdir, filename.strip())
-        new_content = apply_patch(patch, filename)
+        try:
+            new_content, plus_lines, minus_lines = apply_patch(patch, filename)
+        except Exception as e:
+            return f"Error applying patch: {str(e)}\n"
         with open(filename, 'w') as file:
             file.write(new_content)
+        return f"Successfully patched {filename} with {plus_lines} added lines and {minus_lines} removed lines."
 
 
 mr_prompt_template = '''You need to write a summary of the content of a file. You should provide an overview of what this file contains (classes, functions, content, etc.)

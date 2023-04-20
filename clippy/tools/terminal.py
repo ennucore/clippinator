@@ -96,6 +96,8 @@ class BashBackgroundSessions(SimpleTool):
                     return f"Killed process with pid {pid}.\n"
             return f"Could not find process with pid {pid}.\n"
         elif args.startswith("/logs"):
+            if ' ' not in args:
+                return "Please specify a pid.\n"
             pid = int(args.split()[1])
             for process in bash_processes:
                 if process["pr"].pid == pid:
@@ -106,7 +108,7 @@ class BashBackgroundSessions(SimpleTool):
                 ["bash"],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
+                stderr=subprocess.PIPE,
                 text=True,
                 cwd=self.workdir,
             )

@@ -74,9 +74,11 @@ and then come up with the plan milestones and tasks in the first milestone (you 
 Do not do anything, do not create any files. You can do some very simple research (a couple of google/wolfram queries), but anything more complex should be made into a task.
 You should be the one making architectural decisions like the tech stack. You can use your knowledge.
 Note that you don't have admin access, so you should use things like poetry. If you need to install something on the system and it requires admin access, you can use the HumanInput tool.
-When working on a project, you shouldn't deploy it.
+When working on a project, you shouldn't deploy it. Just write the instructions for running it to README.md at the end.
 After each milestone, the project has to be in a working state, it has to be something finished (a milestone can be adding a new feature, for instance).
-If the milestone consists of many tasks, you should insert some testing tasks in the middle.
+When appropriate, incorporate some TDD methodology: write some tests before implementing the feature.
+If the milestone consists of many tasks, you should insert some testing tasks in the middle (running tasks, etc.).
+Try not to make the architecture too complex. When doing frontend, try to make design relatively simple yet modern and professional. You can use CSS frameworks like Tailwind.
 If there's nothing left to do, write "FINISHED" in the "Final Result:".
 The tasks in the first milestone are the tasks that the Executioner will execute. The Executioner should be able to execute them.
 They should be not as simple as "create a folder", but not as complex as "implement the whole feature". More like "Write this class".
@@ -100,7 +102,6 @@ The milestones have to be in a numbered list and they have to be named (not just
     + common_part
 )
 
-#  Try to follow the TDD (test-driven development) methodology.
 initial_planning = (
     common_planning
     + """

@@ -1,6 +1,7 @@
 import os
 import pty
 import subprocess
+import time
 from typing import List, Union
 import fcntl
 import select
@@ -9,6 +10,8 @@ from abc import ABC
 from dataclasses import dataclass
 
 from langchain.agents import Tool
+
+from .tool import SimpleTool
 
 
 class RunBash:
@@ -52,6 +55,68 @@ class RunBash:
 
         combined_output = stdout_output + "\n" + stderr_output
         return combined_output if combined_output.strip() else "(empty)"
+
+
+# Yes, the current processes are stored in a global variable
+bash_processes = []
+
+
+@dataclass
+class BashBackgroundSessions(SimpleTool):
+    name = "BashBackground"
+    description = "A tool that can be used to run bash commands in the background."
+
+    def __init__(self, wd: str):
+        self.workdir = wd
+        self.description = (
+            "A tool that can be used to start bash processes in the background. "
+            "By default, it starts a process using input as a command. There are special commands:\n"
+            "    - `/killall` kills all background processes\n"
+            "    - `/kill <pid>` kills the process with the given pid\n"
+            "    - `/logs <pid>` gets the output of a process\n"
+        )
+        self.description += 'Current processes:\n'
+        for process in bash_processes:
+            self.description += f'    - pid: {process["pr"].pid}| `{process["args"][:50]}`\n'
+
+    def func(self, args: str) -> str:
+        global bash_processes
+        args = args.strip().strip('`').strip("'").strip('"').strip()
+        if args == "/killall":
+            for process in bash_processes:
+                process["pr"].kill()
+            bash_processes = []
+            return "Killed all processes.\n"
+        elif args.startswith("/kill"):
+            pid = int(args.split()[1])
+            for process in bash_processes:
+                if process["pr"].pid == pid:
+                    process["pr"].kill()
+                    bash_processes.remove(process)
+                    return f"Killed process with pid {pid}.\n"
+            return f"Could not find process with pid {pid}.\n"
+        elif args.startswith("/logs"):
+            pid = int(args.split()[1])
+            for process in bash_processes:
+                if process["pr"].pid == pid:
+                    return '```\n' + process["pr"].stdout.read() + process["pr"].stderr.read() + '\n```\n'
+            return f"Could not find process with pid {pid}.\n"
+        else:
+            process = subprocess.Popen(
+                ["bash"],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                cwd=self.workdir,
+            )
+            process.stdin.write(args + '\n')
+            process.stdin.close()
+            bash_processes.append({"pr": process, "args": args})
+            time.sleep(0.5)
+            # Read current output
+            output = process.stdout.read() + process.stderr.read()
+            return f"Started process with pid {process.pid}.\n```\n{output}\n```\n"
 
 
 class BashSession(Tool):

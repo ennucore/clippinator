@@ -19,7 +19,7 @@ class WriteFile(SimpleTool):
 
     name = "WriteFile"
     description = (
-        "A tool that can be used to write files. "
+        "a tool that can be used to write files. "
         "The input format is 'dir/filename' (the path is relative to the project directory) on the first "
         "line, "
         "and starting from the next line the desired content without any quotes or other formatting. "
@@ -69,7 +69,7 @@ class ReadFile(SimpleTool):
 
     name = "ReadFile"
     description = (
-        "A tool that can be used to read files. The input is just the file path. "
+        "a tool that can be used to read files. The input is just the file path. "
         "Optionally, you can add [l1:l2] to the end of the file path to specify a range of lines to read."
     )
 
@@ -137,12 +137,12 @@ class PatchFile(SimpleTool):
 
     name = "PatchFile"
     description = (
-        "A tool to patch a file: make amends to it using diffs. "
+        "a tool to patch a file: make amends to it using diffs. "
         "Provide the diff in unified format, and the tool will apply it to the specified file."
         "The first line of the action input is the filename, the rest is the diff. "
         "The diff (the lines with - will be deleted from the original file) looks like this:\n"
-        "-36|    # start poling\n"
-        "+36|    # start polling\n"
+        "-36|# start poling\n"
+        "+36|# start polling\n"
         "-37|    updater.start_polling()    updater.idle()\n"
         "+37|    updater.start_polling()\n"
         "+38|    updater.idle()\n"
@@ -189,7 +189,7 @@ class SummarizeFile(SimpleTool):
 
     name = "SummarizeFile"
     description = (
-        "A tool that can be used to summarize files. The input is just the file path."
+        "a tool that can be used to summarize files. The input is just the file path."
     )
     summary_agent: BaseCombineDocumentsChain
     text_splitter: RecursiveCharacterTextSplitter

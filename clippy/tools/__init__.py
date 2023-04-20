@@ -1,13 +1,12 @@
 from langchain.agents import Tool
 from langchain.tools import BaseTool
-from .terminal import RunBash
+from .terminal import RunBash, BashBackgroundSessions
 from .file_tools import WriteFile, ReadFile, PatchFile, SummarizeFile
 from .code_tools import SearchInFiles, Pylint
 from .tool import HumanInputTool
 from langchain.utilities import PythonREPL
 from langchain.utilities import WolframAlphaAPIWrapper
 from langchain.utilities import SerpAPIWrapper
-import time
 
 from clippy.project import Project
 
@@ -54,5 +53,6 @@ def get_tools(project: Project) -> list[BaseTool]:
         HumanInputTool().get_tool(),
         Pylint(project.path).get_tool(),
         SearchInFiles(project.path).get_tool(),
+        BashBackgroundSessions(project.path).get_tool(),
     ]
     return tools

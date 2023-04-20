@@ -17,6 +17,7 @@ wolframalpha = "^5.0.0"
 python-telegram-bot = "^20.2"
 unidiff = "^0.7.5"
 patch = "^1.16"
+tiktoken = "^0.3.3"
 
 
 [tool.poetry.group.dev.dependencies]

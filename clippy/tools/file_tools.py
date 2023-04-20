@@ -1,13 +1,14 @@
 import os
-import re
-import subprocess
 from dataclasses import dataclass
+
+from langchain import PromptTemplate
+
 from clippy.tools.tool import SimpleTool
-from langchain import OpenAI
+from langchain.chat_models import ChatOpenAI
 from langchain.chains.summarize import load_summarize_chain
 from langchain.chains.combine_documents.base import BaseCombineDocumentsChain
 from langchain.docstore.document import Document
-from langchain.text_splitter import CharacterTextSplitter
+from langchain.text_splitter import CharacterTextSplitter, RecursiveCharacterTextSplitter
 
 
 @dataclass
@@ -31,8 +32,16 @@ class WriteFile(SimpleTool):
 
     def func(self, args: str) -> str:
         # Use a regular expression to extract the file path from the input
+        if '\n' not in args:
+            file_path = args.strip().strip("'").strip()
+            content = ''
+            with open(os.path.join(self.workdir, file_path), "w") as f:
+                f.write(content)
+                return 'Created an empty file.'
         file_path, content = args.split("\n", 1)
         file_path = file_path.strip().strip("'").strip()
+        # strip ```, ''', """ from the content using strip
+        content = content.strip().strip("'").strip('"').strip("`").removeprefix('\n')
 
         original_file_path = file_path
         file_path = os.path.join(self.workdir, file_path)
@@ -72,8 +81,12 @@ class ReadFile(SimpleTool):
             if "[" not in args:
                 with open(os.path.join(self.workdir, args.strip()), "r") as f:
                     lines = f.readlines()
-                    lines = [f"{i + 1}. {line}" for i, line in enumerate(lines)]
-                    return "".join(lines)
+                    lines = [f"{i + 1}| {line}" for i, line in enumerate(lines)]
+                    out = '```\n' + "".join(lines) + '\n```'
+                    if len(out) > 5000:
+                        return out[:5000] + '\n...\n```\nFile too long, use the summarizer or ' \
+                                            '(preferably) request specific line ranges.\n'
+                    return out
             filename, line_range = args.split("[", 1)
             line_ranges = line_range.strip("]").split(",")
             line_ranges = [line_range.split(":") for line_range in line_ranges]
@@ -86,51 +99,34 @@ class ReadFile(SimpleTool):
                 for line_range in line_ranges:
                     out += "".join(
                         [
-                            f"{i + 1}. {lines[i]}"
+                            f"{i + 1}| {lines[i]}"
                             for i in range(line_range[0], line_range[1] + 1)
                         ]
                     )
-                return out
+                return '```\n' + out + '\n```'
         except Exception as e:
             return f"Error reading file: {str(e)}"
 
 
-def update_line_counts(diff_input):
-    hunks = re.split(r"(@@.*?@@)", diff_input)
-    new_diff = []
+def apply_patch(patch_str: str, file_path: str) -> str:
+    # Split the patch string into lines and remove the filename
+    patch_lines = patch_str.strip().split('\n')  # [1:]
+    with open(file_path, 'r') as file:
+        file_lines = file.readlines()
 
-    for i in range(len(hunks)):
-        if i % 2 == 0:
-            new_diff.append(hunks[i])
-        else:
-            hunk_header = hunks[i]
-            hunk_body = hunks[i + 1]
+    # Loop through the patch lines
+    for patch_line in patch_lines:
+        if '|' not in patch_line:
+            continue
+        # Parse the patch line
+        action, index, content = patch_line[0], int(patch_line[1:].split('|')[0]) - 1, patch_line.split('|', 1)[1]
 
-            # Calculate new line counts
-            old_lines = len(
-                [
-                    line
-                    for line in hunk_body.split("\n")
-                    if line.startswith("-") or line.startswith(" ")
-                ]
-            )
-            new_lines = len(
-                [
-                    line
-                    for line in hunk_body.split("\n")
-                    if line.startswith("+") or line.startswith(" ")
-                ]
-            )
-
-            # Update hunk header with new line counts
-            hunk_header_parts = re.match(r"@@ -(\d+),\d+ \+(\d+),\d+ @@", hunk_header)
-            old_start = hunk_header_parts.group(1)
-            new_start = hunk_header_parts.group(2)
-
-            new_hunk_header = f"@@ -{old_start},{old_lines} +{new_start},{new_lines} @@"
-            new_diff.append(new_hunk_header)
-
-    return "".join(new_diff)
+        # Apply the patch line to the file content
+        if action == '-' and 0 <= index < len(file_lines):
+            del file_lines[index]
+        elif action == '+' and 0 <= index <= len(file_lines) and content.strip():
+            file_lines.insert(index, content)
+    return '\n'.join(file_lines)
 
 
 @dataclass
@@ -141,11 +137,15 @@ class PatchFile(SimpleTool):
 
     name = "PatchFile"
     description = (
-        "A tool to patch files using the Linux patch command. "
-        "Provide the diff in unified format, and the tool will apply it to the specified files."
-        "The entire diff must be provided as the action input, you must not create a separate file."
-        "Don't forget about hunk headers in the format @@ -start_old,count_old +start_new,count_new @@"
-        "These numbers are important, don't mess them up"
+        "A tool to patch a file: make amends to it using diffs. "
+        "Provide the diff in unified format, and the tool will apply it to the specified file."
+        "The first line of the action input is the filename, the rest is the diff. "
+        "The diff (the lines with - will be deleted from the original file) looks like this:\n"
+        "-36|    # start poling\n"
+        "+36|    # start polling\n"
+        "-37|    updater.start_polling()    updater.idle()\n"
+        "+37|    updater.start_polling()\n"
+        "+38|    updater.idle()\n"
     )
 
     def __init__(self, wd: str = "."):
@@ -159,24 +159,26 @@ class PatchFile(SimpleTool):
         :param args: The diff to apply to the files.
         :return: The result of the patch command as a string.
         """
-        args = update_line_counts(args.strip("'''").strip("```"))
-        with open(os.path.join(self.workdir, "temp_diff.patch"), "w") as diff_file:
-            diff_file.write(args)
+        filename, patch = args.strip("'''").strip("```").strip('"').split('\n', 1)
+        patch = patch.strip().strip("'").strip('"').strip("`")
+        filename = os.path.join(self.workdir, filename.strip())
+        new_content = apply_patch(patch, filename)
+        with open(filename, 'w') as file:
+            file.write(new_content)
 
-        command = [
-            "/bin/bash",
-            "-c",
-            "git apply temp_diff.patch --ignore-whitespace --inaccurate-eof",
-        ]
-        try:
-            result = subprocess.run(
-                command, cwd=self.workdir, capture_output=True, text=True, check=True
-            )
-            return result.stdout + result.stderr
-        except subprocess.CalledProcessError as e:
-            return e.stderr
-        finally:
-            os.remove(os.path.join(self.workdir, "temp_diff.patch"))
+
+mr_prompt_template = '''You need to write a summary of the content of a file. You should provide an overview of what this file contains (classes, functions, content, etc.)
+Keep the line numbers, for instance, this is how your output should look like (output just that and nothing else) - this example is for a Python file:
+50| class Prompt - a class for a prompt that ...
+53| def format(self, **kwargs) - a method that formats the prompt
+80| class Toolkit - ....
+
+Note that if the file contains some text information/content, you should summarize it too (but include line numbers as well).
+
+Here is the content (it may include the file and previously summarized content) you should summarize:
+
+{text}
+'''
 
 
 @dataclass
@@ -190,20 +192,29 @@ class SummarizeFile(SimpleTool):
         "A tool that can be used to summarize files. The input is just the file path."
     )
     summary_agent: BaseCombineDocumentsChain
-    text_splitter: CharacterTextSplitter
+    text_splitter: RecursiveCharacterTextSplitter
 
     def __init__(self, wd: str = ".", model_name: str = "gpt-3.5-turbo"):
         self.workdir = wd
+        mr_prompt = PromptTemplate(template=mr_prompt_template, input_variables=["text"])
         self.summary_agent = load_summarize_chain(
-            OpenAI(temperature=0, model_name=model_name), chain_type="map_reduce"
+            ChatOpenAI(model_name=model_name, request_timeout=140), chain_type="map_reduce", map_prompt=mr_prompt,
+            combine_prompt=mr_prompt
         )
-        self.text_splitter = CharacterTextSplitter()
+        self.text_splitter = RecursiveCharacterTextSplitter()
 
     def func(self, args: str) -> str:
         try:
             with open(os.path.join(self.workdir, args.strip()), "r") as f:
-                texts = self.text_splitter.split_text(f.read())
+                inp = f.readlines()
+                inp = ''.join([f"{i + 1}| {line}" for i, line in enumerate(inp)])
+                texts = self.text_splitter.split_text(inp)
                 docs = [Document(page_content=t) for t in texts]
-                return self.summary_agent.run(docs)
+                result = self.summary_agent.run(docs)
+                if len(result) > 4000:
+                    texts_2 = self.text_splitter.split_text(result)
+                    docs_2 = [Document(page_content=t) for t in texts_2]
+                    result = self.summary_agent.run(docs_2)
+                return f"```\n{result}\n```"
         except Exception as e:
             return f"Error reading file: {str(e)}"

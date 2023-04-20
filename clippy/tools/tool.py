@@ -1,5 +1,5 @@
 import typing
-from langchain.tools.base import BaseTool
+from typer import prompt
 from langchain.agents import Tool
 
 
@@ -21,4 +21,5 @@ class HumanInputTool(SimpleTool):
 
     @staticmethod
     def func(args: str) -> str:
-        return input(args)
+        print()
+        return prompt(args)

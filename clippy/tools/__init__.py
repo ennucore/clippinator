@@ -15,12 +15,12 @@ from clippy.project import Project
 def get_tools(project: Project) -> list[BaseTool]:
     search = SerpAPIWrapper(params={"engine": "google"})
     tools = [
-        Tool(
-            name="Google Search",
-            func=search.run,
-            description="useful for when you need to answer simple questions and get a simple answer. "
-            "You cannot read websites or click on any links or read any articles.",
-        ),
+        # Tool(
+        #     name="Google Search",
+        #     func=search.run,
+        #     description="useful for when you need to answer simple questions and get a simple answer. "
+        #     "You cannot read websites or click on any links or read any articles.",
+        # ),
         Tool(
             name="Bash",
             func=RunBash(workdir=project.path).run,
@@ -41,12 +41,12 @@ def get_tools(project: Project) -> list[BaseTool]:
             "The question should be strictly defined, like 'what is the derivative of x^2' or "
             "'what is the capital of France'",
         ),
-        Tool(
-            name="Wait",
-            func=lambda t: time.sleep(float(t)) or "",
-            description="allows you to wait for a certain amount of time "
-            "- to wait for the result of some process you ran.",
-        ),
+        # Tool(
+        #     name="Wait",
+        #     func=lambda t: time.sleep(float(t)) or "",
+        #     description="allows you to wait for a certain amount of time "
+        #     "- to wait for the result of some process you ran.",
+        # ),
         WriteFile(project.path).get_tool(),
         ReadFile(project.path).get_tool(),
         PatchFile(project.path).get_tool(),

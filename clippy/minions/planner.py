@@ -39,6 +39,9 @@ class Plan:
                 first_milestone_tasks.append(line[2:].removeprefix("[ ]").strip())
             elif line and "." in line[:5]:
                 milestones.append(line.split(".", 1)[1].strip())
+
+        if not first_milestone_tasks:
+            first_milestone_tasks = [milestones[0]]
         return cls(milestones, first_milestone_tasks)
 
     def display_progress(self):

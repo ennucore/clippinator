@@ -29,12 +29,12 @@ class Clippy:
         print('Context:', project.state)
         return cls(project, qa, executioner, planner, plan)
 
-    def execute_task(self, task: str) -> str:
+    def execute_task(self, task: str, milestone: str = '') -> str:
         print('Executing task:', task)
-        return self.executioner.execute(task, self.project)
+        return self.executioner.execute(task, self.project, milestone)
 
     def run_iteration(self):
-        result = self.execute_task(self.plan.first_milestone_tasks[0])
+        result = self.execute_task(self.plan.first_milestone_tasks[0], self.plan.milestones[0])
         self.plan.completed_tasks.append(self.plan.first_milestone_tasks[0])
         self.plan.first_milestone_tasks = self.plan.first_milestone_tasks[1:]
         completed_tasks, completed_milestones = self.plan.completed_tasks, self.plan.completed_milestones

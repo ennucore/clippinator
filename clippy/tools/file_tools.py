@@ -156,6 +156,7 @@ class PatchFile(SimpleTool):
         "-37|    updater.start_polling()    updater.idle()\n"
         "+37|    updater.start_polling()\n"
         "+38|    updater.idle()\n"
+        "Remember to add 'AResult:' after."
     )
 
     def __init__(self, wd: str = "."):

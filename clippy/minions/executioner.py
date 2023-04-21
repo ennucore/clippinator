@@ -16,5 +16,5 @@ class Executioner:
     def __init__(self, project: Project):
         self.execution_agent = BaseMinion(execution_prompt, tools.get_tools(project))
 
-    def execute(self, task: str, project: Project) -> str:
-        return self.execution_agent.run(task=task, **project.prompt_fields())
+    def execute(self, task: str, project: Project, milestone: str = '') -> str:
+        return self.execution_agent.run(task=task, milestone=milestone, **project.prompt_fields())

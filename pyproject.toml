@@ -23,6 +23,7 @@ tiktoken = "^0.3.3"
 [tool.poetry.group.dev.dependencies]
 ipython = {version = "^8.12.0", optional = true}
 bandit = "^1.7.5"
+pylint = {version = "^2.17.2", optional = true}
 
 [build-system]
 requires = ["poetry-core"]

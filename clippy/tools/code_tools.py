@@ -3,6 +3,8 @@ from dataclasses import dataclass
 import os
 import subprocess
 
+from .utils import skip_file
+
 
 @dataclass
 class FindUsages(SimpleTool):
@@ -32,21 +34,26 @@ class Pylint(SimpleTool):
         return pylint_output
 
     def func(self, args: str) -> str:
-        target = args.strip() if args.strip() else self.workdir
-        target = os.path.join(self.workdir, target)
+        targets = args.strip().split() if args.strip() else [self.workdir]
+        if args.strip() == '.':
+            targets = [self.workdir]
+        targets = [os.path.join(self.workdir, target) for target in targets]
 
         pylint_output = []
 
-        if os.path.isfile(target) and target.endswith(".py"):
-            pylint_output = self.run_pylint_on_file(target)
-        elif os.path.isdir(target):
-            for root, _, files in os.walk(target):
-                for file in files:
-                    if file.endswith(".py"):
-                        file_path = os.path.join(root, file)
-                        pylint_output.extend(self.run_pylint_on_file(file_path))
-        else:
-            return f"Target not found: {target}"
+        for target in targets:
+            if os.path.isfile(target) and target.endswith(".py"):
+                pylint_output = self.run_pylint_on_file(target)
+            elif os.path.isdir(target):
+                for root, _, files in os.walk(target):
+                    for file in files:
+                        if skip_file(file):
+                            continue
+                        if file.endswith(".py"):
+                            file_path = os.path.join(root, file)
+                            pylint_output.extend(self.run_pylint_on_file(file_path))
+            else:
+                return f"Target not found: {target}"
 
         # Format the output for better readability
         formatted_output = "\n".join(pylint_output)
@@ -73,6 +80,8 @@ class SearchInFiles(SimpleTool):
 
         for root, _, files in os.walk(search_dir):
             for file in files:
+                if skip_file(file):
+                    continue
                 file_path = os.path.join(root, file)
 
                 try:
@@ -102,6 +111,6 @@ class SearchInFiles(SimpleTool):
         results = self.search_files(search_dir, search_query)
 
         if results:
-            return "\n".join(results)
+            return "\n".join(results)[:1500]
         else:
             return "No matches found."

@@ -1,8 +1,8 @@
 import os
 import pty
 import subprocess
-import time
 from typing import List, Union
+import time
 import fcntl
 import select
 import re
@@ -57,6 +57,46 @@ class RunBash:
         return combined_output if combined_output.strip() else "(empty)"
 
 
+class RunPython:
+    """Executes bash commands and returns the output."""
+
+    def __init__(
+            self,
+            strip_newlines: bool = False,
+            return_err_output: bool = False,
+            workdir: str = ".",
+    ):
+        """Initialize with stripping newlines."""
+        self.strip_newlines = strip_newlines
+        self.return_err_output = return_err_output
+        self.workdir = workdir
+
+    def run(self, commands: str) -> str:
+        """Run commands and return final output."""
+
+        try:
+            completed_process = subprocess.run(
+                ['python', '-c', commands],
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                cwd=self.workdir,
+                timeout=40,
+            )
+        except subprocess.TimeoutExpired as error:
+            return "Command timed out, possibly due to asking for input."
+
+        stdout_output = completed_process.stdout.decode()
+        stderr_output = completed_process.stderr.decode()
+
+        if self.strip_newlines:
+            stdout_output = stdout_output.strip()
+            stderr_output = stderr_output.strip()
+
+        combined_output = stdout_output + "\n" + stderr_output
+        return combined_output if combined_output.strip() else "(empty)"
+
+
 # Yes, the current processes are stored in a global variable
 bash_processes = []
 
@@ -91,7 +131,9 @@ class BashBackgroundSessions(SimpleTool):
             pid = int(args.split()[1])
             for process in bash_processes:
                 if process["pr"].pid == pid:
-                    process["pr"].kill()
+                    process["pr"].terminate()
+                    os.system(f"kill -9 {pid}")
+                    os.system(f"kill -9 {pid + 1}")
                     bash_processes.remove(process)
                     return f"Killed process with pid {pid}.\n"
             return f"Could not find process with pid {pid}.\n"
@@ -101,23 +143,32 @@ class BashBackgroundSessions(SimpleTool):
             pid = int(args.split()[1])
             for process in bash_processes:
                 if process["pr"].pid == pid:
-                    return '```\n' + process["pr"].stdout.read() + process["pr"].stderr.read() + '\n```\n'
+                    fd = process["pr"].stdout.fileno()
+                    fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+                    fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+                    ready_to_read, _, _ = select.select([process["pr"].stdout], [], [], 0)
+                    output = '\n'.join([part.read() for part in ready_to_read])
+                    return '```\n' + output + '\n```\n'
             return f"Could not find process with pid {pid}.\n"
         else:
             process = subprocess.Popen(
                 ["bash"],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
                 text=True,
                 cwd=self.workdir,
             )
+            fd = process.stdout.fileno()
+            fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+            fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
             process.stdin.write(args + '\n')
             process.stdin.close()
             bash_processes.append({"pr": process, "args": args})
-            time.sleep(0.5)
+            time.sleep(3)
             # Read current output
-            output = process.stdout.read() + process.stderr.read()
+            ready_to_read, _, _ = select.select([process.stdout], [], [], 0)
+            output = '\n'.join([part.read() for part in ready_to_read])
             return f"Started process with pid {process.pid}.\n```\n{output}\n```\n"
 
 

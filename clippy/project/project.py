@@ -25,6 +25,8 @@ def get_file_summary(file_path: str, ident: str = "") -> str:
         line_number = parts[2]
         definition = " ".join(parts[4:])
         out += f"{ident}|{line_number}| {definition}\n"
+    if len(out) > 400:
+        out = out[:400] + "..."
     return out
 
 
@@ -59,10 +61,12 @@ class Project:
             dir2:
                 file3.py
         """
+        from clippy.tools.utils import skip_file
+
         res = ""
         for file in os.listdir(path):
             file_path = os.path.join(path, file)
-            if file in ('.git', '.idea', '__pycache__', 'venv', 'node_modules') or '_venv' in file:
+            if skip_file(file_path):
                 continue
             if os.path.isdir(file_path):
                 res += f"{ident}{file}:\n"
@@ -70,9 +74,9 @@ class Project:
             else:
                 res += f"{ident}{file}\n"
                 res += get_file_summary(file_path, ident + "  ")
-        if len(res) > 1000:
-            print("Warning: long project summary, truncating to 1000 chars")
-            res = res[:1000] + "..."
+        if len(res) > 2000:
+            print("Warning: long project summary, truncating to 2000 chars")
+            res = res[:2000] + "..."
         return res
 
     def get_project_summary(self) -> str:

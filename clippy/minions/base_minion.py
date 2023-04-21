@@ -34,8 +34,8 @@ class CustomOutputParser(AgentOutputParser):
         action_input = match.group(2)
         if '\nThought: ' in action_input or '\nAction: ' in action_input:
             return AgentAction(tool="Python",
-                               tool_input='print("Error: Write \'Observation: \' after each '
-                                          'action. Execute the actions again.")',
+                               tool_input='print("Error: Write \'AResult: \' after each '
+                                          'action. Execute all the actions without AResult again.")',
                                log=llm_output)
         # Return the action and action input
         return AgentAction(tool=action, tool_input=action_input.strip(" ").strip('"').split('\nThought: ')[0],
@@ -49,13 +49,13 @@ class CustomPromptTemplate(StringPromptTemplate):
     tools: List[Tool]
 
     def format(self, **kwargs) -> str:
-        # Get the intermediate steps (AgentAction, Observation tuples)
+        # Get the intermediate steps (AgentAction, AResult tuples)
         # Format them in a particular way
         intermediate_steps = kwargs.pop("intermediate_steps")
         thoughts = ""
-        for action, observation in intermediate_steps:
+        for action, AResult in intermediate_steps:
             thoughts += action.log
-            thoughts += f"\nObservation: {observation}\nThought: "
+            thoughts += f"\nAResult: {AResult}\nThought: "
         # Set the agent_scratchpad variable to that value
         kwargs["agent_scratchpad"] = thoughts
         # Create a tools variable from the list of tools provided
@@ -96,7 +96,7 @@ class BaseMinion:
         agent = LLMSingleActionAgent(
             llm_chain=llm_chain,
             output_parser=output_parser,
-            stop=["Observation:"],
+            stop=["AResult:"],
             allowed_tools=tool_names
         )
 

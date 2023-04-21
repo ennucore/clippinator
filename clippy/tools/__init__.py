@@ -1,6 +1,6 @@
 from langchain.agents import Tool
 from langchain.tools import BaseTool
-from .terminal import RunBash, BashBackgroundSessions
+from .terminal import RunBash, BashBackgroundSessions, RunPython
 from .file_tools import WriteFile, ReadFile, PatchFile, SummarizeFile
 from .code_tools import SearchInFiles, Pylint
 from .tool import HumanInputTool
@@ -28,7 +28,7 @@ def get_tools(project: Project) -> list[BaseTool]:
         ),
         Tool(
             name="Python",
-            func=PythonREPL().run,
+            func=RunPython(workdir=project.path).run,
             description="allows you to run python code and get everything that's "
             "printed (e.g. print(2+2) will give you 4) in order to compute something. "
             "The input is correct python code.",

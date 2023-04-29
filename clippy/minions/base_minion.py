@@ -77,7 +77,7 @@ def extract_variable_names(prompt):
 @dataclass
 class BaseMinion:
     def __init__(self, base_prompt, avaliable_tools, model: str = 'gpt-4') -> None:
-        llm = ChatOpenAI(temperature=0 if model != 'gpt-3.5-turbo' else 0.7, model_name=model, request_timeout=220)
+        llm = ChatOpenAI(temperature=0 if model != 'gpt-3.5-turbo' else 0.7, model_name=model, request_timeout=320)
 
         variable_names = extract_variable_names(base_prompt)
 

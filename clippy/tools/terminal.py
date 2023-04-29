@@ -41,7 +41,7 @@ class RunBash:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 cwd=self.workdir,
-                timeout=40,
+                timeout=120,
             )
         except subprocess.TimeoutExpired as error:
             return "Command timed out, possibly due to asking for input."

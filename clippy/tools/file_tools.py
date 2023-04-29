@@ -96,7 +96,7 @@ class ReadFile(SimpleTool):
             line_ranges = line_range.strip("]").split(",")
             line_ranges = [line_range.split(":") for line_range in line_ranges]
             line_ranges = [
-                (int(line_range[0]) - 1, int(line_range[1])) for line_range in line_ranges
+                (int(line_range[0].strip()) - 1, int(line_range[1].strip())) for line_range in line_ranges
             ]
             with open(os.path.join(self.workdir, filename.strip()), "r") as f:
                 lines = f.readlines()

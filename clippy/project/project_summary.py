@@ -59,9 +59,11 @@ def get_file_summary(file_path: str, ident: str = "") -> str:
     kinds = tag_kinds_by_language[tags[0]['language']]
     selected_tags = []
     for kind in kinds:
-        if lengths_by_tag[kind] < 400:
+        if lengths_by_tag[kind] < 400 or len(selected_tags) == 0:
             selected_tags += [tag for tag in tags if tag['kind'] == kind]
     selected_tags = sorted(selected_tags, key=lambda tag: tag['line'])
     for tag in selected_tags:
         out += f"{tag['formatted']}\n"
+    if len(out) > 600:
+        out = out[:600] + "\n{ident}...\n"
     return out

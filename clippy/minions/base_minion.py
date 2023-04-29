@@ -1,12 +1,11 @@
 from dataclasses import dataclass
 from langchain.agents import Tool, AgentExecutor, LLMSingleActionAgent, AgentOutputParser
 from langchain.prompts import StringPromptTemplate
-from langchain import LLMChain
+from langchain import LLMChain, PromptTemplate
 from langchain.chat_models import ChatOpenAI
 from typing import List, Union
 from langchain.schema import AgentAction, AgentFinish
 import re
-
 
 long_warning = 'WARNING: You have been working for a very long time. Please, finish ASAP. ' \
                'If there are obstacles, please, return with the result and explain the situation.'
@@ -81,11 +80,28 @@ def extract_variable_names(prompt):
     return variable_names
 
 
+def get_model(model: str = 'gpt-3.5-turbo'):
+    return ChatOpenAI(temperature=0 if model != 'gpt-3.5-turbo' else 0.7, model_name=model, request_timeout=320)
+
+
+@dataclass
+class BasicLLM:
+    prompt: PromptTemplate
+    llm: LLMChain
+
+    def __init__(self, base_prompt: str, model: str = 'gpt-3.5-turbo') -> None:
+        llm = get_model(model)
+        self.llm = LLMChain(llm=llm, prompt=PromptTemplate(template=base_prompt,
+                                                           input_variables=extract_variable_names(base_prompt)))
+
+    def run(self, **kwargs):
+        return self.llm.predict(**kwargs)
+
+
 @dataclass
 class BaseMinion:
-    def __init__(self, base_prompt, avaliable_tools, model: str = 'gpt-4') -> None:
-        # llm = ChatOpenAI(temperature=0 if model != 'gpt-3.5-turbo' else 0.7, model_name=model, request_timeout=320)
-        llm = ChatOpenAI(temperature=0 if model != 'gpt-3.5-turbo' else 0.7, model_name='gpt-3.5-turbo', request_timeout=320)
+    def __init__(self, base_prompt: str, avaliable_tools, model: str = 'gpt-3.5-turbo') -> None:
+        llm = get_model(model)
 
         variable_names = extract_variable_names(base_prompt)
 
@@ -112,3 +128,29 @@ class BaseMinion:
 
     def run(self, **kwargs):
         return self.agent_executor.run(**kwargs)
+
+
+@dataclass
+class FeedbackMinion:
+    underlying_minion: BaseMinion | BasicLLM
+    eval_llm: LLMChain
+    feedback_prompt: PromptTemplate
+
+    def __init__(self, minion: BaseMinion | BasicLLM, eval_prompt: str, feedback_prompt: str,
+                 model: str = 'gpt-3.5-turbo') -> None:
+        llm = get_model(model)
+        self.eval_llm = LLMChain(llm=llm, prompt=PromptTemplate(
+            template=feedback_prompt, input_variables=extract_variable_names(eval_prompt)))
+        self.underlying_minion = minion
+        self.feedback_prompt = PromptTemplate(template=feedback_prompt,
+                                              input_variables=extract_variable_names(eval_prompt))
+
+    def run(self, **kwargs):
+        if 'feedback' in kwargs:
+            kwargs['feedback'] = self.feedback_prompt.format(**kwargs)
+        res = self.underlying_minion.run(**kwargs)
+        evaluation = self.eval_llm.predict(result=res, **kwargs)
+        if 'ACCEPT' in evaluation:
+            return res
+        kwargs['feedback'] = evaluation.split('FEEDBACK: ', 1)[-1].split('RESULT', 1)[0].strip()
+        return self.run(**kwargs)

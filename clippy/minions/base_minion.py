@@ -1,5 +1,10 @@
 from dataclasses import dataclass
-from langchain.agents import Tool, AgentExecutor, LLMSingleActionAgent, AgentOutputParser
+from langchain.agents import (
+    Tool,
+    AgentExecutor,
+    LLMSingleActionAgent,
+    AgentOutputParser,
+)
 from langchain.prompts import StringPromptTemplate
 from langchain import LLMChain, PromptTemplate
 from langchain.chat_models import ChatOpenAI
@@ -7,8 +12,10 @@ from typing import List, Union
 from langchain.schema import AgentAction, AgentFinish
 import re
 
-long_warning = 'WARNING: You have been working for a very long time. Please, finish ASAP. ' \
-               'If there are obstacles, please, return with the result and explain the situation.'
+long_warning = (
+    "WARNING: You have been working for a very long time. Please, finish ASAP. "
+    "If there are obstacles, please, return with the result and explain the situation."
+)
 
 
 class CustomOutputParser(AgentOutputParser):
@@ -24,25 +31,39 @@ class CustomOutputParser(AgentOutputParser):
         # Parse out the action and action input
         regex = r"Action\s*\d*\s*:(.*?)\nAction\s*\d*\s*Input\s*\d*\s*:[\s]*(.*)"
         match = re.search(regex, llm_output, re.DOTALL)
-        if not match and llm_output.strip().split('\n')[-1].strip().startswith("Thought:"):
-            return AgentAction(tool="Python", tool_input='', log=llm_output)
+        if not match and llm_output.strip().split("\n")[-1].strip().startswith(
+            "Thought:"
+        ):
+            return AgentAction(tool="Python", tool_input="", log=llm_output)
         if not match:
-            if 'Action:' in llm_output and 'Action Input:' not in llm_output:
-                return AgentAction(tool="Python", tool_input='print("No Action Input specified.")', log=llm_output)
-            return AgentAction(tool="Python", tool_input='print("*Continue with thoughts and actions*")',
-                               log=llm_output)
+            if "Action:" in llm_output and "Action Input:" not in llm_output:
+                return AgentAction(
+                    tool="Python",
+                    tool_input='print("No Action Input specified.")',
+                    log=llm_output,
+                )
+            return AgentAction(
+                tool="Python",
+                tool_input='print("*Continue with thoughts and actions*")',
+                log=llm_output,
+            )
         if not match:
             raise ValueError(f"Could not parse LLM output: `{llm_output}`")
-        action = match.group(1).strip().strip('`').strip('"').strip("'").strip()
+        action = match.group(1).strip().strip("`").strip('"').strip("'").strip()
         action_input = match.group(2)
-        if '\nThought: ' in action_input or '\nAction: ' in action_input:
-            return AgentAction(tool="Python",
-                               tool_input='print("Error: Write \'AResult: \' after each '
-                                          'action. Execute all the actions without AResult again.")',
-                               log=llm_output)
+        if "\nThought: " in action_input or "\nAction: " in action_input:
+            return AgentAction(
+                tool="Python",
+                tool_input="print(\"Error: Write 'AResult: ' after each "
+                'action. Execute all the actions without AResult again.")',
+                log=llm_output,
+            )
         # Return the action and action input
-        return AgentAction(tool=action, tool_input=action_input.strip(" ").strip('"').split('\nThought: ')[0],
-                           log=llm_output)
+        return AgentAction(
+            tool=action,
+            tool_input=action_input.strip(" ").strip('"').split("\nThought: ")[0],
+            log=llm_output,
+        )
 
 
 class CustomPromptTemplate(StringPromptTemplate):
@@ -62,26 +83,34 @@ class CustomPromptTemplate(StringPromptTemplate):
         # Set the agent_scratchpad variable to that value
         kwargs["agent_scratchpad"] = thoughts
         # Create a tools variable from the list of tools provided
-        kwargs["tools"] = "\n".join([f"{tool.name}: {tool.description}" for tool in self.tools])
+        kwargs["tools"] = "\n".join(
+            [f"{tool.name}: {tool.description}" for tool in self.tools]
+        )
         # Create a list of tool names for the tools provided
         kwargs["tool_names"] = ", ".join([tool.name for tool in self.tools])
         result = self.template.format(**kwargs)
         if len(result) > 6000:
-            result += '\n' + long_warning + '\n'
+            result += "\n" + long_warning + "\n"
         return result
 
 
-def extract_variable_names(prompt):
+def extract_variable_names(prompt: str, interaction_enabled: bool = False):
     variable_pattern = r"\{(\w+)\}"
     variable_names = re.findall(variable_pattern, prompt)
-    for name in ['tools', 'tool_names', 'agent_scratchpad']:
-        variable_names.remove(name)
-    variable_names.append('intermediate_steps')
+    if interaction_enabled:
+        for name in ["tools", "tool_names", "agent_scratchpad"]:
+            if name in variable_names:
+                variable_names.remove(name)
+        variable_names.append("intermediate_steps")
     return variable_names
 
 
-def get_model(model: str = 'gpt-3.5-turbo'):
-    return ChatOpenAI(temperature=0 if model != 'gpt-3.5-turbo' else 0.7, model_name=model, request_timeout=320)
+def get_model(model: str = "gpt-3.5-turbo"):
+    return ChatOpenAI(
+        temperature=0 if model != "gpt-3.5-turbo" else 0.7,
+        model_name=model,
+        request_timeout=320,
+    )
 
 
 @dataclass
@@ -89,10 +118,15 @@ class BasicLLM:
     prompt: PromptTemplate
     llm: LLMChain
 
-    def __init__(self, base_prompt: str, model: str = 'gpt-3.5-turbo') -> None:
+    def __init__(self, base_prompt: str, model: str = "gpt-3.5-turbo") -> None:
         llm = get_model(model)
-        self.llm = LLMChain(llm=llm, prompt=PromptTemplate(template=base_prompt,
-                                                           input_variables=extract_variable_names(base_prompt)))
+        self.llm = LLMChain(
+            llm=llm,
+            prompt=PromptTemplate(
+                template=base_prompt,
+                input_variables=extract_variable_names(base_prompt),
+            ),
+        )
 
     def run(self, **kwargs):
         return self.llm.predict(**kwargs)
@@ -100,7 +134,9 @@ class BasicLLM:
 
 @dataclass
 class BaseMinion:
-    def __init__(self, base_prompt: str, avaliable_tools, model: str = 'gpt-3.5-turbo') -> None:
+    def __init__(
+        self, base_prompt, avaliable_tools, model: str = "gpt-3.5-turbo"
+    ) -> None:
         llm = get_model(model)
 
         variable_names = extract_variable_names(base_prompt)
@@ -108,7 +144,9 @@ class BaseMinion:
         prompt = CustomPromptTemplate(
             template=base_prompt,
             tools=avaliable_tools,
-            input_variables=extract_variable_names(base_prompt)
+            input_variables=extract_variable_names(
+                base_prompt, interaction_enabled=True
+            ),
         )
 
         llm_chain = LLMChain(llm=llm, prompt=prompt)
@@ -121,10 +159,12 @@ class BaseMinion:
             llm_chain=llm_chain,
             output_parser=output_parser,
             stop=["AResult:"],
-            allowed_tools=tool_names
+            allowed_tools=tool_names,
         )
 
-        self.agent_executor = AgentExecutor.from_agent_and_tools(agent=agent, tools=avaliable_tools, verbose=True)
+        self.agent_executor = AgentExecutor.from_agent_and_tools(
+            agent=agent, tools=avaliable_tools, verbose=True
+        )
 
     def run(self, **kwargs):
         return self.agent_executor.run(**kwargs)
@@ -136,21 +176,35 @@ class FeedbackMinion:
     eval_llm: LLMChain
     feedback_prompt: PromptTemplate
 
-    def __init__(self, minion: BaseMinion | BasicLLM, eval_prompt: str, feedback_prompt: str,
-                 model: str = 'gpt-3.5-turbo') -> None:
+    def __init__(
+        self,
+        minion: BaseMinion | BasicLLM,
+        eval_prompt: str,
+        feedback_prompt: str,
+        model: str = "gpt-3.5-turbo",
+    ) -> None:
         llm = get_model(model)
-        self.eval_llm = LLMChain(llm=llm, prompt=PromptTemplate(
-            template=feedback_prompt, input_variables=extract_variable_names(eval_prompt)))
+        self.eval_llm = LLMChain(
+            llm=llm,
+            prompt=PromptTemplate(
+                template=feedback_prompt,
+                input_variables=extract_variable_names(eval_prompt),
+            ),
+        )
         self.underlying_minion = minion
-        self.feedback_prompt = PromptTemplate(template=feedback_prompt,
-                                              input_variables=extract_variable_names(eval_prompt))
+        self.feedback_prompt = PromptTemplate(
+            template=feedback_prompt,
+            input_variables=extract_variable_names(eval_prompt),
+        )
 
     def run(self, **kwargs):
-        if 'feedback' in kwargs:
-            kwargs['feedback'] = self.feedback_prompt.format(**kwargs)
+        if "feedback" in kwargs:
+            kwargs["feedback"] = self.feedback_prompt.format(**kwargs)
         res = self.underlying_minion.run(**kwargs)
         evaluation = self.eval_llm.predict(result=res, **kwargs)
-        if 'ACCEPT' in evaluation:
+        if "ACCEPT" in evaluation:
             return res
-        kwargs['feedback'] = evaluation.split('FEEDBACK: ', 1)[-1].split('RESULT', 1)[0].strip()
+        kwargs["feedback"] = (
+            evaluation.split("FEEDBACK: ", 1)[-1].split("RESULT", 1)[0].strip()
+        )
         return self.run(**kwargs)

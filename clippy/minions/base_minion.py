@@ -8,6 +8,10 @@ from langchain.schema import AgentAction, AgentFinish
 import re
 
 
+long_warning = 'WARNING: You have been working for a very long time. Please, finish ASAP. ' \
+               'If there are obstacles, please, return with the result and explain the situation.'
+
+
 class CustomOutputParser(AgentOutputParser):
     def parse(self, llm_output: str) -> Union[AgentAction, AgentFinish]:
         # Check if agent should finish
@@ -62,7 +66,10 @@ class CustomPromptTemplate(StringPromptTemplate):
         kwargs["tools"] = "\n".join([f"{tool.name}: {tool.description}" for tool in self.tools])
         # Create a list of tool names for the tools provided
         kwargs["tool_names"] = ", ".join([tool.name for tool in self.tools])
-        return self.template.format(**kwargs)
+        result = self.template.format(**kwargs)
+        if len(result) > 6000:
+            result += '\n' + long_warning + '\n'
+        return result
 
 
 def extract_variable_names(prompt):

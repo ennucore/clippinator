@@ -23,46 +23,57 @@ class Clippy:
         qa = QA()
         executioner = Executioner(project)
         planner = Planner(project)
-        plan, state = planner.create_initial_plan(project)
+        architecture, state, plan = planner.create_initial_plan(project)
         project.state = state
-        print('Created plan:', str(plan), sep='\n')
-        print('Context:', project.state)
+        project.architecture = architecture
+        print("Created plan:", str(plan), sep="\n")
+        print("Context:", project.state)
         return cls(project, qa, executioner, planner, plan)
 
-    def execute_task(self, task: str, milestone: str = '') -> str:
-        print('Executing task:', task)
+    def execute_task(self, task: str, milestone: str = "") -> str:
+        print("Executing task:", task)
         return self.executioner.execute(task, self.project, milestone)
 
     def run_iteration(self):
-        result = self.execute_task(self.plan.first_milestone_tasks[0], self.plan.milestones[0])
+        result = self.execute_task(
+            self.plan.first_milestone_tasks[0], self.plan.milestones[0]
+        )
         self.plan.completed_tasks.append(self.plan.first_milestone_tasks[0])
         self.plan.first_milestone_tasks = self.plan.first_milestone_tasks[1:]
-        completed_tasks, completed_milestones = self.plan.completed_tasks, self.plan.completed_milestones
+        completed_tasks, completed_milestones = (
+            self.plan.completed_tasks,
+            self.plan.completed_milestones,
+        )
         if not self.plan.first_milestone_tasks:
             self.plan.completed_milestones.append(self.plan.milestones[0])
             self.plan.milestones = self.plan.milestones[1:]
             completed_tasks = []
             # Later we can run checks here
-        self.plan, self.project.state = self.planner.update_plan(self.plan, result, self.project)
-        print('New plan:', str(self.plan), sep='\n')
-        print('Context:', self.project.state)
-        self.plan.completed_tasks, self.plan.completed_milestones = completed_tasks, completed_milestones
+        self.plan, self.project.state = self.planner.update_plan(
+            self.plan, result, self.project
+        )
+        print("New plan:", str(self.plan), sep="\n")
+        print("Context:", self.project.state)
+        self.plan.completed_tasks, self.plan.completed_milestones = (
+            completed_tasks,
+            completed_milestones,
+        )
         self.project.update()
         self.save_to_file()
 
     def run(self):
         while self.plan.milestones:
             self.run_iteration()
-        print('Done!')
+        print("Done!")
 
-    def save_to_file(self, path: str = ''):
-        path = path or f'clippy_{self.project.name}.pkl'
-        with open(path, 'wb') as f:
+    def save_to_file(self, path: str = ""):
+        path = path or f"clippy_{self.project.name}.pkl"
+        with open(path, "wb") as f:
             pickle.dump((self.plan, self.project), f)
 
     @classmethod
-    def load_from_file(cls, path: str = 'clippy.pkl'):
-        with open(path, 'rb') as f:
+    def load_from_file(cls, path: str = "clippy.pkl"):
+        with open(path, "rb") as f:
             plan, project = pickle.load(f)
         qa = QA()
         executioner = Executioner(project)

@@ -4,8 +4,9 @@ from dataclasses import dataclass, field
 
 import typing
 
-from .base_minion import BaseMinion
+from .base_minion import BaseMinion, BasicLLM
 from .prompts import update_planning, initial_planning
+from .prompts import architecture_prompt, planning_prompt
 from clippy.project import Project
 from clippy import tools
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -96,12 +97,20 @@ def split_context(result: str) -> typing.Tuple[str, str, str]:
     """
     Parse the model output and return the architecture, the context and the plan
     """
-    result = result.strip().removeprefix("ARCHITECTURE:").strip().split('CONTEXT:', 1)
-    architecture, result = ([''] + result) if len(result) == 1 else result
+    result = result.strip().removeprefix("ARCHITECTURE:").strip().split("CONTEXT:", 1)
+    architecture, result = ([""] + result) if len(result) == 1 else result
     result = result.strip().removeprefix("CONTEXT:").strip()
     context, plan = result.split("\n", 1)
     plan = plan.strip().removeprefix("PLAN:").strip()
     return architecture, context, plan
+
+
+def extract_after_keyword(string: str, keyword: str) -> str:
+    """
+    Extract the string after the keyword
+    """
+    print(string)
+    return string.split(keyword, 1)[1].strip()
 
 
 class Planner:
@@ -112,17 +121,25 @@ class Planner:
     - Updating the context when there's the report from a task
     """
 
+    initial_architecturer: BaseMinion
     initial_planner: BaseMinion
     update_planner: BaseMinion
+    update_architecturer: BaseMinion
 
     def __init__(self, project: Project):
-        self.initial_planner = BaseMinion(initial_planning, tools.get_tools(project))
-        self.update_planner = BaseMinion(update_planning, tools.get_tools(project))
+        self.initial_planner = BasicLLM(planning_prompt)
+        self.initial_architecturer = BasicLLM(architecture_prompt)
 
     def create_initial_plan(self, project: Project) -> typing.Tuple[Plan, str, str]:
-        result = self.initial_planner.run(**project.prompt_fields())
-        architecture, context, plan = split_context(result)
-        return Plan.parse(plan), context, architecture
+        architecture = extract_after_keyword(
+            self.initial_architecturer.run(**project.prompt_fields()),
+            "FINAL ARCHITECTURE:",
+        )
+        plan = extract_after_keyword(
+            self.initial_planner.run(**project.prompt_fields()), "FINAL PLAN:"
+        )
+
+        return architecture, "", Plan.parse(plan)
 
     def update_plan(
         self, plan: Plan, report: str, project: Project
@@ -130,7 +147,7 @@ class Planner:
         result = self.update_planner.run(
             **project.prompt_fields(), report=report, plan=str(plan)
         )
-        if 'FINISHED' in result:
+        if "FINISHED" in result:
             return Plan([], []), project.state, project.architecture
         architecture, context, new_plan = split_context(result)
         return Plan.parse(new_plan), context, architecture

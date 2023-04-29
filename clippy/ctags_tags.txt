@@ -1,0 +1,988 @@
+#LANGUAGE            LETTER NAME                  ENABLED REFONLY NROLES MASTER DESCRIPTION
+Abaqus               a      assembly              yes     no      0      NONE   Assembly
+Abaqus               p      part                  yes     no      0      NONE   Parts
+Abaqus               s      step                  yes     no      0      NONE   Steps
+Abc                  s      section               yes     no      0      NONE   sections
+Ada                  E      entryspec             no      no      0      NONE   task/protected data entry specifications
+Ada                  K      taskspec              yes     no      0      NONE   task specifications
+Ada                  O      protectspec           yes     no      0      NONE   protected data specifications
+Ada                  P      packspec              yes     no      0      NONE   package specifications
+Ada                  R      subprogspec           yes     no      0      NONE   subprogram specifications
+Ada                  T      typespec              no      no      0      NONE   type specifications
+Ada                  U      subspec               no      no      0      NONE   subtype specifications
+Ada                  V      varspec               no      no      0      NONE   variable specifications
+Ada                  a      autovar               no      no      0      NONE   automatic variables
+Ada                  b      label                 yes     no      0      NONE   labels
+Ada                  c      component             yes     no      0      NONE   record type components
+Ada                  e      entry                 yes     no      0      NONE   task/protected data entries
+Ada                  f      formal                yes     no      0      NONE   generic formal parameters
+Ada                  i      identifier            yes     no      0      NONE   loop/declare identifiers
+Ada                  k      task                  yes     no      0      NONE   tasks
+Ada                  l      literal               yes     no      0      NONE   enum type literals
+Ada                  n      constant              yes     no      0      NONE   constants
+Ada                  o      protected             yes     no      0      NONE   protected data
+Ada                  p      package               yes     no      1      NONE   packages
+Ada                  r      subprogram            yes     no      0      NONE   subprograms
+Ada                  t      type                  yes     no      0      NONE   types
+Ada                  u      subtype               yes     no      0      NONE   subtypes
+Ada                  v      variable              yes     no      0      NONE   variables
+Ada                  x      exception             yes     no      0      NONE   user defined exceptions
+Ada                  y      anon                  no      no      0      NONE   loops and blocks with no identifier
+AnsiblePlaybook      p      play                  yes     no      0      NONE   plays
+Ant                  P      property              yes     no      0      NONE   properties(global)
+Ant                  i      antfile               yes     yes     1      NONE   antfiles
+Ant                  p      project               yes     no      0      NONE   projects
+Ant                  t      target                yes     no      0      NONE   targets
+Asciidoc             S      subsection            yes     no      0      NONE   level 2 sections
+Asciidoc             T      l4subsection          yes     no      0      NONE   level 4 sections
+Asciidoc             a      anchor                yes     no      0      NONE   anchors
+Asciidoc             c      chapter               yes     no      0      NONE   chapters
+Asciidoc             s      section               yes     no      0      NONE   sections
+Asciidoc             t      subsubsection         yes     no      0      NONE   level 3 sections
+Asciidoc             u      l5subsection          yes     no      0      NONE   level 5 sections
+Asm                  d      define                yes     no      0      NONE   defines
+Asm                  l      label                 yes     no      0      NONE   labels
+Asm                  m      macro                 yes     no      0      NONE   macros
+Asm                  s      section               yes     yes     1      NONE   sections
+Asm                  t      type                  yes     no      0      NONE   types (structs and records)
+Asm                  z      parameter             no      no      0      NONE   parameters for a macro
+Asp                  c      class                 yes     no      0      NONE   classes
+Asp                  d      constant              yes     no      0      NONE   constants
+Asp                  f      function              yes     no      0      NONE   functions
+Asp                  s      subroutine            yes     no      0      NONE   subroutines
+Asp                  v      variable              yes     no      0      NONE   variables
+AutoIt               S      script                yes     yes     2      NONE   included scripts
+AutoIt               f      func                  yes     no      0      NONE   functions
+AutoIt               g      global                yes     no      0      NONE   global variables
+AutoIt               l      local                 yes     no      0      NONE   local variables
+AutoIt               r      region                yes     no      0      NONE   regions
+Autoconf             c      condition             yes     no      0      NONE   automake conditions
+Autoconf             d      definition            yes     no      0      NONE   definitions
+Autoconf             e      optenable             yes     no      1      NONE   options specified with --enable-...
+Autoconf             m      macro                 yes     no      0      NONE   autoconf macros
+Autoconf             p      package               yes     no      0      NONE   packages
+Autoconf             s      subst                 yes     no      0      NONE   substitution keys
+Autoconf             t      template              yes     no      0      NONE   templates
+Autoconf             w      optwith               yes     no      1      NONE   options specified with --with-...
+Automake             D      data                  yes     no      0      NONE   datum
+Automake             L      library               yes     no      0      NONE   libraries
+Automake             M      man                   yes     no      0      NONE   manuals
+Automake             P      program               yes     no      0      NONE   programs
+Automake             S      script                yes     no      0      NONE   scripts
+Automake             T      ltlibrary             yes     no      0      NONE   ltlibraries
+Automake             c      condition             yes     yes     1      NONE   conditions
+Automake             d      directory             yes     no      6      NONE   directories
+Automake             s      subdir                yes     no      0      NONE   subdirs
+Awk                  f      function              yes     no      0      NONE   functions
+BETA                 f      fragment              yes     no      0      NONE   fragment definitions
+BETA                 p      pattern               no      no      0      NONE   all patterns
+BETA                 s      slot                  yes     no      0      NONE   slots (fragment uses)
+BETA                 v      virtual               yes     no      0      NONE   patterns (virtual or rebound)
+Basic                c      constant              yes     no      0      NONE   constants
+Basic                f      function              yes     no      1      NONE   functions
+Basic                g      enum                  yes     no      0      NONE   enumerations
+Basic                l      label                 yes     no      0      NONE   labels
+Basic                n      namespace             yes     no      0      NONE   namespace
+Basic                t      type                  yes     no      0      NONE   types
+Basic                v      variable              yes     no      0      NONE   variables
+Bats                 S      script                yes     yes     1      NONE   scripts
+Bats                 t      test                  yes     no      0      NONE   test cases
+BibTeX               B      booklet               yes     no      0      NONE   booklet
+BibTeX               I      incollection          yes     no      0      NONE   incollection
+BibTeX               M      mastersthesis         yes     no      0      NONE   mastersthesis
+BibTeX               P      proceedings           yes     no      0      NONE   proceedings
+BibTeX               a      article               yes     no      0      NONE   article
+BibTeX               b      book                  yes     no      0      NONE   book
+BibTeX               c      conference            yes     no      0      NONE   conference
+BibTeX               i      inbook                yes     no      0      NONE   inbook
+BibTeX               j      inproceedings         yes     no      0      NONE   inproceedings
+BibTeX               m      manual                yes     no      0      NONE   manual
+BibTeX               n      misc                  yes     no      0      NONE   misc
+BibTeX               p      phdthesis             yes     no      0      NONE   phdthesis
+BibTeX               s      string                yes     no      0      NONE   string
+BibTeX               t      techreport            yes     no      0      NONE   techreport
+BibTeX               u      unpublished           yes     no      0      NONE   unpublished
+C                    D      macroparam            no      no      0      C      parameters inside macro definitions
+C                    L      label                 no      no      0      C      goto labels
+C                    d      macro                 yes     no      2      C      macro definitions
+C                    e      enumerator            yes     no      0      C      enumerators (values inside an enumeration)
+C                    f      function              yes     no      0      C      function definitions
+C                    g      enum                  yes     no      0      C      enumeration names
+C                    h      header                yes     yes     2      C      included header files
+C                    l      local                 no      no      0      C      local variables
+C                    m      member                yes     no      0      C      struct, and union members
+C                    p      prototype             no      no      0      C      function prototypes
+C                    s      struct                yes     no      0      C      structure names
+C                    t      typedef               yes     no      0      C      typedefs
+C                    u      union                 yes     no      0      C      union names
+C                    v      variable              yes     no      0      C      variable definitions
+C                    x      externvar             no      no      0      C      external and forward variable declarations
+C                    z      parameter             no      no      0      C      function parameters inside function or prototype definitions
+C#                   E      event                 yes     no      0      NONE   events
+C#                   c      class                 yes     no      0      NONE   classes
+C#                   d      macro                 yes     no      0      NONE   macro definitions
+C#                   e      enumerator            yes     no      0      NONE   enumerators (values inside an enumeration)
+C#                   f      field                 yes     no      0      NONE   fields
+C#                   g      enum                  yes     no      0      NONE   enumeration names
+C#                   i      interface             yes     no      0      NONE   interfaces
+C#                   l      local                 no      no      0      NONE   local variables
+C#                   m      method                yes     no      0      NONE   methods
+C#                   n      namespace             yes     no      0      NONE   namespaces
+C#                   p      property              yes     no      0      NONE   properties
+C#                   s      struct                yes     no      0      NONE   structure names
+C#                   t      typedef               yes     no      0      NONE   typedefs
+C++                  A      alias                 no      no      0      NONE   namespace aliases
+C++                  D      macroparam            no      no      0      C      parameters inside macro definitions
+C++                  L      label                 no      no      0      C      goto labels
+C++                  N      name                  no      no      0      NONE   names imported via using scope::symbol
+C++                  U      using                 no      no      0      NONE   using namespace statements
+C++                  Z      tparam                no      no      0      NONE   template parameters
+C++                  c      class                 yes     no      0      NONE   classes
+C++                  d      macro                 yes     no      2      C      macro definitions
+C++                  e      enumerator            yes     no      0      C      enumerators (values inside an enumeration)
+C++                  f      function              yes     no      0      C      function definitions
+C++                  g      enum                  yes     no      0      C      enumeration names
+C++                  h      header                yes     yes     2      C      included header files
+C++                  l      local                 no      no      0      C      local variables
+C++                  m      member                yes     no      0      C      class, struct, and union members
+C++                  n      namespace             yes     no      0      NONE   namespaces
+C++                  p      prototype             no      no      0      C      function prototypes
+C++                  s      struct                yes     no      0      C      structure names
+C++                  t      typedef               yes     no      0      C      typedefs
+C++                  u      union                 yes     no      0      C      union names
+C++                  v      variable              yes     no      0      C      variable definitions
+C++                  x      externvar             no      no      0      C      external and forward variable declarations
+C++                  z      parameter             no      no      0      C      function parameters inside function or prototype definitions
+CMake                D      option                yes     no      0      NONE   options specified with -D
+CMake                f      function              yes     no      0      NONE   functions
+CMake                m      macro                 yes     no      0      NONE   macros
+CMake                p      project               yes     no      0      NONE   projects
+CMake                t      target                yes     no      0      NONE   targets
+CMake                v      variable              yes     no      0      NONE   variable definitions
+CPreProcessor        D      parameter             no      no      0      NONE   macro parameters
+CPreProcessor        d      macro                 yes     no      2      NONE   macro definitions
+CPreProcessor        h      header                yes     yes     2      NONE   included header files
+CSS                  c      class                 yes     no      0      NONE   classes
+CSS                  i      id                    yes     no      0      NONE   identities
+CSS                  s      selector              yes     no      0      NONE   selectors
+CUDA                 D      macroparam            no      no      0      NONE   parameters inside macro definitions
+CUDA                 L      label                 no      no      0      NONE   goto labels
+CUDA                 d      macro                 yes     no      2      NONE   macro definitions
+CUDA                 e      enumerator            yes     no      0      NONE   enumerators (values inside an enumeration)
+CUDA                 f      function              yes     no      0      NONE   function definitions
+CUDA                 g      enum                  yes     no      0      NONE   enumeration names
+CUDA                 h      header                yes     yes     2      NONE   included header files
+CUDA                 l      local                 no      no      0      NONE   local variables
+CUDA                 m      member                yes     no      0      NONE   struct, and union members
+CUDA                 p      prototype             no      no      0      NONE   function prototypes
+CUDA                 s      struct                yes     no      0      NONE   structure names
+CUDA                 t      typedef               yes     no      0      NONE   typedefs
+CUDA                 u      union                 yes     no      0      NONE   union names
+CUDA                 v      variable              yes     no      0      NONE   variable definitions
+CUDA                 x      externvar             no      no      0      NONE   external and forward variable declarations
+CUDA                 z      parameter             no      no      0      NONE   function parameters inside function or prototype definitions
+Clojure              f      function              yes     no      0      NONE   functions
+Clojure              n      namespace             yes     no      0      NONE   namespaces
+Cobol                D      division              yes     no      0      NONE   divisions
+Cobol                P      program               yes     no      0      NONE   program ids
+Cobol                S      sourcefile            yes     yes     1      NONE   source code file
+Cobol                d      data                  yes     no      0      NONE   data items
+Cobol                f      fd                    yes     no      0      NONE   file descriptions (FD, SD, RD)
+Cobol                g      group                 yes     no      0      NONE   group items
+Cobol                p      paragraph             yes     no      0      NONE   paragraphs
+Cobol                s      section               yes     no      0      NONE   sections
+CobolFree            D      division              yes     no      0      NONE   divisions
+CobolFree            P      program               yes     no      0      NONE   program ids
+CobolFree            S      sourcefile            yes     yes     1      NONE   source code file
+CobolFree            d      data                  yes     no      0      NONE   data items
+CobolFree            f      fd                    yes     no      0      NONE   file descriptions (FD, SD, RD)
+CobolFree            g      group                 yes     no      0      NONE   group items
+CobolFree            p      paragraph             yes     no      0      NONE   paragraphs
+CobolFree            s      section               yes     no      0      NONE   sections
+CobolVariable        D      division              yes     no      0      NONE   divisions
+CobolVariable        P      program               yes     no      0      NONE   program ids
+CobolVariable        S      sourcefile            yes     yes     1      NONE   source code file
+CobolVariable        d      data                  yes     no      0      NONE   data items
+CobolVariable        f      fd                    yes     no      0      NONE   file descriptions (FD, SD, RD)
+CobolVariable        g      group                 yes     no      0      NONE   group items
+CobolVariable        p      paragraph             yes     no      0      NONE   paragraphs
+CobolVariable        s      section               yes     no      0      NONE   sections
+Ctags                k      kind                  yes     no      0      NONE   kind definitions
+Ctags                l      langdef               yes     no      0      NONE   language definitions
+D                    M      module                yes     no      0      NONE   modules
+D                    T      template              yes     no      0      NONE   templates
+D                    V      version               yes     no      0      NONE   version statements
+D                    X      mixin                 yes     no      0      NONE   mixins
+D                    a      alias                 yes     no      0      NONE   aliases
+D                    c      class                 yes     no      0      NONE   classes
+D                    e      enumerator            yes     no      0      NONE   enumerators (values inside an enumeration)
+D                    f      function              yes     no      0      NONE   function definitions
+D                    g      enum                  yes     no      0      NONE   enumeration names
+D                    i      interface             yes     no      0      NONE   interfaces
+D                    l      local                 no      no      0      NONE   local variables
+D                    m      member                yes     no      0      NONE   class, struct, and union members
+D                    n      namespace             yes     no      0      NONE   namespaces
+D                    p      prototype             no      no      0      NONE   function prototypes
+D                    s      struct                yes     no      0      NONE   structure names
+D                    u      union                 yes     no      0      NONE   union names
+D                    v      variable              yes     no      0      NONE   variable definitions
+D                    x      externvar             no      no      0      NONE   external variable declarations
+DBusIntrospect       a      arg                   yes     no      0      NONE   arguments
+DBusIntrospect       i      interface             yes     no      0      NONE   interfaces
+DBusIntrospect       m      method                yes     no      0      NONE   methods
+DBusIntrospect       n      node                  yes     no      0      NONE   nodes
+DBusIntrospect       p      property              yes     no      0      NONE   properties
+DBusIntrospect       s      signal                yes     no      0      NONE   signals
+DTD                  E      entity                yes     no      0      NONE   entities
+DTD                  a      attribute             yes     no      0      NONE   attributes
+DTD                  e      element               yes     no      1      NONE   elements
+DTD                  n      notation              yes     no      0      NONE   notations
+DTD                  p      parameterEntity       yes     no      3      NONE   parameter entities
+DTS                  l      label                 yes     no      0      NONE   labels
+DTS                  p      phandler              yes     no      0      NONE   phandlers
+Diff                 d      deletedFile           yes     no      0      NONE   deleted files
+Diff                 h      hunk                  yes     no      0      NONE   hunks
+Diff                 m      modifiedFile          yes     no      0      NONE   modified files
+Diff                 n      newFile               yes     no      0      NONE   newly created files
+DosBatch             l      label                 yes     no      0      NONE   labels
+DosBatch             v      variable              yes     no      0      NONE   variables
+Eiffel               c      class                 yes     no      0      NONE   classes
+Eiffel               f      feature               yes     no      0      NONE   features
+Eiffel               l      local                 no      no      0      NONE   local entities
+Elixir               a      macro                 yes     no      0      NONE   macros (defmacro ...)
+Elixir               c      callback              yes     no      0      NONE   callbacks (defcallback ...)
+Elixir               d      delegate              yes     no      0      NONE   delegates (defdelegate ...)
+Elixir               e      exception             yes     no      0      NONE   exceptions (defexception ...)
+Elixir               f      function              yes     no      0      NONE   functions (def ...)
+Elixir               g      guard                 yes     no      0      NONE   guards (defguard ...)
+Elixir               i      implementation        yes     no      0      NONE   implementations (defimpl ...)
+Elixir               m      module                yes     no      0      NONE   modules (defmodule ...)
+Elixir               o      operator              yes     no      0      NONE   operators (e.g. "defmacro a <<< b")
+Elixir               p      protocol              yes     no      0      NONE   protocols (defprotocol...)
+Elixir               r      record                yes     no      0      NONE   records (defrecord...)
+Elixir               t      test                  yes     no      0      NONE   tests (test ...)
+Elixir               y      type                  yes     no      0      NONE   types (@type ...)
+Elm                  a      alias                 yes     no      0      NONE   aliases
+Elm                  c      constructor           yes     no      1      NONE   constructors
+Elm                  f      function              yes     no      1      NONE   functions
+Elm                  m      module                yes     no      1      NONE   modules
+Elm                  n      namespace             yes     no      0      NONE   modules renamed
+Elm                  p      port                  yes     no      0      NONE   ports
+Elm                  t      type                  yes     no      1      NONE   types
+EmacsLisp            C      custom                yes     no      0      NONE   customizable variables
+EmacsLisp            D      derivedMode           yes     no      0      NONE   derived major mode
+EmacsLisp            G      group                 yes     no      0      NONE   customization groups
+EmacsLisp            H      face                  yes     no      0      NONE   customizable faces
+EmacsLisp            M      minorMode             yes     no      0      NONE   minor modes
+EmacsLisp            T      theme                 yes     no      0      NONE   custom themes
+EmacsLisp            V      varalias              yes     no      0      NONE   aliases for variables
+EmacsLisp            Y      unknown               yes     no      0      NONE   unknown type of definitions
+EmacsLisp            a      alias                 yes     no      0      NONE   aliases for functions
+EmacsLisp            c      const                 yes     no      0      NONE   constants
+EmacsLisp            e      error                 yes     no      0      NONE   errors
+EmacsLisp            f      function              yes     no      0      NONE   functions
+EmacsLisp            i      inline                yes     no      0      NONE   inline function
+EmacsLisp            m      macro                 yes     no      0      NONE   macros
+EmacsLisp            s      subst                 yes     no      0      NONE   inline function
+EmacsLisp            v      variable              yes     no      0      NONE   variables
+Erlang               d      macro                 yes     no      0      NONE   macro definitions
+Erlang               f      function              yes     no      0      NONE   functions
+Erlang               m      module                yes     no      0      NONE   modules
+Erlang               r      record                yes     no      0      NONE   record definitions
+Erlang               t      type                  yes     no      0      NONE   type definitions
+Falcon               c      class                 yes     no      0      NONE   classes
+Falcon               f      function              yes     no      0      NONE   functions
+Falcon               i      namespace             yes     no      0      NONE   imports
+Falcon               m      member                yes     no      0      NONE   class members
+Falcon               v      variable              yes     no      0      NONE   variables
+Flex                 C      constant              yes     no      0      NONE   constants
+Flex                 I      import                yes     yes     1      NONE   imports
+Flex                 P      package               yes     no      0      NONE   packages
+Flex                 c      class                 yes     no      0      NONE   classes
+Flex                 f      function              yes     no      0      NONE   functions
+Flex                 i      interface             yes     no      0      NONE   interfaces
+Flex                 l      localvar              no      no      0      NONE   local variables
+Flex                 m      method                yes     no      0      NONE   methods
+Flex                 p      property              yes     no      0      NONE   properties
+Flex                 v      variable              yes     no      0      NONE   global variables
+Flex                 x      mxtag                 yes     no      0      NONE   mxtags
+Fortran              E      enum                  yes     no      0      NONE   enumerations
+Fortran              L      local                 no      no      0      NONE   local, common block, and namelist variables
+Fortran              M      method                yes     no      0      NONE   type bound procedures
+Fortran              N      enumerator            yes     no      0      NONE   enumeration values
+Fortran              P      prototype             no      no      0      NONE   subprogram prototypes
+Fortran              S      submodule             yes     no      0      NONE   submodules
+Fortran              b      blockData             yes     no      0      NONE   block data
+Fortran              c      common                yes     no      0      NONE   common blocks
+Fortran              e      entry                 yes     no      0      NONE   entry points
+Fortran              f      function              yes     no      0      NONE   functions
+Fortran              i      interface             yes     no      0      NONE   interface contents, generic names, and operators
+Fortran              k      component             yes     no      0      NONE   type and structure components
+Fortran              l      label                 yes     no      0      NONE   labels
+Fortran              m      module                yes     no      0      NONE   modules
+Fortran              n      namelist              yes     no      0      NONE   namelists
+Fortran              p      program               yes     no      0      NONE   programs
+Fortran              s      subroutine            yes     no      0      NONE   subroutines
+Fortran              t      type                  yes     no      0      NONE   derived types and structures
+Fortran              v      variable              yes     no      0      NONE   program (global) and module variables
+FrontMatter          t      title                 yes     no      0      NONE   titles
+FunctionParameters   f      fun                   yes     no      0      NONE   functions
+FunctionParameters   m      method                yes     no      0      NONE   methods
+Fypp                 m      macro                 yes     no      0      NONE   macros
+GDScript             C      const                 yes     no      0      NONE   constants
+GDScript             c      class                 yes     no      1      NONE   classes
+GDScript             e      enumerator            yes     no      0      NONE   enumerated values
+GDScript             g      enum                  yes     no      0      NONE   enumeration names
+GDScript             l      local                 no      no      0      NONE   local variables
+GDScript             m      method                yes     no      0      NONE   methods
+GDScript             s      signal                yes     no      0      NONE   signals
+GDScript             v      variable              yes     no      0      NONE   variables
+GDScript             z      parameter             no      no      0      NONE   function parameters
+GPerf                c      class                 yes     no      0      NONE   class names
+GPerf                h      hfunc                 yes     no      0      NONE   hash function names
+GPerf                k      keyword               yes     no      0      NONE   keywords
+GPerf                l      lfunc                 yes     no      0      NONE   lookup function names
+GPerf                s      strpool               yes     no      0      NONE   string pool names
+Gdbinit              D      document              no      no      0      NONE   documents
+Gdbinit              d      definition            yes     no      0      NONE   definitions
+Gdbinit              l      localVariable         no      no      0      NONE   local variables
+Gdbinit              t      toplevelVariable      yes     no      0      NONE   toplevel variables
+GemSpec              g      gem                   yes     no      2      NONE   gems
+Glade                c      class                 yes     yes     1      NONE   classes
+Glade                h      handler               yes     yes     1      NONE   handlers
+Go                   M      anonMember            yes     no      0      NONE   struct anonymous members
+Go                   P      packageName           yes     no      0      NONE   name for specifying imported package
+Go                   R      receiver              no      no      0      NONE   receivers
+Go                   Y      unknown               yes     yes     1      NONE   unknown
+Go                   a      talias                yes     no      0      NONE   type aliases
+Go                   c      const                 yes     no      0      NONE   constants
+Go                   f      func                  yes     no      0      NONE   functions
+Go                   i      interface             yes     no      0      NONE   interfaces
+Go                   m      member                yes     no      0      NONE   struct members
+Go                   n      methodSpec            yes     no      0      NONE   interface method specification
+Go                   p      package               yes     no      1      NONE   packages
+Go                   s      struct                yes     no      0      NONE   structs
+Go                   t      type                  yes     no      0      NONE   types
+Go                   v      var                   yes     no      0      NONE   variables
+HTML                 C      stylesheet            yes     yes     1      NONE   stylesheets
+HTML                 I      id                    yes     no      0      NONE   identifiers
+HTML                 J      script                yes     yes     1      NONE   scripts
+HTML                 a      anchor                yes     no      0      NONE   named anchors
+HTML                 c      class                 yes     yes     1      NONE   classes
+HTML                 h      heading1              yes     no      0      NONE   H1 headings
+HTML                 i      heading2              yes     no      0      NONE   H2 headings
+HTML                 j      heading3              yes     no      0      NONE   H3 headings
+HTML                 t      title                 yes     no      0      NONE   titles
+Haskell              c      constructor           yes     no      0      NONE   type constructors
+Haskell              f      function              yes     no      0      NONE   functions
+Haskell              m      module                yes     no      0      NONE   modules
+Haskell              t      type                  yes     no      0      NONE   types
+Haxe                 c      class                 yes     no      0      NONE   classes
+Haxe                 e      enum                  yes     no      0      NONE   enumerations
+Haxe                 i      interface             yes     no      0      NONE   interfaces
+Haxe                 m      method                yes     no      0      NONE   methods
+Haxe                 t      typedef               yes     no      0      NONE   typedefs
+Haxe                 v      variable              yes     no      0      NONE   variables
+IPythonCell          c      cell                  yes     no      0      NONE   cells
+ITcl                 C      common                yes     no      0      NONE   common variables
+ITcl                 c      class                 yes     no      0      NONE   classes
+ITcl                 m      method                yes     no      0      NONE   methods
+ITcl                 p      procedure             yes     no      0      NONE   procedures within the  class  namespace
+ITcl                 v      variable              yes     no      0      NONE   object-specific variables
+Iniconf              k      key                   yes     no      0      NONE   keys
+Iniconf              s      section               yes     no      0      NONE   sections
+Inko                 a      attribute             yes     no      0      NONE   Attribute definition
+Inko                 c      constant              yes     no      0      NONE   Constant definition
+Inko                 m      method                yes     no      0      NONE   Method definition
+Inko                 o      class                 yes     no      0      NONE   Class definition
+Inko                 r      reopen                yes     no      0      NONE   Reopen class
+Inko                 t      trait                 yes     no      0      NONE   Trait definition
+JSON                 a      array                 yes     no      0      NONE   arrays
+JSON                 b      boolean               yes     no      0      NONE   booleans
+JSON                 n      number                yes     no      0      NONE   numbers
+JSON                 o      object                yes     no      0      NONE   objects
+JSON                 s      string                yes     no      0      NONE   strings
+JSON                 z      null                  yes     no      0      NONE   nulls
+Java                 a      annotation            yes     no      0      NONE   annotation declarations
+Java                 c      class                 yes     no      0      NONE   classes
+Java                 e      enumConstant          yes     no      0      NONE   enum constants
+Java                 f      field                 yes     no      0      NONE   fields
+Java                 g      enum                  yes     no      0      NONE   enum types
+Java                 i      interface             yes     no      0      NONE   interfaces
+Java                 l      local                 no      no      0      NONE   local variables
+Java                 m      method                yes     no      0      NONE   methods
+Java                 p      package               yes     no      1      NONE   packages
+JavaProperties       k      key                   yes     no      0      NONE   keys
+JavaScript           C      constant              yes     no      0      NONE   constants
+JavaScript           G      getter                yes     no      0      NONE   getters
+JavaScript           M      field                 yes     no      0      NONE   fields
+JavaScript           S      setter                yes     no      0      NONE   setters
+JavaScript           c      class                 yes     no      1      NONE   classes
+JavaScript           f      function              yes     no      0      NONE   functions
+JavaScript           g      generator             yes     no      0      NONE   generators
+JavaScript           m      method                yes     no      0      NONE   methods
+JavaScript           p      property              yes     no      0      NONE   properties
+JavaScript           v      variable              yes     no      1      NONE   global variables
+Julia                Y      unknown               yes     yes     2      NONE   name defined in other modules
+Julia                c      constant              yes     no      0      NONE   Constants
+Julia                f      function              yes     no      0      NONE   Functions
+Julia                g      field                 yes     no      0      NONE   Fields
+Julia                m      macro                 yes     no      0      NONE   Macros
+Julia                n      module                yes     no      3      NONE   Modules
+Julia                s      struct                yes     no      0      NONE   Structures
+Julia                t      type                  yes     no      0      NONE   Types
+Kconfig              C      choice                yes     no      0      NONE   choices
+Kconfig              M      mainMenu              yes     no      0      NONE   the main menu
+Kconfig              c      config                yes     no      0      NONE   configs
+Kconfig              k      kconfig               yes     no      1      NONE   kconfig file
+Kconfig              m      menu                  yes     no      0      NONE   menus
+Kotlin               C      constant              yes     no      0      NONE   constants
+Kotlin               T      typealias             yes     no      0      NONE   typealiases
+Kotlin               c      class                 yes     no      0      NONE   classes
+Kotlin               i      interface             yes     no      0      NONE   interfaces
+Kotlin               m      method                yes     no      0      NONE   methods
+Kotlin               o      object                yes     no      0      NONE   objects
+Kotlin               p      package               yes     no      0      NONE   packages
+Kotlin               v      variable              yes     no      0      NONE   variables
+LEX                  c      cond                  yes     no      0      NONE   start or exclusive condition
+LEX                  r      regex                 yes     no      0      NONE   named regular expression
+LdScript             S      section               yes     no      0      NONE   sections
+LdScript             i      inputSection          yes     yes     2      NONE   input sections
+LdScript             s      symbol                yes     no      1      NONE   symbols
+LdScript             v      version               yes     no      0      NONE   versions
+Lisp                 Y      unknown               yes     no      0      NONE   unknown type of definitions
+Lisp                 c      const                 yes     no      0      NONE   constants
+Lisp                 f      function              yes     no      0      NONE   functions
+Lisp                 m      macro                 yes     no      0      NONE   macros
+Lisp                 v      variable              yes     no      0      NONE   variables
+LiterateHaskell      c      constructor           yes     no      0      NONE   type constructors
+LiterateHaskell      f      function              yes     no      0      NONE   functions
+LiterateHaskell      m      module                yes     no      0      NONE   modules
+LiterateHaskell      t      type                  yes     no      0      NONE   types
+Lua                  Y      unknown               no      yes     1      NONE   unknown language object
+Lua                  f      function              yes     no      0      NONE   functions
+M4                   I      macrofile             yes     yes     2      NONE   macro files
+M4                   d      macro                 yes     no      1      NONE   macros
+Make                 I      makefile              yes     yes     2      NONE   makefiles
+Make                 m      macro                 yes     no      0      NONE   macros
+Make                 t      target                yes     no      0      NONE   targets
+Man                  S      subsection            yes     no      0      NONE   sub sections
+Man                  s      section               yes     no      0      NONE   sections
+Man                  t      title                 yes     no      0      NONE   titles
+Markdown             S      subsection            yes     no      0      NONE   level 2 sections
+Markdown             T      l4subsection          yes     no      0      NONE   level 4 sections
+Markdown             c      chapter               yes     no      0      NONE   chapters
+Markdown             n      footnote              yes     no      0      NONE   footnotes
+Markdown             s      section               yes     no      0      NONE   sections
+Markdown             t      subsubsection         yes     no      0      NONE   level 3 sections
+Markdown             u      l5subsection          yes     no      0      NONE   level 5 sections
+MatLab               c      class                 yes     no      0      NONE   class
+MatLab               f      function              yes     no      0      NONE   function
+MatLab               v      variable              yes     no      0      NONE   variable
+Maven2               a      artifactId            yes     no      2      NONE   artifact identifiers
+Maven2               g      groupId               yes     no      2      NONE   group identifiers
+Maven2               p      property              yes     no      0      NONE   properties
+Maven2               r      repositoryId          yes     no      0      NONE   repository identifiers
+Meson                B      build                 yes     no      0      NONE   build targets
+Meson                P      project               yes     no      0      NONE   projects
+Meson                S      subdir                yes     no      0      NONE   subdirs
+Meson                V      variable              yes     no      0      NONE   variables
+Meson                b      benchmark             yes     no      0      NONE   benchmark targets
+Meson                c      custom                yes     no      0      NONE   custom targets
+Meson                m      module                yes     no      1      NONE   modules
+Meson                r      run                   yes     no      0      NONE   run targets
+Meson                t      test                  yes     no      0      NONE   tests
+MesonOptions         a      array                 yes     no      0      NONE   arrays
+MesonOptions         b      boolean               yes     no      0      NONE   booleans
+MesonOptions         c      combo                 yes     no      0      NONE   combos
+MesonOptions         f      feature               yes     no      0      NONE   features
+MesonOptions         i      integer               yes     no      0      NONE   integers
+MesonOptions         s      string                yes     no      0      NONE   strings
+Moose                a      attribute             yes     no      0      NONE   attributes
+Moose                c      class                 yes     no      0      NONE   classes
+Moose                m      method                yes     no      0      NONE   methods
+Moose                r      role                  yes     no      0      NONE   roles
+Moose                w      wrapper               yes     no      0      NONE   wrappers
+Myrddin              c      constant              yes     no      0      NONE   constants
+Myrddin              f      function              yes     no      0      NONE   functions
+Myrddin              p      pkg                   yes     no      0      NONE   packages
+Myrddin              r      trait                 yes     no      0      NONE   traits
+Myrddin              t      type                  yes     no      0      NONE   types
+Myrddin              v      var                   yes     no      0      NONE   variables
+NSIS                 S      sectionGroup          yes     no      0      NONE   section groups
+NSIS                 d      definition            yes     no      0      NONE   definitions
+NSIS                 f      function              yes     no      0      NONE   functions
+NSIS                 i      script                yes     yes     1      NONE   NSIS scripts
+NSIS                 l      langstr               yes     no      0      NONE   language strings
+NSIS                 m      macro                 yes     no      0      NONE   macros
+NSIS                 p      macroparam            no      no      0      NONE   macro parameters
+NSIS                 s      section               yes     no      0      NONE   sections
+NSIS                 v      variable              yes     no      0      NONE   variables
+OCaml                C      Constructor           yes     no      0      NONE   A constructor
+OCaml                M      module                yes     no      0      NONE   Module or functor
+OCaml                c      class                 yes     no      0      NONE   classes
+OCaml                e      Exception             yes     no      0      NONE   An exception
+OCaml                f      function              yes     no      0      NONE   A function
+OCaml                m      method                yes     no      0      NONE   Object's method
+OCaml                p      val                   yes     no      0      NONE   Signature item
+OCaml                r      RecordField           yes     no      0      NONE   A 'structure' field
+OCaml                t      type                  yes     no      0      NONE   Type name
+OCaml                v      var                   yes     no      0      NONE   Global variable
+ObjectiveC           C      category              yes     no      0      NONE   categories
+ObjectiveC           E      field                 yes     no      0      NONE   Object field
+ObjectiveC           I      implementation        yes     no      0      NONE   class implementation
+ObjectiveC           M      macro                 yes     no      0      NONE   A preprocessor macro
+ObjectiveC           P      protocol              yes     no      0      NONE   Protocol
+ObjectiveC           c      class                 yes     no      0      NONE   Class' method
+ObjectiveC           e      enum                  yes     no      0      NONE   An enumeration
+ObjectiveC           f      function              yes     no      0      NONE   A function
+ObjectiveC           i      interface             yes     no      0      NONE   class interface
+ObjectiveC           m      method                yes     no      0      NONE   Object's method
+ObjectiveC           p      property              yes     no      0      NONE   A property
+ObjectiveC           s      struct                yes     no      0      NONE   A type structure
+ObjectiveC           t      typedef               yes     no      0      NONE   A type alias
+ObjectiveC           v      var                   yes     no      0      NONE   Global variable
+OldC                 D      macroparam            no      no      0      NONE   cpp macro parameters
+OldC                 L      label                 no      no      0      NONE   goto label
+OldC                 c      class                 yes     no      0      NONE   classes
+OldC                 d      macro                 yes     no      2      NONE   macro definitions
+OldC                 e      enumerator            yes     no      0      NONE   enumerators (values inside an enumeration)
+OldC                 f      function              yes     no      0      NONE   function definitions
+OldC                 g      enum                  yes     no      0      NONE   enumeration names
+OldC                 h      header                yes     yes     2      NONE   included header files
+OldC                 l      local                 no      no      0      NONE   local variables
+OldC                 m      member                yes     no      0      NONE   class, struct, and union members
+OldC                 n      namespace             yes     no      0      NONE   namespaces
+OldC                 p      prototype             no      no      0      NONE   function prototypes
+OldC                 s      struct                yes     no      0      NONE   structure names
+OldC                 t      typedef               yes     no      0      NONE   typedefs
+OldC                 u      union                 yes     no      0      NONE   union names
+OldC                 v      variable              yes     no      0      NONE   variable definitions
+OldC                 x      externvar             no      no      0      NONE   external and forward variable declarations
+OldC++               D      macroparam            no      no      0      NONE   cpp macro parameters
+OldC++               L      label                 no      no      0      NONE   goto label
+OldC++               c      class                 yes     no      0      NONE   classes
+OldC++               d      macro                 yes     no      2      NONE   macro definitions
+OldC++               e      enumerator            yes     no      0      NONE   enumerators (values inside an enumeration)
+OldC++               f      function              yes     no      0      NONE   function definitions
+OldC++               g      enum                  yes     no      0      NONE   enumeration names
+OldC++               h      header                yes     yes     2      NONE   included header files
+OldC++               l      local                 no      no      0      NONE   local variables
+OldC++               m      member                yes     no      0      NONE   class, struct, and union members
+OldC++               n      namespace             yes     no      0      NONE   namespaces
+OldC++               p      prototype             no      no      0      NONE   function prototypes
+OldC++               s      struct                yes     no      0      NONE   structure names
+OldC++               t      typedef               yes     no      0      NONE   typedefs
+OldC++               u      union                 yes     no      0      NONE   union names
+OldC++               v      variable              yes     no      0      NONE   variable definitions
+OldC++               x      externvar             no      no      0      NONE   external and forward variable declarations
+OpenAPI              P      parameter             yes     no      0      NONE   parameters
+OpenAPI              R      response              yes     no      0      NONE   responses
+OpenAPI              T      tag                   yes     no      0      NONE   tags
+OpenAPI              d      schema                yes     no      0      NONE   schemas
+OpenAPI              p      path                  yes     no      0      NONE   paths
+OpenAPI              s      server                yes     no      0      NONE   servers (or hosts in swagger)
+OpenAPI              t      title                 yes     no      0      NONE   titles
+Org                  G      subparagraph          yes     no      0      NONE   subparagraphs
+Org                  P      paragraph             yes     no      0      NONE   paragraphs
+Org                  b      subsubsection         yes     no      0      NONE   subsubsections
+Org                  c      chapter               yes     no      0      NONE   chapters
+Org                  d      definition            yes     no      0      NONE   definitions
+Org                  p      part                  yes     no      0      NONE   parts
+Org                  s      section               yes     no      0      NONE   sections
+Org                  u      subsection            yes     no      0      NONE   subsections
+PHP                  a      alias                 yes     no      0      NONE   aliases
+PHP                  c      class                 yes     no      0      NONE   classes
+PHP                  d      define                yes     no      0      NONE   constant definitions
+PHP                  f      function              yes     no      0      NONE   functions
+PHP                  i      interface             yes     no      0      NONE   interfaces
+PHP                  l      local                 no      no      0      NONE   local variables
+PHP                  n      namespace             yes     no      0      NONE   namespaces
+PHP                  t      trait                 yes     no      0      NONE   traits
+PHP                  v      variable              yes     no      0      NONE   variables
+Pascal               f      function              yes     no      0      NONE   functions
+Pascal               p      procedure             yes     no      0      NONE   procedures
+Passwd               u      username              yes     no      0      NONE   user names
+Perl                 M      module                no      yes     2      NONE   modules
+Perl                 c      constant              yes     no      0      NONE   constants
+Perl                 d      subroutineDeclaration no      no      0      NONE   subroutine declarations
+Perl                 f      format                yes     no      0      NONE   formats
+Perl                 h      heredoc               no      no      1      NONE   marker for here document
+Perl                 l      label                 yes     no      0      NONE   labels
+Perl                 p      package               yes     no      0      NONE   packages
+Perl                 s      subroutine            yes     no      0      NONE   subroutines
+Perl6                b      submethod             yes     no      0      NONE   submethods
+Perl6                c      class                 yes     no      0      NONE   classes
+Perl6                g      grammar               yes     no      0      NONE   grammars
+Perl6                m      method                yes     no      0      NONE   methods
+Perl6                o      module                yes     no      0      NONE   modules
+Perl6                p      package               yes     no      0      NONE   packages
+Perl6                r      role                  yes     no      0      NONE   roles
+Perl6                s      subroutine            yes     no      0      NONE   subroutines
+Perl6                t      token                 yes     no      0      NONE   tokens
+Perl6                u      rule                  yes     no      0      NONE   rules
+PlistXML             k      key                   yes     no      0      NONE   keys
+Pod                  S      subsection            yes     no      0      NONE   subsections
+Pod                  c      chapter               yes     no      0      NONE   chapters
+Pod                  s      section               yes     no      0      NONE   sections
+Pod                  t      subsubsection         yes     no      0      NONE   subsubsections
+PowerShell           c      class                 yes     no      0      NONE   classes
+PowerShell           f      function              yes     no      0      NONE   functions
+PowerShell           g      enum                  yes     no      0      NONE   enum names
+PowerShell           i      filter                yes     no      0      NONE   filter
+PowerShell           v      variable              yes     no      0      NONE   variables
+Protobuf             D      protodef              yes     yes     1      NONE   .proto definition
+Protobuf             G      group                 yes     no      0      NONE   groups
+Protobuf             e      enumerator            yes     no      0      NONE   enum constants
+Protobuf             f      field                 yes     no      0      NONE   fields
+Protobuf             g      enum                  yes     no      0      NONE   enum types
+Protobuf             m      message               yes     no      1      NONE   messages
+Protobuf             o      oneof                 yes     no      0      NONE   oneof names
+Protobuf             p      package               yes     no      0      NONE   packages
+Protobuf             r      rpc                   yes     no      0      NONE   RPC methods
+Protobuf             s      service               yes     no      0      NONE   services
+PuppetManifest       V      vresource             yes     no      0      NONE   virtual resources
+PuppetManifest       c      class                 yes     no      0      NONE   classes
+PuppetManifest       d      definition            yes     no      0      NONE   definitions
+PuppetManifest       n      node                  yes     no      0      NONE   nodes
+PuppetManifest       p      param                 yes     no      0      NONE   parameters
+PuppetManifest       r      resource              yes     no      0      NONE   resources
+PuppetManifest       t      type                  yes     no      0      NONE   type aliases
+PuppetManifest       v      variable              yes     no      0      NONE   variables
+Python               I      namespace             yes     no      0      NONE   name referring a module defined in other file
+Python               Y      unknown               yes     no      2      NONE   name referring a class/variable/function/module defined in other module
+Python               c      class                 yes     no      0      NONE   classes
+Python               f      function              yes     no      0      NONE   functions
+Python               i      module                yes     yes     3      NONE   modules
+Python               l      local                 no      no      0      NONE   local variables
+Python               m      member                yes     no      0      NONE   class members
+Python               v      variable              yes     no      0      NONE   variables
+Python               z      parameter             no      no      0      NONE   function parameters
+PythonLoggingConfig  L      loggerSection         yes     no      0      NONE   logger sections
+PythonLoggingConfig  q      qualname              yes     no      0      NONE   logger qualnames
+QemuHX               i      infoitem              yes     no      0      NONE   item in texinfo doc
+QemuHX               q      qmp                   yes     no      0      NONE   QEMU Management Protocol dispatch table entries
+QtMoc                S      signal                yes     no      0      NONE   signals
+QtMoc                p      property              yes     no      0      NONE   properties
+QtMoc                s      slot                  yes     no      0      NONE   slots
+R                    L      list                  yes     no      0      NONE   lists explicitly created with `list()'
+R                    c      vector                yes     no      0      NONE   vectors explicitly created with `c()'
+R                    d      dataframe             yes     no      0      NONE   data frame explicitly created with `data.frame()'
+R                    f      function              yes     no      0      NONE   functions
+R                    g      globalVar             yes     no      0      NONE   global variables having values other than function()
+R                    l      library               yes     yes     2      NONE   libraries
+R                    n      nameattr              yes     no      0      NONE   names attribtes in vectors, lists, or dataframes
+R                    s      source                yes     yes     1      NONE   sources
+R                    v      functionVar           yes     no      0      NONE   function variables having values other than function()
+R                    z      parameter             no      no      0      NONE   function parameters inside function definitions
+R6Class              a      activeBindingFunc     yes     no      0      NONE   active binding functions
+R6Class              c      class                 yes     no      0      NONE   classes
+R6Class              f      field                 yes     no      0      NONE   fields
+R6Class              m      method                yes     no      0      NONE   methods
+RDoc                 h      L1Header              yes     no      0      NONE    Level 1 headers
+RDoc                 i      L2Header              yes     no      0      NONE    Level 2 headers
+RDoc                 j      L3Header              yes     no      0      NONE    Level 3 headers
+RDoc                 k      L4Header              yes     no      0      NONE    Level 4 headers
+RDoc                 l      L5Header              yes     no      0      NONE    Level 5 headers
+RDoc                 m      L6Header              yes     no      0      NONE    Level 6 headers
+REXX                 s      subroutine            yes     no      0      NONE   subroutines
+RMarkdown            l      chunklabel            yes     no      0      NONE   chunk labels
+RSpec                c      context               yes     no      0      NONE   contexts
+RSpec                d      describe              yes     no      0      NONE   describes
+RSpec                i      it                    yes     no      0      NONE   things described with "it"
+Rake                 d      directory             yes     no      0      NONE   directory tasks
+Rake                 f      File                  yes     no      0      NONE   file tasks
+Rake                 m      multitask             yes     no      0      NONE   multi tasks
+Rake                 n      namespace             yes     no      0      NONE   namespaces
+Rake                 t      task                  yes     no      0      NONE   tasks
+Rake                 x      xtask                 yes     no      0      NONE   tasks defined with special constructor
+ReStructuredText     C      citation              yes     no      0      NONE   citations
+ReStructuredText     H      title                 yes     no      0      NONE   titles
+ReStructuredText     S      subsection            yes     no      0      NONE   subsections
+ReStructuredText     T      target                yes     no      0      NONE   targets
+ReStructuredText     c      chapter               yes     no      0      NONE   chapters
+ReStructuredText     d      substdef              yes     no      0      NONE   substitute definitions
+ReStructuredText     h      subtitle              yes     no      0      NONE   sub titles
+ReStructuredText     s      section               yes     no      0      NONE   sections
+ReStructuredText     t      subsubsection         yes     no      0      NONE   subsubsections
+RelaxNG              a      attribute             yes     no      0      NONE   attributes
+RelaxNG              e      element               yes     no      0      NONE   elements
+RelaxNG              n      namedPattern          yes     no      0      NONE   named patterns
+Robot                k      keyword               yes     no      0      NONE   keywords
+Robot                t      testcase              yes     no      0      NONE   testcases
+Robot                v      variable              yes     no      0      NONE   variables
+RpmMacros            m      macro                 yes     no      0      NONE   macros
+RpmSpec              g      global                yes     no      0      NONE   global macros
+RpmSpec              m      macro                 yes     no      1      NONE   macros
+RpmSpec              p      package               yes     no      0      NONE   packages
+RpmSpec              p      patch                 yes     yes     1      NONE   patch files
+RpmSpec              t      tag                   yes     no      0      NONE   tags
+Ruby                 A      accessor              yes     no      0      NONE   accessors
+Ruby                 C      constant              yes     no      0      NONE   constants
+Ruby                 L      library               yes     yes     3      NONE   libraries
+Ruby                 S      singletonMethod       yes     no      0      NONE   singleton methods
+Ruby                 a      alias                 yes     no      0      NONE   aliases
+Ruby                 c      class                 yes     no      0      NONE   classes
+Ruby                 f      method                yes     no      0      NONE   methods
+Ruby                 m      module                yes     no      0      NONE   modules
+Rust                 C      constant              yes     no      0      NONE   A constant
+Rust                 M      macro                 yes     no      0      NONE   Macro Definition
+Rust                 P      method                yes     no      0      NONE   A method
+Rust                 c      implementation        yes     no      0      NONE   implementation
+Rust                 e      enumerator            yes     no      0      NONE   An enum variant
+Rust                 f      function              yes     no      0      NONE   Function
+Rust                 g      enum                  yes     no      0      NONE   Enum
+Rust                 i      interface             yes     no      0      NONE   trait interface
+Rust                 m      field                 yes     no      0      NONE   A struct field
+Rust                 n      module                yes     no      0      NONE   module
+Rust                 s      struct                yes     no      0      NONE   structural type
+Rust                 t      typedef               yes     no      0      NONE   Type Alias
+Rust                 v      variable              yes     no      0      NONE   Global variable
+S4Class              c      class                 yes     no      0      NONE   classes
+S4Class              g      generic               yes     no      0      NONE   generics
+S4Class              m      method                yes     no      0      NONE   methods
+S4Class              r      repr                  yes     no      0      NONE   representations
+SCSS                 P      placeholder           yes     no      0      NONE   placeholder classes
+SCSS                 c      class                 yes     no      0      NONE   classes
+SCSS                 f      function              yes     no      0      NONE   functions
+SCSS                 i      id                    yes     no      0      NONE   identities
+SCSS                 m      mixin                 yes     no      0      NONE   mixins
+SCSS                 v      variable              yes     no      0      NONE   variables
+SCSS                 z      parameter             yes     no      0      NONE   function parameters
+SLang                f      function              yes     no      0      NONE   functions
+SLang                n      namespace             yes     no      0      NONE   namespaces
+SML                  c      functor               yes     no      0      NONE   functor definitions
+SML                  e      exception             yes     no      0      NONE   exception declarations
+SML                  f      function              yes     no      0      NONE   function definitions
+SML                  r      structure             yes     no      0      NONE   structure declarations
+SML                  s      signature             yes     no      0      NONE   signature declarations
+SML                  t      type                  yes     no      0      NONE   type definitions
+SML                  v      value                 yes     no      0      NONE   value bindings
+SQL                  C      ccflag                yes     no      0      NONE   PLSQL_CCFLAGS
+SQL                  D      domain                yes     no      0      NONE   domains
+SQL                  E      field                 yes     no      0      NONE   record fields
+SQL                  L      label                 yes     no      0      NONE   block label
+SQL                  P      package               yes     no      0      NONE   packages
+SQL                  R      service               yes     no      0      NONE   services
+SQL                  S      schema                yes     no      0      NONE   schemas
+SQL                  T      trigger               yes     no      0      NONE   triggers
+SQL                  U      publication           yes     no      0      NONE   publications
+SQL                  V      view                  yes     no      0      NONE   views
+SQL                  b      database              yes     no      0      NONE   database
+SQL                  c      cursor                yes     no      0      NONE   cursors
+SQL                  d      prototype             no      no      0      NONE   prototypes
+SQL                  e      event                 yes     no      0      NONE   events
+SQL                  f      function              yes     no      0      NONE   functions
+SQL                  i      index                 yes     no      0      NONE   indexes
+SQL                  l      local                 no      no      0      NONE   local variables
+SQL                  n      synonym               yes     no      0      NONE   synonyms
+SQL                  p      procedure             yes     no      0      NONE   procedures
+SQL                  r      record                no      no      0      NONE   records
+SQL                  s      subtype               yes     no      0      NONE   subtypes
+SQL                  t      table                 yes     no      0      NONE   tables
+SQL                  v      variable              yes     no      0      NONE   variables
+SQL                  x      mltable               yes     no      0      NONE   MobiLink Table Scripts
+SQL                  y      mlconn                yes     no      0      NONE   MobiLink Conn Scripts
+SQL                  z      mlprop                yes     no      0      NONE   MobiLink Properties
+SVG                  d      def                   yes     no      0      NONE   ids in defs tags
+Scheme               f      function              yes     no      0      NONE   functions
+Scheme               s      set                   yes     no      0      NONE   sets
+Sh                   a      alias                 yes     no      0      NONE   aliases
+Sh                   f      function              yes     no      0      NONE   functions
+Sh                   h      heredoc               yes     no      1      NONE   label for here document
+Sh                   s      script                yes     yes     1      NONE   script files
+SystemTap            f      function              yes     no      0      NONE   functions
+SystemTap            m      macro                 yes     no      0      NONE   macros
+SystemTap            p      probe                 yes     no      0      NONE   probe aliases
+SystemTap            v      variable              yes     no      0      NONE   variables
+SystemVerilog        A      assert                yes     no      0      NONE   assertions (assert, assume, cover, restrict)
+SystemVerilog        C      class                 yes     no      0      NONE   classes
+SystemVerilog        E      enum                  yes     no      0      NONE   enumerators
+SystemVerilog        H      checker               yes     no      0      NONE   checkers
+SystemVerilog        I      interface             yes     no      0      NONE   interfaces
+SystemVerilog        K      package               yes     no      0      NONE   packages
+SystemVerilog        L      clocking              yes     no      0      NONE   clocking
+SystemVerilog        M      modport               yes     no      0      NONE   modports
+SystemVerilog        N      nettype               yes     no      0      NONE   nettype declarations
+SystemVerilog        O      constraint            yes     no      0      NONE   constraints
+SystemVerilog        P      program               yes     no      0      NONE   programs
+SystemVerilog        Q      prototype             no      no      0      NONE   prototypes (extern, pure)
+SystemVerilog        R      property              yes     no      0      NONE   properties
+SystemVerilog        S      struct                yes     no      0      NONE   structs and unions
+SystemVerilog        T      typedef               yes     no      0      NONE   type declarations
+SystemVerilog        V      covergroup            yes     no      0      NONE   covergroups
+SystemVerilog        b      block                 yes     no      0      NONE   blocks (begin, fork)
+SystemVerilog        c      constant              yes     no      0      NONE   constants (define, parameter, specparam, enum values)
+SystemVerilog        e      event                 yes     no      0      NONE   events
+SystemVerilog        f      function              yes     no      0      NONE   functions
+SystemVerilog        i      instance              yes     no      0      NONE   instances of module or interface
+SystemVerilog        l      ifclass               yes     no      0      NONE   interface class
+SystemVerilog        m      module                yes     no      1      NONE   modules
+SystemVerilog        n      net                   yes     no      0      NONE   net data types
+SystemVerilog        p      port                  yes     no      0      NONE   ports
+SystemVerilog        q      sequence              yes     no      0      NONE   sequences
+SystemVerilog        r      register              yes     no      0      NONE   variable data types
+SystemVerilog        t      task                  yes     no      0      NONE   tasks
+SystemVerilog        w      member                yes     no      0      NONE   struct and union members
+SystemdUnit          u      unit                  yes     yes     6      NONE   units
+TTCN                 C      testcase              yes     no      0      NONE   testcase definition
+TTCN                 G      group                 yes     no      0      NONE   group definition
+TTCN                 M      module                yes     no      0      NONE   module definition
+TTCN                 P      modulepar             yes     no      0      NONE   module parameter definition
+TTCN                 T      timer                 yes     no      0      NONE   timer instance
+TTCN                 a      altstep               yes     no      0      NONE   altstep definition
+TTCN                 c      const                 yes     no      0      NONE   constant definition
+TTCN                 d      template              yes     no      0      NONE   template definition
+TTCN                 e      enum                  yes     no      0      NONE   enumeration value
+TTCN                 f      function              yes     no      0      NONE   function definition
+TTCN                 m      member                yes     no      0      NONE   record/set/union member
+TTCN                 p      port                  yes     no      0      NONE   port instance
+TTCN                 s      signature             yes     no      0      NONE   signature definition
+TTCN                 t      type                  yes     no      0      NONE   type definition
+TTCN                 v      var                   yes     no      0      NONE   variable instance
+Tcl                  n      namespace             yes     no      0      NONE   namespaces
+Tcl                  p      procedure             yes     no      0      NONE   procedures
+Tcl                  z      parameter             no      no      0      NONE   procedure parameters
+TclOO                c      class                 yes     no      0      NONE   classes
+TclOO                m      method                yes     no      0      NONE   methods
+TeXBeamer            f      frametitle            yes     no      0      NONE   frametitles
+TeXBeamer            g      framesubtitle         yes     no      0      NONE   framesubtitles
+Tex                  B      bibitem               yes     no      0      NONE   bibliography items
+Tex                  C      command               yes     no      0      NONE   command created with \newcommand
+Tex                  G      subparagraph          yes     no      0      NONE   subparagraphs
+Tex                  N      counter               yes     no      0      NONE   counter created with \newcounter
+Tex                  P      paragraph             yes     no      0      NONE   paragraphs
+Tex                  b      subsubsection         yes     no      0      NONE   subsubsections
+Tex                  c      chapter               yes     no      0      NONE   chapters
+Tex                  e      environment           yes     no      1      NONE   environment created with \newenvironment
+Tex                  i      xinput                yes     yes     3      NONE   external input files
+Tex                  l      label                 yes     no      0      NONE   labels
+Tex                  o      operator              yes     no      0      NONE   math operator created with \DeclareMathOperator
+Tex                  p      part                  yes     no      0      NONE   parts
+Tex                  s      section               yes     no      0      NONE   sections
+Tex                  t      theorem               yes     no      0      NONE   theorem created with \newtheorem
+Tex                  u      subsection            yes     no      0      NONE   subsections
+Thrift               C      const                 yes     no      0      NONE   constants
+Thrift               T      thriftFile            yes     yes     1      NONE   thrift files
+Thrift               Z      throwsparam           no      no      0      NONE   parameters in throws list
+Thrift               e      enumerator            yes     no      0      NONE   enumerators (values inside an enumeration)
+Thrift               f      function              yes     no      0      NONE   functions
+Thrift               g      enum                  yes     no      0      NONE   enumeration names
+Thrift               m      member                yes     no      0      NONE   members
+Thrift               n      namespace             yes     no      0      NONE   namespaces
+Thrift               s      struct                yes     no      0      NONE   structs
+Thrift               t      typedef               yes     no      0      NONE   typedefs
+Thrift               u      union                 yes     no      0      NONE   unions
+Thrift               v      service               yes     no      0      NONE   services
+Thrift               x      exception             yes     no      0      NONE   exceptions
+Thrift               z      parameter             no      no      0      NONE   parameters
+Txt2tags             s      section               yes     no      0      NONE   sections
+TypeScript           C      constant              yes     no      0      NONE   constants
+TypeScript           G      generator             yes     no      0      NONE   generators
+TypeScript           a      alias                 yes     no      0      NONE   aliases
+TypeScript           c      class                 yes     no      0      NONE   classes
+TypeScript           e      enumerator            yes     no      0      NONE   enumerators (values inside an enumeration)
+TypeScript           f      function              yes     no      0      NONE   functions
+TypeScript           g      enum                  yes     no      0      NONE   enums
+TypeScript           i      interface             yes     no      0      NONE   interfaces
+TypeScript           l      local                 no      no      0      NONE   local variables
+TypeScript           m      method                yes     no      0      NONE   methods
+TypeScript           n      namespace             yes     no      0      NONE   namespaces
+TypeScript           p      property              yes     no      0      NONE   properties
+TypeScript           v      variable              yes     no      0      NONE   variables
+TypeScript           z      parameter             no      no      0      NONE   function parameters inside function definitions
+VHDL                 A      alias                 yes     no      0      NONE   aliases
+VHDL                 C      component             no      no      0      NONE   component declarations
+VHDL                 P      package               yes     no      0      NONE   package definitions
+VHDL                 Q      process               yes     no      0      NONE   processes
+VHDL                 T      subtype               yes     no      0      NONE   subtype definitions
+VHDL                 a      architecture          yes     no      0      NONE   architectures
+VHDL                 c      constant              yes     no      0      NONE   constant declarations
+VHDL                 d      prototype             no      no      0      NONE   prototypes
+VHDL                 e      entity                yes     no      1      NONE   entity declarations
+VHDL                 f      function              yes     no      0      NONE   function prototypes and declarations
+VHDL                 g      generic               yes     no      0      NONE   generic declarations
+VHDL                 l      local                 no      no      0      NONE   local definitions
+VHDL                 p      procedure             yes     no      0      NONE   procedure prototypes and declarations
+VHDL                 q      port                  yes     no      0      NONE   port declarations
+VHDL                 r      record                yes     no      0      NONE   record names
+VHDL                 s      signal                yes     no      0      NONE   signal declarations
+VHDL                 t      type                  yes     no      0      NONE   type definitions
+VHDL                 v      variable              yes     no      0      NONE   variables
+Varlink              E      error                 yes     no      0      NONE   errors
+Varlink              I      iparam                yes     no      0      NONE   input parameters
+Varlink              O      oparam                yes     no      0      NONE   output parameters
+Varlink              d      edesc                 yes     no      0      NONE   error descriptors
+Varlink              e      enumerator            yes     no      0      NONE   enumerators (values inside an enumeration)
+Varlink              f      field                 yes     no      0      NONE   fields
+Varlink              g      enum                  yes     no      0      NONE   enumeration names
+Varlink              i      interface             yes     no      0      NONE   interfaces
+Varlink              m      method                yes     no      0      NONE   methods
+Varlink              s      struct                yes     no      0      NONE   structs
+Vera                 D      macroParameter        no      no      0      NONE   cpp macro parameters
+Vera                 P      prototype             no      no      0      NONE   function prototypes
+Vera                 T      typedef               yes     no      0      NONE   typedefs
+Vera                 c      class                 yes     no      0      NONE   classes
+Vera                 d      macro                 yes     no      2      NONE   macro definitions
+Vera                 e      enumerator            yes     no      0      NONE   enumerators (values inside an enumeration)
+Vera                 f      function              yes     no      0      NONE   function definitions
+Vera                 g      enum                  yes     no      0      NONE   enumeration names
+Vera                 h      header                yes     yes     2      NONE   included header files
+Vera                 i      interface             yes     no      0      NONE   interfaces
+Vera                 l      local                 no      no      0      NONE   local variables
+Vera                 m      member                yes     no      0      NONE   class, struct, and union members
+Vera                 p      program               yes     no      0      NONE   programs
+Vera                 s      signal                yes     no      0      NONE   signals
+Vera                 t      task                  yes     no      0      NONE   tasks
+Vera                 v      variable              yes     no      0      NONE   variable definitions
+Vera                 x      externvar             no      no      0      NONE   external variable declarations
+Verilog              b      block                 yes     no      0      NONE   blocks (begin, fork)
+Verilog              c      constant              yes     no      0      NONE   constants (define, parameter, specparam)
+Verilog              e      event                 yes     no      0      NONE   events
+Verilog              f      function              yes     no      0      NONE   functions
+Verilog              i      instance              yes     no      0      NONE   instances of module
+Verilog              m      module                yes     no      1      NONE   modules
+Verilog              n      net                   yes     no      0      NONE   net data types
+Verilog              p      port                  yes     no      0      NONE   ports
+Verilog              r      register              yes     no      0      NONE   variable data types
+Verilog              t      task                  yes     no      0      NONE   tasks
+Vim                  C      constant              yes     no      0      NONE   constant definitions
+Vim                  a      augroup               yes     no      0      NONE   autocommand groups
+Vim                  c      command               yes     no      0      NONE   user-defined commands
+Vim                  f      function              yes     no      0      NONE   function definitions
+Vim                  m      map                   yes     no      0      NONE   maps
+Vim                  n      filename              yes     no      0      NONE   vimball filename
+Vim                  v      variable              yes     no      0      NONE   variable definitions
+WindRes              a      accelerators          yes     no      0      NONE   accelerators
+WindRes              b      bitmap                yes     no      0      NONE   bitmaps
+WindRes              c      cursor                yes     no      0      NONE   cursors
+WindRes              d      dialog                yes     no      0      NONE   dialogs
+WindRes              f      font                  yes     no      0      NONE   fonts
+WindRes              i      icon                  yes     no      0      NONE   icons
+WindRes              m      menu                  yes     no      0      NONE   menus
+WindRes              v      version               yes     no      0      NONE   versions
+XML                  i      id                    yes     no      0      NONE   id attributes
+XML                  n      nsprefix              yes     no      0      NONE   namespace prefixes
+XML                  r      root                  yes     no      0      NONE   root elements
+XSLT                 m      matchedTemplate       yes     no      1      NONE   matched template
+XSLT                 n      namedTemplate         yes     no      1      NONE   named template
+XSLT                 p      parameter             yes     no      1      NONE   parameters
+XSLT                 s      stylesheet            yes     yes     2      NONE   stylesheets
+XSLT                 v      variable              yes     no      0      NONE   variables
+YACC                 l      label                 yes     no      0      NONE   labels
+YACC                 t      token                 yes     no      0      NONE   tokens
+Yaml                 a      anchor                yes     no      1      NONE   anchors
+YumRepo              r      repoid                yes     no      0      NONE   repository id
+Zephir               a      alias                 yes     no      0      NONE   aliases
+Zephir               c      class                 yes     no      0      NONE   classes
+Zephir               d      define                yes     no      0      NONE   constant definitions
+Zephir               f      function              yes     no      0      NONE   functions
+Zephir               i      interface             yes     no      0      NONE   interfaces
+Zephir               l      local                 no      no      0      NONE   local variables
+Zephir               n      namespace             yes     no      0      NONE   namespaces
+Zephir               t      trait                 yes     no      0      NONE   traits
+Zephir               v      variable              yes     no      0      NONE   variables
+Zsh                  a      alias                 yes     no      0      NONE   aliases
+Zsh                  f      function              yes     no      1      NONE   functions
+Zsh                  h      heredoc               yes     no      1      NONE   label for here document
+Zsh                  s      script                yes     yes     2      NONE   script files

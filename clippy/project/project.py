@@ -1,33 +1,8 @@
 from __future__ import annotations
 from dataclasses import dataclass
 import os
-import subprocess
 
-
-def get_file_summary(file_path: str, ident: str = "") -> str:
-    """
-    | 72| class A:
-    | 80| def create(self, a: str) -> A:
-    |100| class B:
-    """
-    cmd = ["ctags", "-x", file_path]
-    result = subprocess.run(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-    )
-    out = ""
-
-    if result.returncode != 0:
-        raise RuntimeError(f"Error executing ctags: {result.stderr}")
-
-    lines = result.stdout.splitlines()
-    for line in lines:
-        parts = line.split()
-        line_number = parts[2]
-        definition = " ".join(parts[4:])
-        out += f"{ident}|{line_number}| {definition}\n"
-    if len(out) > 400:
-        out = out[:400] + "..."
-    return out
+from clippy.project.project_summary import get_file_summary
 
 
 @dataclass
@@ -74,9 +49,9 @@ class Project:
             else:
                 res += f"{ident}{file}\n"
                 res += get_file_summary(file_path, ident + "  ")
-        if len(res) > 2000:
-            print("Warning: long project summary, truncating to 2000 chars")
-            res = res[:2000] + "..."
+        if len(res) > 4000:
+            print(f"Warning: long project summary at {path}, truncating to 4000 chars")
+            res = res[:4000] + "..."
         return res
 
     def get_project_summary(self) -> str:

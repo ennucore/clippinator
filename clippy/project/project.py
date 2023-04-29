@@ -10,6 +10,7 @@ class Project:
     path: str
     objective: str
     state: str = ""
+    architecture: str = ""
     summary_cache: str = ""
 
     @classmethod
@@ -29,9 +30,9 @@ class Project:
         path:
             dir1:
                 file1.py
-                    | 72| class A:
-                    | 80| def create(self, a: str) -> A:
-                    |100| class B:
+                    72|class A:
+                    80|def create(self, a: str) -> A:
+                    100|class B:
                 file2.py
             dir2:
                 file3.py
@@ -73,6 +74,7 @@ class Project:
         return {
             "objective": self.objective,
             "state": self.state,
+            "architecture": self.architecture,
             "project_name": self.name,
             "project_summary": self.get_project_summary(),
         }

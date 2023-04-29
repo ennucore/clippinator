@@ -92,13 +92,16 @@ class Plan:
         return res
 
 
-def split_context(result: str) -> typing.Tuple[str, str]:
+def split_context(result: str) -> typing.Tuple[str, str, str]:
     """
-    Parse the model output and return the context and the plan
+    Parse the model output and return the architecture, the context and the plan
     """
+    result = result.strip().removeprefix("ARCHITECTURE:").strip().split('CONTEXT:', 1)
+    architecture, result = ([''] + result) if len(result) == 1 else result
     result = result.strip().removeprefix("CONTEXT:").strip()
     context, plan = result.split("\n", 1)
-    return context, plan
+    plan = plan.strip().removeprefix("PLAN:").strip()
+    return architecture, context, plan
 
 
 class Planner:
@@ -116,18 +119,18 @@ class Planner:
         self.initial_planner = BaseMinion(initial_planning, tools.get_tools(project))
         self.update_planner = BaseMinion(update_planning, tools.get_tools(project))
 
-    def create_initial_plan(self, project: Project) -> typing.Tuple[Plan, str]:
+    def create_initial_plan(self, project: Project) -> typing.Tuple[Plan, str, str]:
         result = self.initial_planner.run(**project.prompt_fields())
-        context, plan = split_context(result)
-        return Plan.parse(plan), context
+        architecture, context, plan = split_context(result)
+        return Plan.parse(plan), context, architecture
 
     def update_plan(
         self, plan: Plan, report: str, project: Project
-    ) -> typing.Tuple[Plan, str]:
+    ) -> typing.Tuple[Plan, str, str]:
         result = self.update_planner.run(
             **project.prompt_fields(), report=report, plan=str(plan)
         )
         if 'FINISHED' in result:
-            return Plan([], []), project.state
-        context, new_plan = split_context(result)
-        return Plan.parse(new_plan), context
+            return Plan([], []), project.state, project.architecture
+        architecture, context, new_plan = split_context(result)
+        return Plan.parse(new_plan), context, architecture

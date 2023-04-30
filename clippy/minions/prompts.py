@@ -41,6 +41,8 @@ You are The Architect. You are a part of a team of AI developers which is workin
 Here is the current state of the project folder:
 {project_summary}
 
+{feedback}
+
 Follow the instructions below carefully and intelligently. Some parts of the message below are especially important, they will be in caps
 Write the stack, the file structure, and what should be in each file (classes, functions, what they should do). You need to specify the file content right after its name
 Example output:
@@ -97,6 +99,8 @@ Here is the architecture of the project with the following objetive: "{objective
 Here is the current state of the project folder:
 {project_summary}
 
+{feedback}
+
 Generate a plan to implement architecture step-by-step and a context with all the information to keep in mind. 
 The context should be a couple of sentences about the project and its current state. For instance, the tech stack, what's working and what isn't right now, and so on.
 It has to consist of a few of milestones and the task for each milestone. Each milestone should be something complete, which results in a working product. Some of the milestones should be about testing. The tasks should be smaller (for example, writing a file with certain functions). Each task should contain all necessary information. 
@@ -140,6 +144,8 @@ Here is the plan of the project (the plan may be updated later, but not by you):
 
 Here's the result of the last executed task - THESE ARE THE IMPORTANT CHANGES YOU SHOULD ACCOUNT FOR:
 {report}
+
+{feedback}
 
 Write the file structure, and what should be in each file (classes, functions, what they should do). You need to specify the file content right after its name
 Example output:
@@ -199,6 +205,8 @@ Here is the existing plan of the project:
 Here's the result of the last executed task - THESE ARE THE IMPORTANT CHANGES YOU SHOULD ACCOUNT FOR:
 {report}
 
+{feedback}
+
 Generate a plan to implement architecture step-by-step. 
 It has to consist of a few of milestones and the task for each milestone. Each milestone should be something complete, which results in a working product. Some of the milestones should be about testing. The tasks should be smaller (for example, writing a file with certain functions). Each task should contain all necessary information. 
 Output format:
@@ -245,6 +253,36 @@ Your output should look like this:
 Thoughts: your inner thought process about planning
 Feedback: your feedback on the plan
 Go!
+"""
+
+architecture_evaluation_prompt = """
+An AI created an architecture for the project {project_name} with this objective: "{objective}".
+Please, evaluate the architecture and provide feedback.
+If the architecture is acceptable, write "ACCEPTED". If the architecture is not acceptable, provide feedback on the architecture
+Here is the project context: {state}
+Here is the architecture of the project:
+{architecture}
+Here is the current state of the project folder:
+{project_summary}
+Here is the plan:
+{plan}
+You need to evaluate the architecture. Write "ACCEPTED" if the architecture is acceptable. If the architecture is not acceptable, provide feedback on the architecture.
+Your output should look like this:
+Thoughts: your inner thought process about architecture
+Feedback: your feedback on the architecture
+Go!
+"""
+
+feedback_prompt = """
+You've already tried to execute the task and miserably failed. Here is the result you produced:
+
+{previous_result}
+
+Here is the feedback you received:
+
+{feedback}
+
+Do better job now!
 """
 
 common_planning = (

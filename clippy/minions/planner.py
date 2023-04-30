@@ -5,9 +5,18 @@ from dataclasses import dataclass, field
 import typing
 from typing import Tuple
 
-from .base_minion import BasicLLM
-from .prompts import architecture_prompt, planning_prompt, update_planning_prompt, update_architecture_prompt
+from .base_minion import BasicLLM, FeedbackMinion
+from .prompts import (
+    architecture_prompt,
+    planning_prompt,
+    update_planning_prompt,
+    update_architecture_prompt,
+    planning_evaluation_prompt,
+    architecture_evaluation_prompt,
+    feedback_prompt,
+)
 from clippy.project import Project
+
 # from clippy import tools
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
@@ -97,14 +106,18 @@ def split_context(result: str, raise_errors: bool = True) -> typing.Tuple[str, s
     """
     Parse the model output and return the context and the plan
     """
-    if 'CONTEXT:' not in result and raise_errors:
-        raise ValueError(f"Context not found in the result. It needs to go after 'CONTEXT:'")
-    if 'FINAL PLAN:' not in result and raise_errors:
-        raise ValueError(f"Final plan not found in the result. It needs to go after 'FINAL PLAN:'")
+    if "CONTEXT:" not in result and raise_errors:
+        raise ValueError(
+            f"Context not found in the result. It needs to go after 'CONTEXT:'"
+        )
+    if "FINAL PLAN:" not in result and raise_errors:
+        raise ValueError(
+            f"Final plan not found in the result. It needs to go after 'FINAL PLAN:'"
+        )
     result = result.split("CONTEXT:", 1)[-1].strip()
     context, plan = result.split("FINAL PLAN:", 1)
     plan = plan.strip()
-    return context, plan
+    return context, Plan.parse(plan)
 
 
 def extract_after_keyword(string: str, keyword: str, raise_errors: bool = False) -> str:
@@ -125,16 +138,36 @@ class Planner:
     - Updating the context when there's the report from a task
     """
 
-    initial_architect: BasicLLM
-    initial_planner: BasicLLM
-    update_planner: BasicLLM
-    update_architect: BasicLLM
+    initial_architect: FeedbackMinion
+    initial_planner: FeedbackMinion
+    update_planner: FeedbackMinion
+    update_architect: FeedbackMinion
 
     def __init__(self, project: Project):
-        self.initial_planner = BasicLLM(planning_prompt)
-        self.initial_architect = BasicLLM(architecture_prompt)
-        self.update_planner = BasicLLM(update_planning_prompt)
-        self.update_architect = BasicLLM(update_architecture_prompt)
+        self.initial_planner = FeedbackMinion(
+            BasicLLM(planning_prompt),
+            planning_evaluation_prompt,
+            feedback_prompt,
+            lambda result: split_context(result),
+        )
+        self.initial_architect = FeedbackMinion(
+            BasicLLM(architecture_prompt),
+            architecture_evaluation_prompt,
+            feedback_prompt,
+            lambda result: extract_after_keyword(result, "FINAL ARCHITECTURE:"),
+        )
+        self.update_planner = FeedbackMinion(
+            BasicLLM(update_planning_prompt),
+            planning_evaluation_prompt,
+            feedback_prompt,
+            lambda result: split_context(result),
+        )
+        self.update_architect = FeedbackMinion(
+            BasicLLM(update_architecture_prompt),
+            architecture_evaluation_prompt,
+            feedback_prompt,
+            lambda result: extract_after_keyword(result, "FINAL ARCHITECTURE:"),
+        )
 
     def create_initial_plan(self, project: Project) -> tuple[str, str, Plan]:
         architecture = extract_after_keyword(
@@ -145,7 +178,7 @@ class Planner:
             self.initial_planner.run(**project.prompt_fields())
         )
 
-        return architecture, context, Plan.parse(plan)
+        return architecture, context, plan
 
     def update_plan(
         self, plan: Plan, report: str, project: Project
@@ -164,4 +197,4 @@ class Planner:
         )
         # if "FINISHED" in result:
         #     return Plan([], []), project.state, project.architecture
-        return Plan.parse(plan), context, project.architecture
+        return plan, context, project.architecture

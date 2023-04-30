@@ -129,6 +129,8 @@ class BasicLLM:
         )
 
     def run(self, **kwargs):
+        print("RunningMinion")
+        kwargs["feedback"] = kwargs.get("feedback", "")
         return self.llm.predict(**kwargs)
 
 
@@ -167,6 +169,8 @@ class BaseMinion:
         )
 
     def run(self, **kwargs):
+        print("RunningMinion")
+        kwargs["feedback"] = kwargs.get("feedback", "")
         return self.agent_executor.run(**kwargs)
 
 
@@ -175,37 +179,40 @@ class FeedbackMinion:
     underlying_minion: BaseMinion | BasicLLM
     eval_llm: LLMChain
     feedback_prompt: PromptTemplate
-    check_function: Callable[[str], str | None] = lambda x: None
+    check_function: Callable[[str], str | None]
 
     def __init__(
         self,
         minion: BaseMinion | BasicLLM,
         eval_prompt: str,
         feedback_prompt: str,
+        check_function: Callable[[str], str | None] = lambda x: None,
         model: str = "gpt-3.5-turbo",
     ) -> None:
         llm = get_model(model)
         self.eval_llm = LLMChain(
             llm=llm,
             prompt=PromptTemplate(
-                template=feedback_prompt,
+                template=eval_prompt,
                 input_variables=extract_variable_names(eval_prompt),
             ),
         )
         self.underlying_minion = minion
-        self.feedback_prompt = PromptTemplate(
-            template=feedback_prompt,
-            input_variables=extract_variable_names(eval_prompt),
-        )
+        self.feedback_prompt = feedback_prompt
+
+        self.check_function = check_function
 
     def run(self, **kwargs):
         if "feedback" in kwargs:
+            print("Sosat + Lezhat")
+            print(kwargs["feedback"])
             kwargs["feedback"] = self.feedback_prompt.format(**kwargs)
         res = self.underlying_minion.run(**kwargs)
         try:
-            check_result = self.check_function(res)
+            check_result = None
+            self.check_function(res)
         except ValueError as e:
-            check_result = ' '.join(e.args)
+            check_result = " ".join(e.args)
         if check_result:
             kwargs["feedback"] = check_result
             kwargs["previous_result"] = res
@@ -213,8 +220,6 @@ class FeedbackMinion:
         evaluation = self.eval_llm.predict(result=res, **kwargs)
         if "ACCEPT" in evaluation:
             return res
-        kwargs["feedback"] = (
-            evaluation.split("FEEDBACK: ", 1)[-1].split("RESULT", 1)[0].strip()
-        )
+        kwargs["feedback"] = evaluation.split("Feedback: ", 1)[-1].strip()
         kwargs["previous_result"] = res
         return self.run(**kwargs)

@@ -16,7 +16,7 @@ class Clippy:
     executioner: Executioner
     planner: Planner
     plan: Plan
-
+ 
     @classmethod
     def create(cls, path: str, objective: str) -> Clippy:
         project = Project.create(path, objective)

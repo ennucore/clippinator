@@ -8,7 +8,7 @@ from langchain.agents import (
 from langchain.prompts import StringPromptTemplate
 from langchain import LLMChain, PromptTemplate
 from langchain.chat_models import ChatOpenAI
-from typing import List, Union
+from typing import List, Union, Callable
 from langchain.schema import AgentAction, AgentFinish
 import re
 
@@ -175,6 +175,7 @@ class FeedbackMinion:
     underlying_minion: BaseMinion | BasicLLM
     eval_llm: LLMChain
     feedback_prompt: PromptTemplate
+    check_function: Callable[[str], str | None] = lambda x: None
 
     def __init__(
         self,
@@ -201,10 +202,19 @@ class FeedbackMinion:
         if "feedback" in kwargs:
             kwargs["feedback"] = self.feedback_prompt.format(**kwargs)
         res = self.underlying_minion.run(**kwargs)
+        try:
+            check_result = self.check_function(res)
+        except ValueError as e:
+            check_result = ' '.join(e.args)
+        if check_result:
+            kwargs["feedback"] = check_result
+            kwargs["previous_result"] = res
+            return self.run(**kwargs)
         evaluation = self.eval_llm.predict(result=res, **kwargs)
         if "ACCEPT" in evaluation:
             return res
         kwargs["feedback"] = (
             evaluation.split("FEEDBACK: ", 1)[-1].split("RESULT", 1)[0].strip()
         )
+        kwargs["previous_result"] = res
         return self.run(**kwargs)

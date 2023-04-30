@@ -49,7 +49,7 @@ class Clippy:
             self.plan.milestones = self.plan.milestones[1:]
             completed_tasks = []
             # Later we can run checks here
-        self.plan, self.project.state = self.planner.update_plan(
+        self.plan, self.project.state, self.project.architecture = self.planner.update_plan(
             self.plan, result, self.project
         )
         print("New plan:", str(self.plan), sep="\n")

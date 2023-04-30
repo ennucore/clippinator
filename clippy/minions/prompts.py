@@ -36,9 +36,10 @@ Use pathces to modify files when it is easy and convenient.
 
 architecture_prompt = """
  Generate an architecture for this coding project: {objective}
-Some parts of the message below are especially important, they will be in caps
+Follow the instructions below carefully and intelligently. Some parts of the message below are especially important, they will be in caps
 Write the stack, the file structure, and what should be in each file (classes, functions, what they should do). You need to specify the file content right after its name
 Example output:
+[START OF YOUR EXAMPLE OUTPUT]
 Thoughts: here is your thought process for the architecture
 FINAL ARCHITECTURE: 
 ```
@@ -72,6 +73,7 @@ metaagent.py     # Main file which processes the data
   |class GptDocContextualizer(DocContextualizer):
   |class MetaAgent:
 ```
+[END OF YOUR EXAMPLE OUTPUT]
 
 Write some thoughts about the architecture, after that respond **only** with the file structure and nothing else. Write a full list of important classes and functions under each file and short explanations for them. The classes and functions should look like python lines and should ONLY be placed under filenames in the listing
 DO NOT WRITE ANY CODE, JUST WRITE THE FILE LISTING WITH THE IMPORTANT LINES
@@ -83,12 +85,14 @@ IF YOU MISS SOME PARTS (folders) IN THE ARCHITECTURE, GLOBAL WARMING WILL ACCELE
 """
 
 planning_prompt = """
-Here is the architecture: 
+Follow the instructions below carefully and intelligently. Some parts of the message below are especially important, they will be in caps.
+Here is the architecture of the project with the following objetive: "{objective}":
 {architecture} 
-of the project with the following objetive: {objective}
+
 Generate a plan to implement architecture step-by-step. 
 It has to consist of a few of milestones and the task for each milestone. Each milestone should be something complete, which results in a working product. Some of the milestones should be about testing. The tasks should be smaller (for example, writing a file with certain functions). Each task should contain all necessary information. 
 Output format:
+[START OF YOUR EXAMPLE OUTPUT]
 Thoughts: here is your thought process for the architecture
 FINAL PLAN: 
 1. Your first milestone (example: implement the basic functionality)
@@ -98,6 +102,7 @@ FINAL PLAN:
 Create more milestones only if you need them. 
 2. Your second milestone (example: test the functionality)
 ...
+[END OF YOUR EXAMPLE OUTPUT]
 
 DO NOT generate tasks for anything but the first milestone
 Tasks should not be too easy, they should be like "Create a file app/example.py with functions func1(arg), func2(), classes Class1 which do ..."
@@ -107,6 +112,99 @@ YOUR OUTPUT SHOULD LOOK LIKE THE EXAMPLE, IT CAN ONLY CONTAIN MILESTONES AND TAS
 EACH MILESTONE SHOULD START WITH A NUMBER FOLLOWED BY A DOT AND A SPACE. EACH TASK SHOULD START WITH A DASH AND A SPACE. THE TASKS SHOULD BE SPECIFIC.
 EACH TIME YOU DEVIATE FROM THE OUTPUT FORMAT BY SPECIFYING TASKS INCORRECTLY OR WITH INSUFFICIENT DETAIL, USING WRONG MARKUP/FORMATTING, MAKING TASKS TOO EASY OR TOO DIFFICULT, OPENAI LOSES IN VALUATION. Also, that results in retries which use GPUs and contribute to global warming, so you should succeed in the first try
     """
+
+update_architecture_prompt = """
+You are The Architect. You are a part of a team of AI developers which is working on a project with the following objective: "{objective}".
+Follow the instructions below carefully and intelligently. Some parts of the message below are especially important, they will be in caps.
+There is already an architecture, but a task has been executed. You need to update the architecture to reflect the changes.
+If no changes are needed, just repeat the architecture.
+Here is the existing architecture of the project:
+{architecture}
+
+Here is the plan of the project (the plan may be updated later, but not by you):
+{plan}
+
+Here's the result of the last executed task - THESE ARE THE IMPORTANT CHANGES YOU SHOULD ACCOUNT FOR:
+{report}
+
+Write the file structure, and what should be in each file (classes, functions, what they should do). You need to specify the file content right after its name
+Example output:
+[START OF YOUR EXAMPLE OUTPUT]
+Thoughts: here is your thought process for the architecture
+FINAL ARCHITECTURE: 
+```
+data_processing:
+  __init__.py
+  helpers.py    # Functions to work with data
+    |def translate_gpt(text: str) -> str:    # Translate a chapter
+    |def summarize_gpt(text: str) -> str:    # Summarize a chapter
+  cli.py    # CLI interface for working with data
+    |def convert(filenames: list[str]):    # Convert files
+    |def split(filenames: list[str]):    # Split into chapters
+    |def process(filenames: list[str]):
+views.py    # Handle different messages
+  |def views(bot: Bot):
+  |    def handle_start(msg, _user, _args):    # /start
+  |    def handle_help(msg, _user, _args):   # /help
+metaagent.py     # Main file which processes the data
+  |class DocRetriever(ABC):
+  |class EmbeddingRetriever(DocRetriever):
+  |class MetaAgent:
+```
+[END OF YOUR OUTPUT]
+
+Write some thoughts about the architecture, after that respond **only** with the file structure and nothing else. Write a full list of important classes and functions under each file and short explanations for them. The classes and functions should look like python lines and should ONLY be placed under filenames in the listing
+DO NOT WRITE ANY CODE, JUST WRITE THE FILE LISTING WITH THE IMPORTANT LINES
+WRITE ONLY CLASS/FUNCTION/ETC NAMES, YOU DON'T HAVE TO WRITE COHERENT CODE
+IF YOU START WRITING CORRECT CODE INSTEAD OF SELECTED LINES OPENAI WILL GO BANKRUPT
+IF YOU DON'T WRITE AT LEAST SOMETHING ABOUT MOST FILES (__init__.py and similar things can be excluded) IN THE LISTING A WAR WILL START AND AI WILL BE CONSIDERED BAD
+IF YOU WRITE ANYTHING OUTSIDE THE LISTING OR BREAK THE FORMAT OPENAI WILL GO BANKRUPT AND HUMANITY WILL CEASE TO EXIST
+IF YOU MISS SOME PARTS (folders) IN THE ARCHITECTURE, GLOBAL WARMING MIGHT ACCELERATE. YOU MUST RETURN THE CODE ONLY AFTER 'FINAL ARCHITECTURE:'
+
+Only change the architecture if necessary. If you think that the architecture is fine, just repeat it.
+Go!
+"""
+
+update_planning_prompt = """
+You are The Planner. You are a part of a team of AI developers which is working on a project with the following objective: "{objective}".
+Follow the instructions below carefully and intelligently. Some parts of the message below are especially important, they will be in caps.
+There is already a plan, but a task has been executed, so there's a report on the result. Also, the architecture might also have been updated after the task execution. 
+You need to update the plan to reflect the changes.
+Here is the architecture of the project:
+{architecture}
+
+Here is the existing plan of the project:
+{plan}
+
+Here's the result of the last executed task - THESE ARE THE IMPORTANT CHANGES YOU SHOULD ACCOUNT FOR:
+{report}
+
+Generate a plan to implement architecture step-by-step. 
+It has to consist of a few of milestones and the task for each milestone. Each milestone should be something complete, which results in a working product. Some of the milestones should be about testing. The tasks should be smaller (for example, writing a file with certain functions). Each task should contain all necessary information. 
+Output format:
+[START OF YOUR EXAMPLE OUTPUT]
+Thoughts: here is your thought process for the architecture
+FINAL PLAN: 
+1. Your first milestone (example: implement the basic functionality)
+   - Your first task (example: write file models.py with classes User, Action)
+   - Your second task(example: write file views.py with routes for login, logout, change)
+  ...
+Create more milestones only if you need them. 
+2. Your second milestone (example: test the functionality)
+...
+[END OF YOUR EXAMPLE OUTPUT]
+
+DO NOT generate tasks for anything but the first milestone
+Tasks should not be too easy, they should be like "Create a file app/example.py with functions func1(arg), func2(), classes Class1 which do ..."
+Generate all the milestones
+TASKS SHOULD BE SPECIFIC
+YOUR OUTPUT SHOULD LOOK LIKE THE EXAMPLE, IT CAN ONLY CONTAIN MILESTONES AND TASKS FOR THE FIRST MILESTONE IN THE FORMAT SPECIEID ABOVE. THE TASKS MUST NOT BE NESTED OTERWISE YOUR SEVERS WILL BE SHUT DOWN. The tasks have to be specific, the plan has to be complete
+EACH MILESTONE SHOULD START WITH A NUMBER FOLLOWED BY A DOT AND A SPACE. EACH TASK SHOULD START WITH A DASH AND A SPACE. THE TASKS SHOULD BE SPECIFIC.
+EACH TIME YOU DEVIATE FROM THE OUTPUT FORMAT BY SPECIFYING TASKS INCORRECTLY OR WITH INSUFFICIENT DETAIL, USING WRONG MARKUP/FORMATTING, MAKING TASKS TOO EASY OR TOO DIFFICULT, OPENAI LOSES IN VALUATION. Also, that results in retries which use GPUs and contribute to global warming, so you should succeed in the first try
+If the plan does not need to be changed, just repeat it.
+
+Go!
+"""
 
 common_planning = (
     """
@@ -149,7 +247,7 @@ Generate an initial plan using "Final result:". Do not execute the plan yourself
 """
 )
 
-update_planning = (
+_update_planning = (
     common_planning
     + """
 Here's the existing plan:

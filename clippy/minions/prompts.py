@@ -1,14 +1,28 @@
 common_part = """
+Follow the instructions below carefully and intelligently.
 You are a part of a team of AI agents working on the IT project {project_name} (you're in the desired project directory now) towards this objective: **{objective}**.
 Here's the current state of project: 
 {project_summary}
 Here's some information for you: {state}
-Here's the planned project archictecture: {architecture}
+Here's the planned project architecture: 
+{architecture}
+
+Note that the architecture may be significantly different from the current project state.
 
 You have access to the following tools:
 {tools}
 When possible, use your own knowledge.
-Avoid reading and writing entire files, strive to specify ranges in reading and use patch instead of writing.
+Avoid reading big files, strive to specify ranges in reading and use patch instead of writing unless you are writing to a file from scratch.
+If you are writing to a new file, you have to use WriteFile (and write the desired code in the action input, as requested; base your code on the architecture).
+A reminder on how to use patches:
+Action Input: filename
+-12|def hello():
++12|def hello(name):
+-36|    # start poling
++36|    # start polling
+-37|    updater.start_polling()    updater.idle()
++37|    updater.start_polling()
++38|    updater.idle()
 
 You will use the following format to accomplish your tasks: 
 Thought: the thought you have about what to do next.
@@ -29,7 +43,13 @@ You are the Executor. Your goal is to execute the task in a project."""
     + common_part
     + """
 You need to execute only one task: **{task}**. It is part of the milestone **{milestone}**.
-Use pathces to modify files when it is easy and convenient.
+Use patches to modify files (pay attention to the format) when it is easy and convenient unless you are writing to an empty file.
+If you fail to execute the task or face significant obstacles, write about it in your Final Result.
+If there is a small error in an action, don't give up.
+Try to very briefly check that everything is successful in the end.
+
+Begin!
+
 {agent_scratchpad}
 """
 )
@@ -53,32 +73,32 @@ FINAL ARCHITECTURE:
 data_processing:
   __init__.py
   helpers.py    # Functions to work with data
-    |def translate_gpt(text: str) -> str:    # Translate a chapter
-    |def summarize_gpt(text: str) -> str:    # Summarize a chapter
+    >def translate_gpt(text: str) -> str:    # Translate a chapter
+    >def summarize_gpt(text: str) -> str:    # Summarize a chapter
   cli.py    # CLI interface for working with data
-    |app = typer.Typer()    # create the app
-    |def convert(filenames: list[str]):    # Convert files
-    |def split(filenames: list[str]):    # Split into chapters
-    |def process(filenames: list[str]):
+    >app = typer.Typer()    # create the app
+    >def convert(filenames: list[str]):    # Convert files
+    >def split(filenames: list[str]):    # Split into chapters
+    >def process(filenames: list[str]):
   convert:    # Functions for conversion of files
     __init__.py
     convert_pdf.py
     convert_doc.py
 views.py    # Handle different messages
-  |def views(bot: Bot):
-  |    def handle_start(msg, _user, _args):    # /start
-  |    def handle_help(msg, _user, _args):   # /help
-  |    def cancel_creation(msg, _user, _args):
-  |    def new_conversation(msg, user, _args):
-  |    def handle_rest(msg, user):
+  >def views(bot: Bot):
+  >    def handle_start(msg, _user, _args):    # /start
+  >    def handle_help(msg, _user, _args):   # /help
+  >    def cancel_creation(msg, _user, _args):
+  >    def new_conversation(msg, user, _args):
+  >    def handle_rest(msg, user):
 metaagent.py     # Main file which processes the data
-  |class DocRetriever(ABC):
-  |class EmbeddingRetriever(DocRetriever):
-  |class ChoiceRetriever(DocRetriever):
-  |class DocContextualizer(ABC):
-  |class NonContextualizer(DocContextualizer):
-  |class GptDocContextualizer(DocContextualizer):
-  |class MetaAgent:
+  >class DocRetriever(ABC):
+  >class EmbeddingRetriever(DocRetriever):
+  >class ChoiceRetriever(DocRetriever):
+  >class DocContextualizer(ABC):
+  >class NonContextualizer(DocContextualizer):
+  >class GptDocContextualizer(DocContextualizer):
+  >class MetaAgent:
 ```
 [END OF YOUR EXAMPLE OUTPUT]
 
@@ -103,7 +123,7 @@ Here is the current state of the project folder:
 
 Generate a plan to implement architecture step-by-step and a context with all the information to keep in mind. 
 The context should be a couple of sentences about the project and its current state. For instance, the tech stack, what's working and what isn't right now, and so on.
-It has to consist of a few of milestones and the task for each milestone. Each milestone should be something complete, which results in a working product. Some of the milestones should be about testing. The tasks should be smaller (for example, writing a file with certain functions). Each task should contain all necessary information. 
+It has to consist of a few of milestones and the task for each milestone. Each milestone should be something complete, which results in a working product. The tasks should be smaller (for example, writing a file with certain functions). Each task should contain all necessary information. 
 Output format:
 [START OF YOUR EXAMPLE OUTPUT]
 Thoughts: here is your thought process for the architecture
@@ -156,20 +176,20 @@ FINAL ARCHITECTURE:
 data_processing:
   __init__.py
   helpers.py    # Functions to work with data
-    |def translate_gpt(text: str) -> str:    # Translate a chapter
-    |def summarize_gpt(text: str) -> str:    # Summarize a chapter
+    >def translate_gpt(text: str) -> str:    # Translate a chapter
+    >def summarize_gpt(text: str) -> str:    # Summarize a chapter
   cli.py    # CLI interface for working with data
-    |def convert(filenames: list[str]):    # Convert files
-    |def split(filenames: list[str]):    # Split into chapters
-    |def process(filenames: list[str]):
+    >def convert(filenames: list[str]):    # Convert files
+    >def split(filenames: list[str]):    # Split into chapters
+    >def process(filenames: list[str]):
 views.py    # Handle different messages
-  |def views(bot: Bot):
-  |    def handle_start(msg, _user, _args):    # /start
-  |    def handle_help(msg, _user, _args):   # /help
+  >def views(bot: Bot):
+  >    def handle_start(msg, _user, _args):    # /start
+  >    def handle_help(msg, _user, _args):   # /help
 metaagent.py     # Main file which processes the data
-  |class DocRetriever(ABC):
-  |class EmbeddingRetriever(DocRetriever):
-  |class MetaAgent:
+  >class DocRetriever(ABC):
+  >class EmbeddingRetriever(DocRetriever):
+  >class MetaAgent:
 ```
 [END OF YOUR OUTPUT]
 
@@ -198,6 +218,8 @@ Here is the state of the project folder:
 
 Here is the architecture of the project:
 {architecture}
+
+Note that the architecture may be significantly different from the current project state.
 
 Here is the existing plan of the project:
 {plan}
@@ -243,12 +265,17 @@ If the plan is acceptable, write "ACCEPTED". If the plan is not acceptable, prov
 Here is the project context: {state}
 Here is the architecture of the project:
 {architecture}
+
 Here is the current state of the project folder:
 {project_summary}
-Here is the plan:
-{plan}
+Here is the plan which you need to evaluate:
+{result}
 
 You need to evaluate the plan. Write "ACCEPTED" if the plan is acceptable. If the plan is not acceptable, provide feedback on the plan.
+Here are some possible errors:
+- The plan is too big
+- The plan is overcomplicated for the objective
+
 Your output should look like this:
 Thoughts: your inner thought process about planning
 Feedback: your feedback on the plan
@@ -260,13 +287,15 @@ An AI created an architecture for the project {project_name} with this objective
 Please, evaluate the architecture and provide feedback.
 If the architecture is acceptable, write "ACCEPTED". If the architecture is not acceptable, provide feedback on the architecture
 Here is the project context: {state}
-Here is the architecture of the project:
-{architecture}
 Here is the current state of the project folder:
 {project_summary}
-Here is the plan:
+Here is the plan, if available:
 {plan}
+Here is the architecture of the project which you need to evaluate:
+{result}
+
 You need to evaluate the architecture. Write "ACCEPTED" if the architecture is acceptable. If the architecture is not acceptable, provide feedback on the architecture.
+If the architecture makes sense, don't try to find little mistakes, just accept it. Only report major issues.
 Your output should look like this:
 Thoughts: your inner thought process about architecture
 Feedback: your feedback on the architecture
@@ -275,14 +304,13 @@ Go!
 
 feedback_prompt = """
 You've already tried to execute the task and miserably failed. Here is the result you produced:
-
 {previous_result}
 
 Here is the feedback you received:
-
 {feedback}
 
 Do better job now!
+PAY ATTENTION TO THE FEEDBACK
 """
 
 common_planning = (

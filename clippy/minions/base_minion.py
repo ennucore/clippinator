@@ -8,7 +8,7 @@ from langchain.agents import (
 from langchain.prompts import StringPromptTemplate
 from langchain import LLMChain, PromptTemplate
 from langchain.chat_models import ChatOpenAI
-from typing import List, Union, Callable
+from typing import List, Union, Callable, Any
 from langchain.schema import AgentAction, AgentFinish
 import re
 
@@ -61,7 +61,7 @@ class CustomOutputParser(AgentOutputParser):
         # Return the action and action input
         return AgentAction(
             tool=action,
-            tool_input=action_input.strip(" ").strip('"').split("\nThought: ")[0],
+            tool_input=action_input.strip(" ").split("\nThought: ")[0],
             log=llm_output,
         )
 
@@ -118,7 +118,7 @@ class BasicLLM:
     prompt: PromptTemplate
     llm: LLMChain
 
-    def __init__(self, base_prompt: str, model: str = "gpt-3.5-turbo") -> None:
+    def __init__(self, base_prompt: str, model: str = "gpt-4") -> None:
         llm = get_model(model)
         self.llm = LLMChain(
             llm=llm,
@@ -129,7 +129,6 @@ class BasicLLM:
         )
 
     def run(self, **kwargs):
-        print("RunningMinion")
         kwargs["feedback"] = kwargs.get("feedback", "")
         return self.llm.predict(**kwargs)
 
@@ -137,7 +136,7 @@ class BasicLLM:
 @dataclass
 class BaseMinion:
     def __init__(
-        self, base_prompt, avaliable_tools, model: str = "gpt-3.5-turbo"
+        self, base_prompt, avaliable_tools, model: str = "gpt-4"
     ) -> None:
         llm = get_model(model)
 
@@ -169,7 +168,6 @@ class BaseMinion:
         )
 
     def run(self, **kwargs):
-        print("RunningMinion")
         kwargs["feedback"] = kwargs.get("feedback", "")
         return self.agent_executor.run(**kwargs)
 
@@ -178,8 +176,8 @@ class BaseMinion:
 class FeedbackMinion:
     underlying_minion: BaseMinion | BasicLLM
     eval_llm: LLMChain
-    feedback_prompt: PromptTemplate
-    check_function: Callable[[str], str | None]
+    feedback_prompt: str
+    check_function: Callable[[str], Any]
 
     def __init__(
         self,
@@ -204,8 +202,9 @@ class FeedbackMinion:
 
     def run(self, **kwargs):
         if "feedback" in kwargs:
-            print("Sosat + Lezhat")
-            print(kwargs["feedback"])
+            print("Rerunning a prompt with feedback:", kwargs["feedback"])
+            if len(kwargs['previous_result']) > 500:
+                kwargs["previous_result"] = kwargs["previous_result"][:500] + '\n...(truncated)\n'
             kwargs["feedback"] = self.feedback_prompt.format(**kwargs)
         res = self.underlying_minion.run(**kwargs)
         try:

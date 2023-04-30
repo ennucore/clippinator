@@ -29,7 +29,7 @@ class Plan:
     completed_tasks: list[str] = field(default_factory=list)
 
     @classmethod
-    def parse(cls, plan: str) -> Plan:
+    def parse(cls, plan: str, raise_errors: bool = True) -> Plan:
         """
         Parse the plan from a string to the class. The format is as following:
         1. Milestone 1
@@ -50,8 +50,18 @@ class Plan:
             elif line and "." in line[:5]:
                 milestones.append(line.split(".", 1)[1].strip())
 
+        if not milestones and raise_errors:
+            raise ValueError("No milestones found. Pay attention to the format - the milestones are numbered items.")
+        if len(milestones) > 5 and raise_errors:
+            raise ValueError("Too many milestones (the numbered items) found, there should be less than 6 numbered items.")
+
         if not first_milestone_tasks:
+            if raise_errors:
+                raise ValueError("No tasks for the first milestone found. The tasks are the bulleted items "
+                                 "after the first milestone (after 1.).")
             first_milestone_tasks = [milestones[0]]
+        if len(first_milestone_tasks) > 22 and raise_errors:
+            raise ValueError("Too many tasks for the first milestone found, there should be <23.")
         return cls(milestones, first_milestone_tasks)
 
     def display_progress(self):
@@ -102,7 +112,7 @@ class Plan:
         return res
 
 
-def split_context(result: str, raise_errors: bool = True) -> typing.Tuple[str, str]:
+def split_context(result: str, raise_errors: bool = True) -> typing.Tuple[str, Plan]:
     """
     Parse the model output and return the context and the plan
     """
@@ -110,7 +120,7 @@ def split_context(result: str, raise_errors: bool = True) -> typing.Tuple[str, s
         raise ValueError(
             f"Context not found in the result. It needs to go after 'CONTEXT:'"
         )
-    if "FINAL PLAN:" not in result and raise_errors:
+    if "FINAL PLAN:" not in result.split("CONTEXT:", 1)[-1].strip() and raise_errors:
         raise ValueError(
             f"Final plan not found in the result. It needs to go after 'FINAL PLAN:'"
         )
@@ -143,7 +153,7 @@ class Planner:
     update_planner: FeedbackMinion
     update_architect: FeedbackMinion
 
-    def __init__(self, project: Project):
+    def __init__(self, _project: Project):
         self.initial_planner = FeedbackMinion(
             BasicLLM(planning_prompt),
             planning_evaluation_prompt,
@@ -171,7 +181,7 @@ class Planner:
 
     def create_initial_plan(self, project: Project) -> tuple[str, str, Plan]:
         architecture = extract_after_keyword(
-            self.initial_architect.run(**project.prompt_fields()),
+            self.initial_architect.run(plan='No plan yet', **project.prompt_fields()),
             "FINAL ARCHITECTURE:",
         )
         context, plan = split_context(

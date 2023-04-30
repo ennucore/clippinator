@@ -17,6 +17,7 @@ def strip_quotes(inp: str) -> str:
     inp = inp.removesuffix('\n```').removesuffix("\n'''").removesuffix('\n"""')
     return inp
 
+
 @dataclass
 class WriteFile(SimpleTool):
     """
@@ -47,6 +48,8 @@ class WriteFile(SimpleTool):
         file_path, content = args.split("\n", 1)
         file_path = file_path.strip().strip("'").strip()
         content = strip_quotes(content)
+        if all('|' in line[:5] or not line.strip() for line in content.split('\n')):
+            content = '\n'.join(line.split('|', 1)[1] if line.strip() else line for line in content.split('\n'))
 
         original_file_path = file_path
         file_path = os.path.join(self.workdir, file_path)

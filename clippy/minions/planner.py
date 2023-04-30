@@ -93,16 +93,18 @@ class Plan:
         return res
 
 
-def split_context(result: str) -> typing.Tuple[str, str, str]:
+def split_context(result: str) -> typing.Tuple[str, str]:
     """
-    Parse the model output and return the architecture, the context and the plan
+    Parse the model output and return the context and the plan
     """
-    result = result.strip().removeprefix("ARCHITECTURE:").strip().split("CONTEXT:", 1)
-    architecture, result = ([""] + result) if len(result) == 1 else result
-    result = result.strip().removeprefix("CONTEXT:").strip()
-    context, plan = result.split("\n", 1)
-    plan = plan.strip().removeprefix("PLAN:").strip()
-    return architecture, context, plan
+    if 'CONTEXT:' not in result:
+        raise ValueError(f"Context not found in the result. It needs to go after 'CONTEXT:'")
+    if 'FINAL PLAN:' not in result:
+        raise ValueError(f"Final plan not found in the result. It needs to go after 'FINAL PLAN:'")
+    result = result.split("CONTEXT:", 1)[-1].strip()
+    context, plan = result.split("FINAL PLAN:", 1)
+    plan = plan.strip()
+    return context, plan
 
 
 def extract_after_keyword(string: str, keyword: str) -> str:
@@ -110,6 +112,8 @@ def extract_after_keyword(string: str, keyword: str) -> str:
     Extract the string after the keyword
     """
     print(string)
+    if keyword not in string:
+        raise ValueError(f"Keyword '{keyword}' not found in the result.")
     return string.split(keyword, 1)[1].strip()
 
 
@@ -137,11 +141,11 @@ class Planner:
             self.initial_architect.run(**project.prompt_fields()),
             "FINAL ARCHITECTURE:",
         )
-        plan = extract_after_keyword(
-            self.initial_planner.run(**project.prompt_fields()), "FINAL PLAN:"
+        context, plan = split_context(
+            self.initial_planner.run(**project.prompt_fields())
         )
 
-        return architecture, "", Plan.parse(plan)
+        return architecture, context, Plan.parse(plan)
 
     def update_plan(
         self, plan: Plan, report: str, project: Project
@@ -153,12 +157,11 @@ class Planner:
             "FINAL ARCHITECTURE:",
         )
         project.architecture = architecture
-        plan = extract_after_keyword(
+        context, plan = split_context(
             self.update_planner.run(
                 **project.prompt_fields(), report=report, plan=str(plan)
-            ),
-            "FINAL PLAN:",
+            )
         )
         # if "FINISHED" in result:
         #     return Plan([], []), project.state, project.architecture
-        return Plan.parse(plan), project.state, project.architecture
+        return Plan.parse(plan), context, project.architecture

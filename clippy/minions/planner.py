@@ -93,13 +93,13 @@ class Plan:
         return res
 
 
-def split_context(result: str) -> typing.Tuple[str, str]:
+def split_context(result: str, raise_errors: bool = True) -> typing.Tuple[str, str]:
     """
     Parse the model output and return the context and the plan
     """
-    if 'CONTEXT:' not in result:
+    if 'CONTEXT:' not in result and raise_errors:
         raise ValueError(f"Context not found in the result. It needs to go after 'CONTEXT:'")
-    if 'FINAL PLAN:' not in result:
+    if 'FINAL PLAN:' not in result and raise_errors:
         raise ValueError(f"Final plan not found in the result. It needs to go after 'FINAL PLAN:'")
     result = result.split("CONTEXT:", 1)[-1].strip()
     context, plan = result.split("FINAL PLAN:", 1)
@@ -107,14 +107,14 @@ def split_context(result: str) -> typing.Tuple[str, str]:
     return context, plan
 
 
-def extract_after_keyword(string: str, keyword: str) -> str:
+def extract_after_keyword(string: str, keyword: str, raise_errors: bool = False) -> str:
     """
     Extract the string after the keyword
     """
     print(string)
-    if keyword not in string:
+    if keyword not in string and raise_errors:
         raise ValueError(f"Keyword '{keyword}' not found in the result.")
-    return string.split(keyword, 1)[1].strip()
+    return string.split(keyword, 1)[-1].strip()
 
 
 class Planner:

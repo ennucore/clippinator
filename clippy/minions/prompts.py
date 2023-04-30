@@ -35,7 +35,12 @@ Use pathces to modify files when it is easy and convenient.
 )
 
 architecture_prompt = """
+You are The Architect. You are a part of a team of AI developers which is working on the project {project_name} with the following objective: "{objective}".
  Generate an architecture for this coding project: {objective}
+ 
+Here is the current state of the project folder:
+{project_summary}
+
 Follow the instructions below carefully and intelligently. Some parts of the message below are especially important, they will be in caps
 Write the stack, the file structure, and what should be in each file (classes, functions, what they should do). You need to specify the file content right after its name
 Example output:
@@ -85,9 +90,12 @@ IF YOU MISS SOME PARTS (folders) IN THE ARCHITECTURE, GLOBAL WARMING WILL ACCELE
 """
 
 planning_prompt = """
+You are The Planner. You are a part of a team of AI developers which is working on the project {project_name} with the following objective: "{objective}".
 Follow the instructions below carefully and intelligently. Some parts of the message below are especially important, they will be in caps.
 Here is the architecture of the project with the following objetive: "{objective}":
 {architecture} 
+Here is the current state of the project folder:
+{project_summary}
 
 Generate a plan to implement architecture step-by-step and a context with all the information to keep in mind. 
 The context should be a couple of sentences about the project and its current state. For instance, the tech stack, what's working and what isn't right now, and so on.
@@ -117,13 +125,15 @@ EACH TIME YOU DEVIATE FROM THE OUTPUT FORMAT BY SPECIFYING TASKS INCORRECTLY OR 
     """
 
 update_architecture_prompt = """
-You are The Architect. You are a part of a team of AI developers which is working on a project with the following objective: "{objective}".
+You are The Architect. You are a part of a team of AI developers which is working on the project {project_name} with the following objective: "{objective}".
 Follow the instructions below carefully and intelligently. Some parts of the message below are especially important, they will be in caps.
 There is already an architecture, but a task has been executed. You need to update the architecture to reflect the changes.
 If no changes are needed, just repeat the architecture.
 Here is some context information about the project: {state}
 Here is the existing architecture of the project:
 {architecture}
+Here is the current state of the project folder:
+{project_summary}
 
 Here is the plan of the project (the plan may be updated later, but not by you):
 {plan}
@@ -170,13 +180,15 @@ Go!
 """
 
 update_planning_prompt = """
-You are The Planner. You are a part of a team of AI developers which is working on a project with the following objective: "{objective}".
+You are The Planner. You are a part of a team of AI developers which is working on the project {project_name} with the following objective: "{objective}".
 Follow the instructions below carefully and intelligently. Some parts of the message below are especially important, they will be in caps.
 There is already a plan, but a task has been executed, so there's a report on the result. Also, the architecture might also have been updated after the task execution. 
 You need to update the plan to reflect the changes.
 You also need to update the context.
 The context is a couple of sentences about the project and its current state. For instance, the tech stack, what's working and what isn't right now, and so on.
 Here is the current context: {state}
+Here is the state of the project folder:
+{project_summary}
 
 Here is the architecture of the project:
 {architecture}
@@ -213,6 +225,25 @@ EACH TIME YOU DEVIATE FROM THE OUTPUT FORMAT BY SPECIFYING TASKS INCORRECTLY OR 
 NOTE THAT IF SOMETHING ISN'T IN THE ARCHITECTURE, THE PLAN, OR THE CONTEXT, IT WILL NOT BE PASSED TO THE OTHER AGENTS.
 If the plan does not need to be changed, just repeat it.
 
+Go!
+"""
+
+planning_evaluation_prompt = """
+An AI created a plan for the project {project_name} with this objective: "{objective}".
+Please, evaluate the plan and provide feedback.
+If the plan is acceptable, write "ACCEPTED". If the plan is not acceptable, provide feedback on the plan
+Here is the project context: {state}
+Here is the architecture of the project:
+{architecture}
+Here is the current state of the project folder:
+{project_summary}
+Here is the plan:
+{plan}
+
+You need to evaluate the plan. Write "ACCEPTED" if the plan is acceptable. If the plan is not acceptable, provide feedback on the plan.
+Your output should look like this:
+Thoughts: your inner thought process about planning
+Feedback: your feedback on the plan
 Go!
 """
 

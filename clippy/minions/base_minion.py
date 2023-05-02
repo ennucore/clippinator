@@ -89,7 +89,7 @@ class CustomPromptTemplate(StringPromptTemplate):
         # Create a list of tool names for the tools provided
         kwargs["tool_names"] = ", ".join([tool.name for tool in self.tools])
         result = self.template.format(**kwargs)
-        if len(result) > 6000:
+        if len(result) > 5000:
             result += "\n" + long_warning + "\n"
         return result
 
@@ -184,7 +184,7 @@ class FeedbackMinion:
         minion: BaseMinion | BasicLLM,
         eval_prompt: str,
         feedback_prompt: str,
-        check_function: Callable[[str], str | None] = lambda x: None,
+        check_function: Callable[[str], Any] = lambda x: None,
         model: str = "gpt-3.5-turbo",
     ) -> None:
         llm = get_model(model)

@@ -134,7 +134,6 @@ def extract_after_keyword(string: str, keyword: str, raise_errors: bool = False)
     """
     Extract the string after the keyword
     """
-    print(string)
     if keyword not in string and raise_errors:
         raise ValueError(f"Keyword '{keyword}' not found in the result.")
     return string.split(keyword, 1)[-1].strip()

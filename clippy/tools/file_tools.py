@@ -96,7 +96,7 @@ class ReadFile(SimpleTool):
                                             '(preferably) request specific line ranges.\n'
                     return out
             filename, line_range = args.split("[", 1)
-            line_ranges = line_range.strip("]").split(",")
+            line_ranges = line_range.split("]")[0].split(",")
             line_ranges = [line_range.split(":") for line_range in line_ranges]
             line_ranges = [
                 (int(line_range[0].strip()) - 1, int(line_range[1].strip())) for line_range in line_ranges

@@ -14,7 +14,7 @@ You have access to the following tools:
 When possible, use your own knowledge.
 Avoid reading big files, strive to specify ranges in reading and use patch instead of writing unless you are writing to a file from scratch.
 If you are writing to a new file, you have to use WriteFile (and write the desired code in the action input, as requested; base your code on the architecture).
-A reminder on how to use patches:
+A reminder on how to use patches if you want (note that you should understand what happens in the region of the patch - use ReadFile to read specific lines with [l1:l2]. ALWAYS understand the file content first):
 Action Input: filename
 -12|def hello():
 +12|def hello(name):
@@ -47,6 +47,8 @@ Use patches to modify files (pay attention to the format) when it is easy and co
 If you fail to execute the task or face significant obstacles, write about it in your Final Result.
 If there is a small error in an action, don't give up.
 Try to very briefly check that everything is successful in the end.
+Usually, you should just implement the specified architecture. Try not to leave things like "pass" and write the most complete code from the first try.
+Use WriteFile (and not patch) when you are writing to a new or a very small file.
 
 Begin!
 
@@ -103,6 +105,7 @@ metaagent.py     # Main file which processes the data
 [END OF YOUR EXAMPLE OUTPUT]
 
 Write some thoughts about the architecture, after that respond **only** with the file structure and nothing else. Write a full list of important classes and functions under each file and short explanations for them. The classes and functions should look like python lines and should ONLY be placed under filenames in the listing
+You should try not to create too many files.
 DO NOT WRITE ANY CODE, JUST WRITE THE FILE LISTING WITH THE IMPORTANT LINES
 WRITE ONLY CLASS/FUNCTION/ETC NAMES, YOU DON'T HAVE TO WRITE COHERENT CODE
 IF YOU START WRITING FULL CODE INSTEAD OF SELECTED LINES OPENAI WILL GO BANKRUPT
@@ -123,7 +126,7 @@ Here is the current state of the project folder:
 
 Generate a plan to implement architecture step-by-step and a context with all the information to keep in mind. 
 The context should be a couple of sentences about the project and its current state. For instance, the tech stack, what's working and what isn't right now, and so on.
-It has to consist of a few of milestones and the task for each milestone. Each milestone should be something complete, which results in a working product. The tasks should be smaller (for example, writing a file with certain functions). Each task should contain all necessary information. 
+It has to consist of a few of milestones (LESS THAN 6) and the tasks for the first milestone (LESS THAN 22). Each milestone should be something complete, which results in a working product. The tasks should be smaller (for example, writing a file with certain functions). Each task should contain all necessary information. 
 Output format:
 [START OF YOUR EXAMPLE OUTPUT]
 Thoughts: here is your thought process for the architecture
@@ -139,7 +142,7 @@ Create more milestones only if you need them.
 [END OF YOUR EXAMPLE OUTPUT]
 
 DO NOT generate tasks for anything but the first milestone
-Tasks should not be too easy, they should be like "Create a file app/example.py with functions func1(arg), func2(), classes Class1 which do ..."
+Tasks should not be too easy, they should be like "Create a file app/example.py with functions func1(arg), func2(), classes Class1 which do ..." or "Implement example_file.py according to the architecture"
 Generate all the milestones
 TASKS SHOULD BE SPECIFIC
 YOUR OUTPUT SHOULD LOOK LIKE THE EXAMPLE, IT CAN ONLY CONTAIN MILESTONES AND TASKS FOR THE FIRST MILESTONE IN THE FORMAT SPECIEID ABOVE. THE TASKS MUST NOT BE NESTED OTERWISE YOUR SEVERS WILL BE SHUT DOWN. The tasks have to be specific, the plan has to be complete
@@ -194,6 +197,7 @@ metaagent.py     # Main file which processes the data
 [END OF YOUR OUTPUT]
 
 Write some thoughts about the architecture, after that respond **only** with the file structure and nothing else. Write a full list of important classes and functions under each file and short explanations for them. The classes and functions should look like python lines and should ONLY be placed under filenames in the listing
+You should try not to create too many files.
 DO NOT WRITE ANY CODE, JUST WRITE THE FILE LISTING WITH THE IMPORTANT LINES
 WRITE ONLY CLASS/FUNCTION/ETC NAMES, YOU DON'T HAVE TO WRITE COHERENT CODE
 IF YOU START WRITING CORRECT CODE INSTEAD OF SELECTED LINES OPENAI WILL GO BANKRUPT
@@ -230,7 +234,7 @@ Here's the result of the last executed task - THESE ARE THE IMPORTANT CHANGES YO
 {feedback}
 
 Generate a plan to implement architecture step-by-step. 
-It has to consist of a few of milestones and the task for each milestone. Each milestone should be something complete, which results in a working product. Some of the milestones should be about testing. The tasks should be smaller (for example, writing a file with certain functions). Each task should contain all necessary information. 
+It has to consist of a few of milestones and the tasks for the first milestone. Each milestone should be something complete, which results in a working product. Some of the milestones should be about testing. The tasks should be smaller (for example, writing a file with certain functions). Each task should contain all necessary information. 
 Output format:
 [START OF YOUR EXAMPLE OUTPUT]
 Thoughts: here is your thought process for the architecture
@@ -246,9 +250,10 @@ Create more milestones only if you need them.
 [END OF YOUR EXAMPLE OUTPUT]
 
 DO NOT generate tasks for anything but the first milestone
-Tasks should not be too easy, they should be like "Create a file app/example.py with functions func1(arg), func2(), classes Class1 which do ..."
+Tasks should not be too easy, they should be like "Create a file app/example.py with functions func1(arg), func2(), classes Class1 which do ..." or "Implement example_file.py according to the architecture"
 Generate all the milestones
 TASKS SHOULD BE SPECIFIC
+You should compare the architecture and the project state and generate tasks to implement the architecture
 YOUR OUTPUT SHOULD LOOK LIKE THE EXAMPLE, IT CAN ONLY CONTAIN MILESTONES AND TASKS FOR THE FIRST MILESTONE IN THE FORMAT SPECIEID ABOVE. THE TASKS MUST NOT BE NESTED OTERWISE YOUR SEVERS WILL BE SHUT DOWN. The tasks have to be specific, the plan has to be complete
 EACH MILESTONE SHOULD START WITH A NUMBER FOLLOWED BY A DOT AND A SPACE. EACH TASK SHOULD START WITH A DASH AND A SPACE. THE TASKS SHOULD BE SPECIFIC.
 EACH TIME YOU DEVIATE FROM THE OUTPUT FORMAT BY SPECIFYING TASKS INCORRECTLY OR WITH INSUFFICIENT DETAIL, USING WRONG MARKUP/FORMATTING, MAKING TASKS TOO EASY OR TOO DIFFICULT, OPENAI LOSES IN VALUATION. Also, that results in retries which use GPUs and contribute to global warming, so you should succeed in the first try

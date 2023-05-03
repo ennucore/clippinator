@@ -3,7 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 import typing
-from typing import Tuple
+
+if typing.TYPE_CHECKING:
+    from .executioner import SpecializedExecutioner
 
 from .base_minion import BasicLLM, FeedbackMinion
 from .prompts import (
@@ -53,7 +55,8 @@ class Plan:
         if not milestones and raise_errors:
             raise ValueError("No milestones found. Pay attention to the format - the milestones are numbered items.")
         if len(milestones) > 5 and raise_errors:
-            raise ValueError("Too many milestones (the numbered items) found, there should be less than 6 numbered items.")
+            raise ValueError(
+                "Too many milestones (the numbered items) found, there should be less than 6 numbered items.")
 
         if not first_milestone_tasks:
             if raise_errors:
@@ -66,9 +69,9 @@ class Plan:
 
     def display_progress(self):
         with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            transient=True,
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                transient=True,
         ) as progress:
             # Display completed milestones
             for milestone in self.completed_milestones:
@@ -139,6 +142,28 @@ def extract_after_keyword(string: str, keyword: str, raise_errors: bool = False)
     return string.split(keyword, 1)[-1].strip()
 
 
+def special_minions_prompt(specialized_executioners: dict[str, SpecializedExecutioner]) -> str:
+    """
+    Prompt for the special minions
+    """
+    res = "You can also use specialized agents for the tasks. It's better to use them if possible. " \
+          "To assign the task, to an agent, add @Agent to the end of the line with the task (- Example task @Writer).\n" \
+          "The specialized agents are:\n"
+    for _key, executioner in specialized_executioners.items():
+        res += executioner.expl()
+    return res
+
+
+def extract_agent_name(task: str) -> (str, str):
+    """
+    Extract the agent name from the task
+    """
+    if "@" not in task:
+        return task, None
+    task, agent = task.split("@", 1)
+    return task.strip(), agent.strip()
+
+
 class Planner:
     """
     The minion responsible for:
@@ -178,19 +203,21 @@ class Planner:
             lambda result: extract_after_keyword(result, "FINAL ARCHITECTURE:"),
         )
 
-    def create_initial_plan(self, project: Project) -> tuple[str, str, Plan]:
+    def create_initial_plan(self, project: Project,
+                            specialized_executioners: dict[str, SpecializedExecutioner]) -> tuple[str, str, Plan]:
         architecture = extract_after_keyword(
             self.initial_architect.run(plan='No plan yet', **project.prompt_fields()),
             "FINAL ARCHITECTURE:",
         )
         context, plan = split_context(
-            self.initial_planner.run(**project.prompt_fields())
+            self.initial_planner.run(**project.prompt_fields(),
+                                     specialized_minions=special_minions_prompt(specialized_executioners))
         )
 
         return architecture, context, plan
 
     def update_plan(
-        self, plan: Plan, report: str, project: Project
+            self, plan: Plan, report: str, project: Project, specialized_executioners: dict[str, SpecializedExecutioner]
     ) -> typing.Tuple[Plan, str, str]:
         architecture = extract_after_keyword(
             self.update_architect.run(
@@ -201,7 +228,8 @@ class Planner:
         project.architecture = architecture
         context, plan = split_context(
             self.update_planner.run(
-                **project.prompt_fields(), report=report, plan=str(plan)
+                **project.prompt_fields(), report=report, plan=str(plan),
+                specialized_minions=special_minions_prompt(specialized_executioners)
             )
         )
         # if "FINISHED" in result:

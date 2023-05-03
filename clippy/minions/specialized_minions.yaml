@@ -1,0 +1,11 @@
+---
+- name: "Writer"
+  description: "implements a part of the architecture in a new or small file. Example task: 'Implement example.py according to the architecture'"
+  prompt: "Look at the architecture, then implement it using WriteFile."
+  tool_names: ["ReadFile", "WriteFile", "Bash"]
+- name: "QA"
+  description: "Helps test functionality"
+  prompt: |+
+    You can create a file with tests and run it to test the functionality.
+    Sometimes, you need to start some process (like a web server) in the background first.
+  tool_names: ["ReadFile", "WriteFile", "Bash", "PatchFile", "BashBackground"]

@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import pickle
-import time
 from .project import Project
 from .minions.qa import QA
-from .minions.executioner import Executioner
-from .minions.planner import Planner, Plan
+from .minions.executioner import Executioner, get_specialized_executioners, SpecializedExecutioner
+from .minions.planner import Planner, Plan, extract_agent_name
 
 
 @dataclass
@@ -16,6 +15,7 @@ class Clippy:
     executioner: Executioner
     planner: Planner
     plan: Plan
+    specialized_executioners: dict[str, SpecializedExecutioner] = field(default_factory=dict)
  
     @classmethod
     def create(cls, path: str, objective: str) -> Clippy:
@@ -23,20 +23,25 @@ class Clippy:
         qa = QA()
         executioner = Executioner(project)
         planner = Planner(project)
-        architecture, state, plan = planner.create_initial_plan(project)
+        specialized_executioners = get_specialized_executioners(project)
+        architecture, state, plan = planner.create_initial_plan(project, specialized_executioners)
         project.state = state
         project.architecture = architecture
         print("Created plan:", str(plan), sep="\n")
         print("Context:", project.state)
-        return cls(project, qa, executioner, planner, plan)
+        return cls(project, qa, executioner, planner, plan, specialized_executioners)
 
-    def execute_task(self, task: str, milestone: str = "") -> str:
+    def get_specialized_agent(self, agent: str) -> SpecializedExecutioner:
+        return self.specialized_executioners.get(agent, self.executioner)
+
+    def execute_task(self, task: str, milestone: str = "", agent: str = '') -> str:
         print("Executing task:", task)
-        return self.executioner.execute(task, self.project, milestone)
+        return self.get_specialized_agent(agent).execute(task, self.project, milestone)
 
     def run_iteration(self):
+        task, agent = extract_agent_name(self.plan.first_milestone_tasks[0])
         result = self.execute_task(
-            self.plan.first_milestone_tasks[0], self.plan.milestones[0]
+            task, self.plan.milestones[0]
         )
         self.plan.completed_tasks.append(self.plan.first_milestone_tasks[0])
         self.plan.first_milestone_tasks = self.plan.first_milestone_tasks[1:]
@@ -50,7 +55,7 @@ class Clippy:
             completed_tasks = []
             # Later we can run checks here
         self.plan, self.project.state, self.project.architecture = self.planner.update_plan(
-            self.plan, result, self.project
+            self.plan, result, self.project, self.specialized_executioners
         )
         print("New plan:", str(self.plan), sep="\n")
         print("Context:", self.project.state)

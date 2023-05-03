@@ -169,7 +169,7 @@ class BaseMinion:
 
     def run(self, **kwargs):
         kwargs["feedback"] = kwargs.get("feedback", "")
-        return self.agent_executor.run(**kwargs)
+        return self.agent_executor.run(**kwargs) or 'No result. The execution was probably unsuccessful.'
 
 
 @dataclass

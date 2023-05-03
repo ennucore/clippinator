@@ -318,7 +318,7 @@ Feedback: your feedback on the architecture
 Go!
 """
 
-taskmaster_prompt = ''
+taskmaster_prompt = common_part + 'Achieve the objective: {objective}\n' + '\nBegin!\n{agent_scratchpad}'
 
 feedback_prompt = """
 You've already tried to execute the task and miserably failed. Here is the result you produced:

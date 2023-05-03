@@ -318,6 +318,8 @@ Feedback: your feedback on the architecture
 Go!
 """
 
+taskmaster_prompt = ''
+
 feedback_prompt = """
 You've already tried to execute the task and miserably failed. Here is the result you produced:
 {previous_result}

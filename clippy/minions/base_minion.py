@@ -60,7 +60,6 @@ class CustomOutputParser(AgentOutputParser):
                 log=llm_output,
             )
 
-
         # Return the action and action input
         return AgentAction(
             tool=action,

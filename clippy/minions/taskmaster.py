@@ -1,8 +1,14 @@
 from langchain import LLMChain
 from langchain.agents import AgentExecutor, LLMSingleActionAgent, Tool
+from langchain.callbacks.base import CallbackManager, BaseCallbackHandler
 from langchain.prompts import StringPromptTemplate
 
-from .base_minion import CustomPromptTemplate, CustomOutputParser, extract_variable_names, get_model
+from .base_minion import (
+    CustomPromptTemplate,
+    CustomOutputParser,
+    extract_variable_names,
+    get_model,
+)
 from clippy.project import Project
 from clippy.tools import get_tools
 from langchain.schema import BaseMemory
@@ -30,8 +36,10 @@ class CustomMemory(BaseMemory):
 
     def load_memory_variables(self, inputs: Dict[str, Any]) -> Dict[str, str]:
         """Load the memory variables, in this case the entity key."""
-        return {"project_summary": self.project.get_project_summary(),
-                "summary": self.summary_buffer.load_memory_variables(inputs)["history"]}
+        return {
+            "project_summary": self.project.get_project_summary(),
+            "summary": self.summary_buffer.load_memory_variables(inputs)["history"],
+        }
 
     def save_context(self, inputs: Dict[str, Any], outputs: Dict[str, str]) -> None:
         self.summary_buffer.save_context(inputs, outputs)
@@ -44,7 +52,7 @@ class TaskmasterPromptTemplate(StringPromptTemplate):
 
     @property
     def _prompt_type(self) -> str:
-        return 'taskmaster'
+        return "taskmaster"
 
     def format(self, **kwargs) -> str:
         # Get the intermediate steps (AgentAction, AResult tuples)
@@ -65,8 +73,13 @@ class TaskmasterPromptTemplate(StringPromptTemplate):
         return result
 
 
+class CallbackHandler(BaseCallbackHandler):
+    def on_text(self, text: str, **kwargs: Any) -> Any:
+        print(text)
+
+
 class Taskmaster:
-    def __init__(self, project: Project, model: str = 'gpt-4'):
+    def __init__(self, project: Project, model: str = "gpt-4"):
         self.project = project
         self.specialized_executioners = get_specialized_executioners(project)
         self.default_executioner = Executioner(project)
@@ -93,10 +106,16 @@ class Taskmaster:
             allowed_tools=tool_names,
         )
 
+        callback_manager = CallbackManager()
+        callback_manager.add_handler(CallbackHandler())
+
         self.agent_executor = AgentExecutor.from_agent_and_tools(
-            agent=agent, tools=tools, verbose=True
+            agent=agent, tools=tools, verbose=True, callback_manager=callback_manager
         )
 
     def run(self, **kwargs):
         kwargs["feedback"] = kwargs.get("feedback", "")
-        return self.agent_executor.run(**kwargs) or 'No result. The execution was probably unsuccessful.'
+        return (
+            self.agent_executor.run(**kwargs)
+            or "No result. The execution was probably unsuccessful."
+        )

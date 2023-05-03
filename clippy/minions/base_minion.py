@@ -20,6 +20,7 @@ long_warning = (
 
 class CustomOutputParser(AgentOutputParser):
     def parse(self, llm_output: str) -> Union[AgentAction, AgentFinish]:
+        # todo: check that there's no "Action:" together with the result
         # Check if agent should finish
         if "Final Result:" in llm_output:
             return AgentFinish(
@@ -58,6 +59,8 @@ class CustomOutputParser(AgentOutputParser):
                 'action. Execute all the actions without AResult again.")',
                 log=llm_output,
             )
+
+
         # Return the action and action input
         return AgentAction(
             tool=action,

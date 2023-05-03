@@ -1,22 +1,24 @@
+from typing import List, Dict, Any, Union
+
 from langchain import LLMChain
 from langchain.agents import AgentExecutor, LLMSingleActionAgent, Tool
-from langchain.callbacks.base import CallbackManager, BaseCallbackHandler
+from langchain.callbacks.base import BaseCallbackHandler
+from langchain.memory import ConversationSummaryMemory
 from langchain.prompts import StringPromptTemplate
+from langchain.schema import AgentAction, AgentFinish, LLMResult
+from langchain.schema import BaseMemory
 
+from clippy.project import Project
+from clippy.tools import get_tools
+from clippy.tools.subagents import Subagent
 from .base_minion import (
     CustomPromptTemplate,
     CustomOutputParser,
     extract_variable_names,
     get_model,
 )
-from clippy.project import Project
-from clippy.tools import get_tools
-from langchain.schema import BaseMemory
-from langchain.memory import ConversationSummaryMemory
 from .executioner import Executioner, get_specialized_executioners
 from .prompts import taskmaster_prompt
-from typing import List, Dict, Any, Union
-from langchain.schema import AgentAction, AgentFinish, LLMResult
 
 
 class CustomMemory(BaseMemory):
@@ -60,9 +62,8 @@ class TaskmasterPromptTemplate(StringPromptTemplate):
         # Format them in a particular way
         intermediate_steps = kwargs.pop("intermediate_steps")
         thoughts = ""
-        for action, AResult in intermediate_steps:
-            thoughts += action.log
-            thoughts += f"\nAResult: {AResult}\nThought: "
+        for action, AResult in intermediate_steps[::-1]:
+            thoughts = action.log + f"\nAResult: {AResult}\nThought: " + thoughts
             if len(thoughts) > 2000:
                 break
         kwargs["tools"] = "\n".join(
@@ -76,7 +77,7 @@ class TaskmasterPromptTemplate(StringPromptTemplate):
 
 class CallbackHandler(BaseCallbackHandler):
     def on_llm_start(
-        self, serialized: Dict[str, Any], prompts: List[str], **kwargs: Any
+            self, serialized: Dict[str, Any], prompts: List[str], **kwargs: Any
     ) -> Any:
         """Run when LLM starts running."""
 
@@ -87,12 +88,12 @@ class CallbackHandler(BaseCallbackHandler):
         """Run when LLM ends running."""
 
     def on_llm_error(
-        self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
+            self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
     ) -> Any:
         """Run when LLM errors."""
 
     def on_chain_start(
-        self, serialized: Dict[str, Any], inputs: Dict[str, Any], **kwargs: Any
+            self, serialized: Dict[str, Any], inputs: Dict[str, Any], **kwargs: Any
     ) -> Any:
         """Run when chain starts running."""
 
@@ -100,12 +101,12 @@ class CallbackHandler(BaseCallbackHandler):
         """Run when chain ends running."""
 
     def on_chain_error(
-        self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
+            self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
     ) -> Any:
         """Run when chain errors."""
 
     def on_tool_start(
-        self, serialized: Dict[str, Any], input_str: str, **kwargs: Any
+            self, serialized: Dict[str, Any], input_str: str, **kwargs: Any
     ) -> Any:
         """Run when tool starts running."""
 
@@ -113,7 +114,7 @@ class CallbackHandler(BaseCallbackHandler):
         """Run when tool ends running."""
 
     def on_tool_error(
-        self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
+            self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
     ) -> Any:
         """Run when tool errors."""
 
@@ -147,23 +148,25 @@ class Taskmaster:
         output_parser = CustomOutputParser()
 
         tool_names = [tool.name for tool in tools]
-        callback_manager = CallbackManager(handlers=[CallbackHandler()])
+        tools.append(Subagent(project, get_specialized_executioners(project), Executioner(project)).get_tool())
+        # callback_manager = CallbackManager(handlers=[CallbackHandler()])
 
         agent = LLMSingleActionAgent(
             llm_chain=llm_chain,
             output_parser=output_parser,
             stop=["AResult:"],
             allowed_tools=tool_names,
-            callback_manager=callback_manager
+            # callback_manager=callback_manager
         )
 
         self.agent_executor = AgentExecutor.from_agent_and_tools(
-            agent=agent, tools=tools, verbose=True, callback_manager=callback_manager
+            agent=agent, tools=tools, verbose=True  # , callback_manager=callback_manager
         )
 
     def run(self, **kwargs):
         kwargs["feedback"] = kwargs.get("feedback", "")
+        kwargs['specialized_minions'] = '\n'.join(minion.expl() for minion in self.specialized_executioners.values())
         return (
-            self.agent_executor.run(**kwargs)
-            or "No result. The execution was probably unsuccessful."
+                self.agent_executor.run(**kwargs)
+                or "No result. The execution was probably unsuccessful."
         )

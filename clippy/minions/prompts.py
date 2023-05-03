@@ -20,8 +20,8 @@ Action Input: the input to the action.
 AResult: the result of the action.
 Final Result: the final result of the task.
 
-"AResult:" always comes after "Action Input:" - it's the result of any taken action. Do not use to describe the result of your thought.
-"Action Input:" can logically come only after "Action:".
+"AResult:" ALWAYS comes after "Action Input:" - it's the result of any taken action. Do not use to describe the result of your thought.
+"Action Input:" can come only after "Action:" - and always does.
 You need to have a "Final Result:", even if the result is trivial. Never stop at "Thought:".
 Everything you do should be one of: Action, Action Input, AResult, Final Result. 
 """
@@ -59,6 +59,7 @@ Begin!
 get_specialized_prompt = lambda special_part: (
         """You are the Executor. Your goal is to execute the task in a project.""" + common_part +
         'You need to execute only one task: **{task}**. It is part of the milestone **{milestone}**. '
+        'Give a somewhat detailed description of your process and result in the Final Result.'
         + special_part + '\nBegin!\n{agent_scratchpad}')
 
 architecture_prompt = """
@@ -318,7 +319,19 @@ Feedback: your feedback on the architecture
 Go!
 """
 
-taskmaster_prompt = common_part + 'Achieve the objective: {objective}\n' + '\nBegin!\n{agent_scratchpad}'
+taskmaster_prompt = common_part + '''Achieve the objective: {objective}
+''' + '''
+You can (and should) delegate some tasks to subagents. It's better to delegate things to the subagents than to do them yourself.
+Avoid performing common actions yourself.
+To delegate, use the following syntax:
+Action: Subagent @SomeAgent
+Action Input: task
+AResult: the result from the agent will be here
+
+Here are the agents you have:
+{specialized_minions}
+
+Begin!\n{agent_scratchpad}'''
 
 feedback_prompt = """
 You've already tried to execute the task and miserably failed. Here is the result you produced:

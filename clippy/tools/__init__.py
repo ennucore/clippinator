@@ -4,7 +4,6 @@ from .terminal import RunBash, BashBackgroundSessions, RunPython
 from .file_tools import WriteFile, ReadFile, PatchFile, SummarizeFile
 from .code_tools import SearchInFiles, Pylint
 from .tool import HumanInputTool
-from langchain.utilities import PythonREPL
 from langchain.utilities import WolframAlphaAPIWrapper
 from langchain.utilities import SerpAPIWrapper
 

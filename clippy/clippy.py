@@ -5,7 +5,8 @@ import pickle
 from .project import Project
 from .minions.qa import QA
 from .minions.executioner import Executioner, get_specialized_executioners, SpecializedExecutioner
-from .minions.planner import Planner, Plan, extract_agent_name
+from .minions.planner import Planner, Plan
+from .minions import extract_agent_name
 
 
 @dataclass

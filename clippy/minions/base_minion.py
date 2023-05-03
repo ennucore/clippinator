@@ -59,6 +59,9 @@ class CustomOutputParser(AgentOutputParser):
                 'action. Execute all the actions without AResult again.")',
                 log=llm_output,
             )
+        if 'Subagent' in action:
+            action_input += ' ' + action.split('Subagent')[1].strip()
+            action = 'Subagent'
 
         # Return the action and action input
         return AgentAction(

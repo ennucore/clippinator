@@ -136,7 +136,7 @@ class BasicLLM:
 @dataclass
 class BaseMinion:
     def __init__(
-        self, base_prompt, avaliable_tools, model: str = "gpt-4"
+        self, base_prompt, available_tools, model: str = "gpt-4"
     ) -> None:
         llm = get_model(model)
 
@@ -144,7 +144,7 @@ class BaseMinion:
 
         prompt = CustomPromptTemplate(
             template=base_prompt,
-            tools=avaliable_tools,
+            tools=available_tools,
             input_variables=extract_variable_names(
                 base_prompt, interaction_enabled=True
             ),
@@ -154,7 +154,7 @@ class BaseMinion:
 
         output_parser = CustomOutputParser()
 
-        tool_names = [tool.name for tool in avaliable_tools]
+        tool_names = [tool.name for tool in available_tools]
 
         agent = LLMSingleActionAgent(
             llm_chain=llm_chain,
@@ -164,7 +164,7 @@ class BaseMinion:
         )
 
         self.agent_executor = AgentExecutor.from_agent_and_tools(
-            agent=agent, tools=avaliable_tools, verbose=True
+            agent=agent, tools=available_tools, verbose=True
         )
 
     def run(self, **kwargs):

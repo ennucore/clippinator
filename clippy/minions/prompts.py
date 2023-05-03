@@ -232,7 +232,7 @@ Here is the architecture of the project:
 
 Note that the architecture may be significantly different from the current project state.
 
-Here is the existing plan of the project:
+Here is the existing plan of the project, including completed task:
 {plan}
 
 Here's the result of the last executed task - THESE ARE THE IMPORTANT CHANGES YOU SHOULD ACCOUNT FOR:
@@ -260,6 +260,8 @@ Create more milestones only if you need them.
 
 DO NOT generate tasks for anything but the first milestone
 Tasks should not be too easy, they should be like "Create a file app/example.py with functions func1(arg), func2(), classes Class1 which do ..." or "Implement example_file.py according to the architecture"
+Include only uncompleted tasks, only the future plan.
+IF YOU ADD EXTRA TASKS LIKE IMPLEMENTING WHAT IS ALREADY IMPLEMENTED, PEOPLE MAY DIE
 Generate all the milestones
 TASKS SHOULD BE SPECIFIC
 You should compare the architecture and the project state and generate tasks to implement the architecture

@@ -10,7 +10,7 @@ from langchain.schema import BaseMemory
 
 from clippy.project import Project
 from clippy.tools import get_tools
-from clippy.tools.subagents import Subagent
+from clippy.tools.subagents import Subagent, DeclareArchitecture
 from .base_minion import (
     CustomPromptTemplate,
     CustomOutputParser,
@@ -135,6 +135,7 @@ class Taskmaster:
         self.default_executioner = Executioner(project)
         llm = get_model(model)
         tools = get_tools(project)
+        tools.append(DeclareArchitecture(project).get_tool())
         prompt = CustomPromptTemplate(
             template=taskmaster_prompt,
             tools=tools,

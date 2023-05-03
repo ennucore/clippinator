@@ -1,8 +1,9 @@
-from .base_minion import BaseMinion
-from clippy.project import Project
-from .prompts import execution_prompt, get_specialized_prompt
-from clippy import tools
 import yaml
+
+from clippy import tools
+from clippy.project import Project
+from .base_minion import BaseMinion
+from .prompts import execution_prompt, get_specialized_prompt
 
 
 class Executioner:
@@ -33,7 +34,7 @@ def specialized_executioner(name: str, description: str, prompt: str, tool_names
         def __init__(self, project: Project):
             super().__init__(project)
             all_tools = tools.get_tools(project)
-            spe_tools = [tool for tool in all_tools if tool.name in tool_names]
+            spe_tools = [tool for tool in all_tools if tool.name in tool_names or tool.name == 'Python']
             self.execution_agent = BaseMinion(get_specialized_prompt(prompt), spe_tools)
             self.name = name
             self.description = description

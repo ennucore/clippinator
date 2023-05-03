@@ -22,3 +22,16 @@ class Subagent(SimpleTool):
         print(f'Running task "{task}" with agent "{agent}"')
         runner = self.agents.get(agent, self.default)
         return runner.execute(task, self.project)
+
+
+class DeclareArchitecture(SimpleTool):
+    name = "DeclareArchitecture"
+    description = "declare the architecture of the project for the subagents"
+
+    def __init__(self, project: Project):
+        self.project = project
+        super().__init__()
+
+    def func(self, args: str) -> str:
+        self.project.architecture = args
+        return f'Architecture declared.'

@@ -1,13 +1,13 @@
 from langchain.agents import Tool
 from langchain.tools import BaseTool
-from .terminal import RunBash, BashBackgroundSessions, RunPython
-from .file_tools import WriteFile, ReadFile, PatchFile, SummarizeFile
-from .code_tools import SearchInFiles, Pylint
-from .tool import HumanInputTool
-from langchain.utilities import WolframAlphaAPIWrapper
 from langchain.utilities import SerpAPIWrapper
+from langchain.utilities import WolframAlphaAPIWrapper
 
 from clippy.project import Project
+from .code_tools import SearchInFiles, Pylint
+from .file_tools import WriteFile, ReadFile, PatchFile, SummarizeFile
+from .terminal import RunBash, BashBackgroundSessions, RunPython
+from .tool import HumanInputTool
 
 
 def get_tools(project: Project) -> list[BaseTool]:
@@ -29,15 +29,15 @@ def get_tools(project: Project) -> list[BaseTool]:
             name="Python",
             func=RunPython(workdir=project.path).run,
             description="allows you to run python code and get everything that's "
-            "printed (e.g. print(2+2) will give you 4) in order to compute something. "
-            "The input is correct python code.",
+                        "printed (e.g. print(2+2) will give you 4) in order to compute something. "
+                        "The input is correct python code.",
         ),
         Tool(
             name="Wolfram Alpha",
             func=WolframAlphaAPIWrapper().run,
             description="allows you to ask questions about math, science, solve equations, and more. "
-            "The question should be strictly defined, like 'what is the derivative of x^2' or "
-            "'what is the capital of France'",
+                        "The question should be strictly defined, like 'what is the derivative of x^2' or "
+                        "'what is the capital of France'",
         ),
         # Tool(
         #     name="Wait",
@@ -49,7 +49,7 @@ def get_tools(project: Project) -> list[BaseTool]:
         ReadFile(project.path).get_tool(),
         PatchFile(project.path).get_tool(),
         SummarizeFile(project.path).get_tool(),
-        HumanInputTool().get_tool(),
+        # HumanInputTool().get_tool(),
         Pylint(project.path).get_tool(),
         SearchInFiles(project.path).get_tool(),
         BashBackgroundSessions(project.path).get_tool(),

@@ -1,16 +1,17 @@
+import re
 from dataclasses import dataclass
+from typing import List, Union, Callable, Any
+
+from langchain import LLMChain, PromptTemplate
 from langchain.agents import (
     Tool,
     AgentExecutor,
     LLMSingleActionAgent,
     AgentOutputParser,
 )
-from langchain.prompts import StringPromptTemplate
-from langchain import LLMChain, PromptTemplate
 from langchain.chat_models import ChatOpenAI
-from typing import List, Union, Callable, Any
+from langchain.prompts import StringPromptTemplate
 from langchain.schema import AgentAction, AgentFinish
-import re
 
 long_warning = (
     "WARNING: You have been working for a very long time. Please, finish ASAP. "
@@ -33,7 +34,7 @@ class CustomOutputParser(AgentOutputParser):
         regex = r"Action\s*\d*\s*:(.*?)\nAction\s*\d*\s*Input\s*\d*\s*:[\s]*(.*)"
         match = re.search(regex, llm_output, re.DOTALL)
         if not match and llm_output.strip().split("\n")[-1].strip().startswith(
-            "Thought:"
+                "Thought:"
         ):
             return AgentAction(tool="Python", tool_input="", log=llm_output)
         if not match:
@@ -56,7 +57,7 @@ class CustomOutputParser(AgentOutputParser):
             return AgentAction(
                 tool="Python",
                 tool_input="print(\"Error: Write 'AResult: ' after each "
-                'action. Execute all the actions without AResult again.")',
+                           'action. Execute all the actions without AResult again.")',
                 log=llm_output,
             )
         if 'Subagent' in action:
@@ -84,7 +85,7 @@ class CustomPromptTemplate(StringPromptTemplate):
         thoughts = ""
         for action, AResult in intermediate_steps:
             thoughts += action.log
-            thoughts += f"\nAResult: {AResult}\nThought: "
+            thoughts += f"\nAction: {action.tool}\nAction Input: {action.tool_input}\nAResult: {AResult}\nThought: "
         # Set the agent_scratchpad variable to that value
         kwargs["agent_scratchpad"] = thoughts
         # Create a tools variable from the list of tools provided
@@ -141,7 +142,7 @@ class BasicLLM:
 @dataclass
 class BaseMinion:
     def __init__(
-        self, base_prompt, available_tools, model: str = "gpt-4"
+            self, base_prompt, available_tools, model: str = "gpt-4"
     ) -> None:
         llm = get_model(model)
 
@@ -169,7 +170,7 @@ class BaseMinion:
         )
 
         self.agent_executor = AgentExecutor.from_agent_and_tools(
-            agent=agent, tools=available_tools, verbose=True
+            agent=agent, tools=available_tools, verbose=True, max_iterations=50
         )
 
     def run(self, **kwargs):
@@ -185,12 +186,12 @@ class FeedbackMinion:
     check_function: Callable[[str], Any]
 
     def __init__(
-        self,
-        minion: BaseMinion | BasicLLM,
-        eval_prompt: str,
-        feedback_prompt: str,
-        check_function: Callable[[str], Any] = lambda x: None,
-        model: str = "gpt-3.5-turbo",
+            self,
+            minion: BaseMinion | BasicLLM,
+            eval_prompt: str,
+            feedback_prompt: str,
+            check_function: Callable[[str], Any] = lambda x: None,
+            model: str = "gpt-3.5-turbo",
     ) -> None:
         llm = get_model(model)
         self.eval_llm = LLMChain(

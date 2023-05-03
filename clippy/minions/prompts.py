@@ -21,6 +21,8 @@ AResult: the result of the action.
 Final Result: the final result of the task.
 
 "AResult:" ALWAYS comes after "Action Input:" - it's the result of any taken action. Do not use to describe the result of your thought.
+"AResult:" comes after "Action Input:" even if there's a Final Result after that.
+"AResult:" never comes just after "Thought:".
 "Action Input:" can come only after "Action:" - and always does.
 You need to have a "Final Result:", even if the result is trivial. Never stop at "Thought:".
 Everything you do should be one of: Action, Action Input, AResult, Final Result. 
@@ -319,10 +321,33 @@ Feedback: your feedback on the architecture
 Go!
 """
 
-taskmaster_prompt = common_part + '''Achieve the objective: {objective}
+taskmaster_prompt = common_part + '''Achieve the objective: **{objective}**. DO NOT give a Final Result until you achieve the objective.
 ''' + '''
 You can (and should) delegate some tasks to subagents. It's better to delegate things to the subagents than to do them yourself.
-Avoid performing common actions yourself.
+Avoid performing common actions yourself. Note that the tasks for the subagents have to be manageable (not very big, but not very small either).
+Usually, before delegating to an agent, you should declare the project architecture using the corresponding tool. Here's an example of what architecture looks like:
+Action: DeclareArchitecture
+Action Input: ```
+data_processing:
+  __init__.py
+  helpers.py    # Functions to work with data
+    >def translate_gpt(text: str) -> str:    # Translate a chapter
+    >def summarize_gpt(text: str) -> str:    # Summarize a chapter
+  cli.py    # CLI interface for working with data
+    >def convert(filenames: list[str]):    # Convert files
+    >def split(filenames: list[str]):    # Split into chapters
+    >def process(filenames: list[str]):
+views.py    # Handle different messages
+  >def views(bot: Bot):
+  >    def handle_start(msg, _user, _args):    # /start
+  >    def handle_help(msg, _user, _args):   # /help
+metaagent.py     # Main file which processes the data
+  >class DocRetriever(ABC):
+  >class EmbeddingRetriever(DocRetriever):
+  >class MetaAgent:
+```
+AResult: Architecture declared.
+
 To delegate, use the following syntax:
 Action: Subagent @SomeAgent
 Action Input: task
@@ -331,7 +356,10 @@ AResult: the result from the agent will be here
 Here are the agents you have:
 {specialized_minions}
 
-Begin!\n{agent_scratchpad}'''
+Work until you have completely achieved the objective (and tested), do not give a Final Result until then. If you do, we will beat you with a stick.
+
+Begin!
+{agent_scratchpad}'''
 
 feedback_prompt = """
 You've already tried to execute the task and miserably failed. Here is the result you produced:

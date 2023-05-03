@@ -1,6 +1,7 @@
 import typing
-from typer import prompt
+
 from langchain.agents import Tool
+from typer import prompt
 
 
 class SimpleTool:
@@ -16,7 +17,7 @@ class HumanInputTool(SimpleTool):
     name: str = "HumanInput"
     description: str = (
         "A tool that can be used to ask a human for something (only if it's required). "
-        "For instance, it can be useful if you need some kind of API token."
+        "For instance, it can be useful if you need some kind of API token. Use only if absolutely necessary. "
     )
 
     @staticmethod

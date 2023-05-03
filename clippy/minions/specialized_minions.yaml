@@ -1,19 +1,19 @@
 ---
 - name: "Writer"
-  description: "implements a part of the architecture in a new or small file. Example task: 'Implement example.py according to the architecture'. Prefer using this agent when appropriate. It can even implement several connected files."
+  description: "implements a part of the architecture in a new or small file. Example task: 'Implement example.py according to the architecture'. Prefer using this agent when appropriate. It can even implement several connected files, but only a couple of specified files."
   prompt: |+
     Look at the architecture, then implement it using WriteFile. If the file already exists, read it first, then rewrite it.
-  tool_names: ["ReadFile", "WriteFile", "Bash"]
+  tool_names: [ "ReadFile", "WriteFile", "Bash" ]
 - name: "QA"
   description: "Helps test functionality"
   prompt: |+
     You can create a file with tests and run it to test the functionality.
     Sometimes, you need to start some process (like a web server) in the background first.
     When you encounter errors, don't try to fix them, just report them as the result.
-  tool_names: ["ReadFile", "WriteFile", "Bash", "PatchFile", "BashBackground"]
+  tool_names: [ "ReadFile", "WriteFile", "Bash", "PatchFile", "BashBackground" ]
 - name: "Editor"
   description: "Edits a file - usually, to add some new functions or classes to it. Use **only** if the file is already pretty big (>200 lines)."
-  tool_names: ["ReadFile", "PatchFile", "Bash"]
+  tool_names: [ "ReadFile", "PatchFile", "Bash" ]
   prompt: |+
     Look at the architecture and the current code in the file, then use patch to add the new functionality to the file.
     READ THE FILE BEFORE PATCHING
@@ -33,7 +33,7 @@
     If something fails, try again.
 - name: "Devops"
   description: "Does operations with the system: moves files, installs packages, etc."
-  tool_names: ["Bash", "BashBackground", "ReadFile", "WriteFile"]
+  tool_names: [ "Bash", "BashBackground", "ReadFile", "WriteFile" ]
   prompt: |+
     You can use Bash to do operations with the system. 
     Keep in mind that your Bash commands can't ask for stdin or run for a long time.

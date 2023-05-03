@@ -147,16 +147,15 @@ class Taskmaster:
         output_parser = CustomOutputParser()
 
         tool_names = [tool.name for tool in tools]
+        callback_manager = CallbackManager(handlers=[CallbackHandler()])
 
         agent = LLMSingleActionAgent(
             llm_chain=llm_chain,
             output_parser=output_parser,
             stop=["AResult:"],
             allowed_tools=tool_names,
+            callback_manager=callback_manager
         )
-
-        callback_manager = CallbackManager()
-        callback_manager.add_handler(CallbackHandler())
 
         self.agent_executor = AgentExecutor.from_agent_and_tools(
             agent=agent, tools=tools, verbose=True, callback_manager=callback_manager

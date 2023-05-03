@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 from clippy.clippy import Clippy
 import os
 
+from clippy.minions.taskmaster import Taskmaster
+from clippy.project import Project
 
 load_dotenv()
 
@@ -39,6 +41,19 @@ def resume(clippy_path: str):
     """
     clippy = Clippy.load_from_file(clippy_path)
     clippy.run()
+
+
+@app.command()
+def taskmaster(project_path: str, objective: str = ''):
+    """
+    Create a new project using clippy.
+    """
+    if not objective:
+        objective = typer.prompt('What project do I need to create?\n')
+    os.makedirs(project_path, exist_ok=True)
+    project = Project(project_path, objective)
+    tm = Taskmaster(project)
+    tm.run(**project.prompt_fields())
 
 
 if __name__ == "__main__":

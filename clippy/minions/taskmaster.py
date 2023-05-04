@@ -77,6 +77,69 @@ class TaskmasterPromptTemplate(StringPromptTemplate):
         return result
 
 
+<<<<<<< Updated upstream
+=======
+class CallbackHandler(BaseCallbackHandler):
+    agent: LLMSingleActionAgent
+    memory: CustomMemory
+
+    def __init__(self, agent: LLMSingleActionAgent, memory: CustomMemory):
+        self.agent = agent
+        self.memory = memory
+
+    def on_llm_start(
+        self, serialized: Dict[str, Any], prompts: List[str], **kwargs: Any
+    ) -> Any:
+        """Run when LLM starts running."""
+
+    def on_llm_new_token(self, token: str, **kwargs: Any) -> Any:
+        """Run on new LLM token. Only available when streaming is enabled."""
+
+    def on_llm_end(self, response: LLMResult, **kwargs: Any) -> Any:
+        """Run when LLM ends running."""
+
+    def on_llm_error(
+        self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
+    ) -> Any:
+        """Run when LLM errors."""
+
+    def on_chain_start(
+        self, serialized: Dict[str, Any], inputs: Dict[str, Any], **kwargs: Any
+    ) -> Any:
+        """Run when chain starts running."""
+
+    def on_chain_end(self, outputs: Dict[str, Any], **kwargs: Any) -> Any:
+        """Run when chain ends running."""
+
+    def on_chain_error(
+        self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
+    ) -> Any:
+        """Run when chain errors."""
+
+    def on_tool_start(
+        self, serialized: Dict[str, Any], input_str: str, **kwargs: Any
+    ) -> Any:
+        """Run when tool starts running."""
+
+    def on_tool_end(self, output: str, **kwargs: Any) -> Any:
+        """Run when tool ends running."""
+
+    def on_tool_error(
+        self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
+    ) -> Any:
+        """Run when tool errors."""
+
+    def on_agent_action(self, action: AgentAction, **kwargs: Any) -> Any:
+        """Run on agent action."""
+
+    def on_agent_finish(self, finish: AgentFinish, **kwargs: Any) -> Any:
+        """Run on agent end."""
+
+    def on_text(self, text: str, **kwargs: Any) -> Any:
+        """Run on arbitrary text."""
+
+
+>>>>>>> Stashed changes
 class Taskmaster:
     def __init__(self, project: Project, model: str = "gpt-3.5-turbo"):
         self.project = project
@@ -84,6 +147,7 @@ class Taskmaster:
         self.default_executioner = Executioner(project)
         llm = get_model(model)
         tools = get_tools(project)
+<<<<<<< Updated upstream
         tools.append(DeclareArchitecture(project).get_tool())
         tool_names = [tool.name for tool in tools]
 
@@ -95,6 +159,10 @@ class Taskmaster:
         tools.append(WarningTool().get_tool())
 
         prompt = TaskmasterPromptTemplate(
+=======
+
+        prompt = CustomPromptTemplate(
+>>>>>>> Stashed changes
             template=taskmaster_prompt,
             tools=tools,
             input_variables=extract_variable_names(
@@ -107,6 +175,10 @@ class Taskmaster:
 
         output_parser = CustomOutputParser()
 
+<<<<<<< Updated upstream
+=======
+        tool_names = [tool.name for tool in tools]
+>>>>>>> Stashed changes
         agent = LLMSingleActionAgent(
             llm_chain=llm_chain,
             output_parser=output_parser,
@@ -114,6 +186,7 @@ class Taskmaster:
             allowed_tools=tool_names,
         )
 
+        callback_manager = CallbackManager(handlers=[CallbackHandler()])
         self.agent_executor = AgentExecutor.from_agent_and_tools(
             agent=agent,
             tools=tools,

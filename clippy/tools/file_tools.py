@@ -2,7 +2,7 @@ import os
 from dataclasses import dataclass
 
 from langchain import PromptTemplate
-
+from typing import Tuple
 from clippy.tools.tool import SimpleTool
 from langchain.chat_models import ChatOpenAI
 from langchain.chains.summarize import load_summarize_chain
@@ -126,7 +126,7 @@ class ReadFile(SimpleTool):
             return f"Error reading file: {str(e)}"
 
 
-def apply_patch(patch_str: str, file_path: str) -> (str, int, int):
+def apply_patch(patch_str: str, file_path: str) -> Tuple[str, int, int]:
     # Split the patch string into lines and remove the filename
     patch_lines = patch_str.strip().split("\n")  # [1:]
     with open(file_path.strip(), "r") as file:

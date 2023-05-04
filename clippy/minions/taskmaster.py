@@ -113,8 +113,6 @@ class Taskmaster:
             stop=["AResult:"],
             allowed_tools=tool_names,
         )
-
-        callback_manager = CallbackManager(handlers=[CallbackHandler()])
         self.agent_executor = AgentExecutor.from_agent_and_tools(
             agent=agent,
             tools=tools,

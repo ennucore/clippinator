@@ -325,6 +325,7 @@ taskmaster_prompt = common_part + '''Achieve the objective: **{objective}**. DO 
 ''' + '''
 You can (and should) delegate some tasks to subagents. It's better to delegate things to the subagents than to do them yourself.
 Avoid performing common actions yourself. Note that the tasks for the subagents have to be manageable (not very big, but not very small either).
+TASKS SHOULD HAVE REASONABLE SIZE AND THE DESCRIPTION SHOULD BE DETAILED
 Usually, before delegating to an agent, you should declare the project architecture using the corresponding tool. Here's an example of what architecture looks like:
 Action: DeclareArchitecture
 Action Input: ```
@@ -347,6 +348,8 @@ metaagent.py     # Main file which processes the data
   >class MetaAgent:
 ```
 AResult: Architecture declared.
+
+Architecture should include **all** important classes and functions. You can also write with words what exactly should be inside the file (for html and css files, for instance).
 
 To delegate, use the following syntax:
 Action: Subagent @SomeAgent

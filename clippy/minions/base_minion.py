@@ -12,6 +12,7 @@ from langchain.agents import (
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import StringPromptTemplate
 from langchain.schema import AgentAction, AgentFinish
+from clippy.tools.tool import WarningTool
 
 long_warning = (
     "WARNING: You have been working for a very long time. Please, finish ASAP. "
@@ -90,30 +91,28 @@ class CustomOutputParser(AgentOutputParser):
 
 
 class CustomPromptTemplate(StringPromptTemplate):
-    # The template to use
     template: str
     # The list of tools available
     tools: List[Tool]
+    agent_toolnames: List[str]
+
+    @property
+    def _prompt_type(self) -> str:
+        return "taskmaster"
 
     def format(self, **kwargs) -> str:
         # Get the intermediate steps (AgentAction, AResult tuples)
         # Format them in a particular way
         intermediate_steps = kwargs.pop("intermediate_steps")
         thoughts = ""
-        for action, AResult in intermediate_steps:
-            thoughts += action.log
-            thoughts += f"\nAction: {action.tool}\nAction Input: {action.tool_input}\nAResult: {AResult}\nThought: "
-        # Set the agent_scratchpad variable to that value
-        kwargs["agent_scratchpad"] = thoughts
-        # Create a tools variable from the list of tools provided
+        for action, AResult in intermediate_steps[::-1]:
+            thoughts = action.log + f"\nAResult: {AResult}\nThought: " + thoughts
         kwargs["tools"] = "\n".join(
             [f"{tool.name}: {tool.description}" for tool in self.tools]
         )
-        # Create a list of tool names for the tools provided
-        kwargs["tool_names"] = ", ".join([tool.name for tool in self.tools])
+        kwargs["agent_scratchpad"] = thoughts
+        kwargs["tool_names"] = self.agent_toolnames
         result = self.template.format(**kwargs)
-        if len(result) > 5000:
-            result += "\n" + long_warning + "\n"
         return result
 
 
@@ -162,6 +161,8 @@ class BaseMinion:
         llm = get_model(model)
 
         variable_names = extract_variable_names(base_prompt)
+        agent_toolnames = [tool.name for tool in available_tools]
+        available_tools.append(WarningTool().get_tool())
 
         prompt = CustomPromptTemplate(
             template=base_prompt,
@@ -169,19 +170,18 @@ class BaseMinion:
             input_variables=extract_variable_names(
                 base_prompt, interaction_enabled=True
             ),
+            agent_toolnames=agent_toolnames,
         )
 
         llm_chain = LLMChain(llm=llm, prompt=prompt)
 
         output_parser = CustomOutputParser()
 
-        tool_names = [tool.name for tool in available_tools]
-
         agent = LLMSingleActionAgent(
             llm_chain=llm_chain,
             output_parser=output_parser,
             stop=["AResult:"],
-            allowed_tools=tool_names,
+            allowed_tools=[tool.name for tool in available_tools],
         )
 
         self.agent_executor = AgentExecutor.from_agent_and_tools(

@@ -21,7 +21,9 @@ class Subagent(SimpleTool):
         task, agent = extract_agent_name(args)
         print(f'Running task "{task}" with agent "{agent}"')
         runner = self.agents.get(agent, self.default)
-        return runner.execute(task, self.project)
+        result = runner.execute(task, self.project)
+        result = f'Completed, result: {result}.\nCurrent project state:\n{self.project.get_project_summary()}'
+        return result
 
 
 class DeclareArchitecture(SimpleTool):

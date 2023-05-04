@@ -49,9 +49,9 @@ def get_tools(project: Project) -> list[BaseTool]:
         ReadFile(project.path).get_tool(),
         PatchFile(project.path).get_tool(),
         SummarizeFile(project.path).get_tool(),
-        # HumanInputTool().get_tool(),
+        HumanInputTool().get_tool(),
         Pylint(project.path).get_tool(),
-        SearchInFiles(project.path).get_tool(),
+        # SearchInFiles(project.path).get_tool(),
         BashBackgroundSessions(project.path).get_tool(),
     ]
     return tools

@@ -1,19 +1,16 @@
-from typing import List, Dict, Any, Union
+from typing import List, Dict, Any
 
 from langchain import LLMChain
 from langchain.agents import AgentExecutor, LLMSingleActionAgent, Tool
-from langchain.callbacks.base import BaseCallbackHandler
 from langchain.memory import ConversationSummaryMemory
 from langchain.prompts import StringPromptTemplate
-from langchain.schema import AgentAction, AgentFinish, LLMResult
 from langchain.schema import BaseMemory
 
 from clippy.project import Project
 from clippy.tools import get_tools
-from clippy.tools.tool import WarningTool
 from clippy.tools.subagents import Subagent, DeclareArchitecture
+from clippy.tools.tool import WarningTool
 from .base_minion import (
-    CustomPromptTemplate,
     CustomOutputParser,
     extract_variable_names,
     get_model,
@@ -86,6 +83,7 @@ class Taskmaster:
         tools = get_tools(project)
         tools.append(DeclareArchitecture(project).get_tool())
         tool_names = [tool.name for tool in tools]
+        tool_names.remove('PatchFile')
 
         tools.append(
             Subagent(
@@ -125,6 +123,6 @@ class Taskmaster:
             minion.expl() for minion in self.specialized_executioners.values()
         )
         return (
-            self.agent_executor.run(**kwargs)
-            or "No result. The execution was probably unsuccessful."
+                self.agent_executor.run(**kwargs)
+                or "No result. The execution was probably unsuccessful."
         )

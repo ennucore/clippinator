@@ -1,13 +1,13 @@
+import fcntl
 import os
 import pty
-import subprocess
-from typing import List, Union
-import time
-import fcntl
-import select
 import re
+import select
+import subprocess
+import time
 from abc import ABC
 from dataclasses import dataclass
+from typing import List, Union
 
 from langchain.agents import Tool
 
@@ -74,6 +74,8 @@ class RunPython:
     def run(self, commands: str) -> str:
         """Run commands and return final output."""
 
+        if not commands.strip():
+            return ''
         try:
             completed_process = subprocess.run(
                 ['python', '-c', commands],

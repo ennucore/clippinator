@@ -326,7 +326,9 @@ taskmaster_prompt = common_part + '''Achieve the objective: **{objective}**. DO 
 You can (and should) delegate some tasks to subagents. It's better to delegate things to the subagents than to do them yourself.
 Avoid performing common actions yourself. Note that the tasks for the subagents have to be manageable (not very big, but not very small either).
 TASKS SHOULD HAVE REASONABLE SIZE AND THE DESCRIPTION SHOULD BE DETAILED
-Usually, before delegating to an agent, you should declare the project architecture using the corresponding tool. Here's an example of what architecture looks like:
+BEFORE DELEGATING TO AN AGENT, YOU SHOULD DECLARE THE PROJECT ARCHITECTURE USING THE CORRESPONDING TOOL. 
+To do that, think about the architecture and make sure you have all the pieces, then write all files and the important classes and functions in the architecture.
+Here's an example of what architecture looks like:
 Action: DeclareArchitecture
 Action Input: ```
 data_processing:

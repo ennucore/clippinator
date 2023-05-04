@@ -10,6 +10,7 @@ from langchain.schema import BaseMemory
 
 from clippy.project import Project
 from clippy.tools import get_tools
+from clippy.tools.tool import WarningTool
 from clippy.tools.subagents import Subagent, DeclareArchitecture
 from .base_minion import (
     CustomPromptTemplate,
@@ -52,6 +53,7 @@ class TaskmasterPromptTemplate(StringPromptTemplate):
     template: str
     # The list of tools available
     tools: List[Tool]
+    agent_toolnames: List[str]
 
     @property
     def _prompt_type(self) -> str:
@@ -70,104 +72,60 @@ class TaskmasterPromptTemplate(StringPromptTemplate):
             [f"{tool.name}: {tool.description}" for tool in self.tools]
         )
         kwargs["agent_scratchpad"] = thoughts
-        kwargs["tool_names"] = ", ".join([tool.name for tool in self.tools])
+        kwargs["tool_names"] = self.agent_toolnames
         result = self.template.format(**kwargs)
         return result
 
 
-class CallbackHandler(BaseCallbackHandler):
-    def on_llm_start(
-            self, serialized: Dict[str, Any], prompts: List[str], **kwargs: Any
-    ) -> Any:
-        """Run when LLM starts running."""
-
-    def on_llm_new_token(self, token: str, **kwargs: Any) -> Any:
-        """Run on new LLM token. Only available when streaming is enabled."""
-
-    def on_llm_end(self, response: LLMResult, **kwargs: Any) -> Any:
-        """Run when LLM ends running."""
-
-    def on_llm_error(
-            self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
-    ) -> Any:
-        """Run when LLM errors."""
-
-    def on_chain_start(
-            self, serialized: Dict[str, Any], inputs: Dict[str, Any], **kwargs: Any
-    ) -> Any:
-        """Run when chain starts running."""
-
-    def on_chain_end(self, outputs: Dict[str, Any], **kwargs: Any) -> Any:
-        """Run when chain ends running."""
-
-    def on_chain_error(
-            self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
-    ) -> Any:
-        """Run when chain errors."""
-
-    def on_tool_start(
-            self, serialized: Dict[str, Any], input_str: str, **kwargs: Any
-    ) -> Any:
-        """Run when tool starts running."""
-
-    def on_tool_end(self, output: str, **kwargs: Any) -> Any:
-        """Run when tool ends running."""
-
-    def on_tool_error(
-            self, error: Union[Exception, KeyboardInterrupt], **kwargs: Any
-    ) -> Any:
-        """Run when tool errors."""
-
-    def on_agent_action(self, action: AgentAction, **kwargs: Any) -> Any:
-        """Run on agent action."""
-
-    def on_agent_finish(self, finish: AgentFinish, **kwargs: Any) -> Any:
-        """Run on agent end."""
-
-    def on_text(self, text: str, **kwargs: Any) -> Any:
-        print(text)
-
-
 class Taskmaster:
-    def __init__(self, project: Project, model: str = "gpt-4"):
+    def __init__(self, project: Project, model: str = "gpt-3.5-turbo"):
         self.project = project
         self.specialized_executioners = get_specialized_executioners(project)
         self.default_executioner = Executioner(project)
         llm = get_model(model)
         tools = get_tools(project)
         tools.append(DeclareArchitecture(project).get_tool())
-        prompt = CustomPromptTemplate(
+        tool_names = [tool.name for tool in tools]
+
+        tools.append(
+            Subagent(
+                project, get_specialized_executioners(project), Executioner(project)
+            ).get_tool()
+        )
+        tools.append(WarningTool().get_tool())
+
+        prompt = TaskmasterPromptTemplate(
             template=taskmaster_prompt,
             tools=tools,
             input_variables=extract_variable_names(
                 taskmaster_prompt, interaction_enabled=True
             ),
+            agent_toolnames=tool_names,
         )
 
         llm_chain = LLMChain(llm=llm, prompt=prompt)
 
         output_parser = CustomOutputParser()
 
-        tool_names = [tool.name for tool in tools]
-        tools.append(Subagent(project, get_specialized_executioners(project), Executioner(project)).get_tool())
-        # callback_manager = CallbackManager(handlers=[CallbackHandler()])
-
         agent = LLMSingleActionAgent(
             llm_chain=llm_chain,
             output_parser=output_parser,
             stop=["AResult:"],
             allowed_tools=tool_names,
-            # callback_manager=callback_manager
         )
 
         self.agent_executor = AgentExecutor.from_agent_and_tools(
-            agent=agent, tools=tools, verbose=True  # , callback_manager=callback_manager
+            agent=agent,
+            tools=tools,
+            verbose=True,
         )
 
     def run(self, **kwargs):
         kwargs["feedback"] = kwargs.get("feedback", "")
-        kwargs['specialized_minions'] = '\n'.join(minion.expl() for minion in self.specialized_executioners.values())
+        kwargs["specialized_minions"] = "\n".join(
+            minion.expl() for minion in self.specialized_executioners.values()
+        )
         return (
-                self.agent_executor.run(**kwargs)
-                or "No result. The execution was probably unsuccessful."
+            self.agent_executor.run(**kwargs)
+            or "No result. The execution was probably unsuccessful."
         )

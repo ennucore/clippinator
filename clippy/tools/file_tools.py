@@ -8,13 +8,16 @@ from langchain.chat_models import ChatOpenAI
 from langchain.chains.summarize import load_summarize_chain
 from langchain.chains.combine_documents.base import BaseCombineDocumentsChain
 from langchain.docstore.document import Document
-from langchain.text_splitter import CharacterTextSplitter, RecursiveCharacterTextSplitter
+from langchain.text_splitter import (
+    CharacterTextSplitter,
+    RecursiveCharacterTextSplitter,
+)
 
 
 def strip_quotes(inp: str) -> str:
     inp = inp.strip()
-    inp = inp.removeprefix('```').removeprefix("'''").removeprefix('"""').strip()
-    inp = inp.removesuffix('\n```').removesuffix("\n'''").removesuffix('\n"""')
+    inp = inp.removeprefix("```").removeprefix("'''").removeprefix('"""').strip()
+    inp = inp.removesuffix("\n```").removesuffix("\n'''").removesuffix('\n"""')
     return inp
 
 
@@ -39,17 +42,20 @@ class WriteFile(SimpleTool):
 
     def func(self, args: str) -> str:
         # Use a regular expression to extract the file path from the input
-        if '\n' not in args:
+        if "\n" not in args:
             file_path = args.strip().strip("'").strip()
-            content = ''
+            content = ""
             with open(os.path.join(self.workdir, file_path), "w") as f:
                 f.write(content)
-                return 'Created an empty file.'
+                return "Created an empty file."
         file_path, content = args.split("\n", 1)
         file_path = file_path.strip().strip("'").strip()
         content = strip_quotes(content)
-        if all('|' in line[:5] or not line.strip() for line in content.split('\n')):
-            content = '\n'.join(line.split('|', 1)[1] if line.strip() else line for line in content.split('\n'))
+        if all("|" in line[:5] or not line.strip() for line in content.split("\n")):
+            content = "\n".join(
+                line.split("|", 1)[1] if line.strip() else line
+                for line in content.split("\n")
+            )
 
         original_file_path = file_path
         file_path = os.path.join(self.workdir, file_path)
@@ -90,16 +96,20 @@ class ReadFile(SimpleTool):
                 with open(os.path.join(self.workdir, args.strip()), "r") as f:
                     lines = f.readlines()
                     lines = [f"{i + 1}|{line}" for i, line in enumerate(lines)]
-                    out = '```\n' + "".join(lines) + '\n```'
+                    out = "```\n" + "".join(lines) + "\n```"
                     if len(out) > 5000:
-                        return out[:5000] + '\n...\n```\nFile too long, use the summarizer or ' \
-                                            '(preferably) request specific line ranges.\n'
+                        return (
+                            out[:5000]
+                            + "\n...\n```\nFile too long, use the summarizer or "
+                            "(preferably) request specific line ranges.\n"
+                        )
                     return out
             filename, line_range = args.split("[", 1)
             line_ranges = line_range.split("]")[0].split(",")
             line_ranges = [line_range.split(":") for line_range in line_ranges]
             line_ranges = [
-                (int(line_range[0].strip()) - 1, int(line_range[1].strip())) for line_range in line_ranges
+                (int(line_range[0].strip()) - 1, int(line_range[1].strip()))
+                for line_range in line_ranges
             ]
             with open(os.path.join(self.workdir, filename.strip()), "r") as f:
                 lines = f.readlines()
@@ -111,35 +121,41 @@ class ReadFile(SimpleTool):
                             for i in range(line_range[0], line_range[1] + 1)
                         ]
                     )
-                return '```\n' + out + '\n```'
+                return "```\n" + out + "\n```"
         except Exception as e:
             return f"Error reading file: {str(e)}"
 
 
 def apply_patch(patch_str: str, file_path: str) -> (str, int, int):
     # Split the patch string into lines and remove the filename
-    patch_lines = patch_str.strip().split('\n')  # [1:]
-    with open(file_path.strip(), 'r') as file:
+    patch_lines = patch_str.strip().split("\n")  # [1:]
+    with open(file_path.strip(), "r") as file:
         file_lines = file.readlines()
 
     plus_lines, minus_lines = 0, 0
     # Loop through the patch lines
     for patch_line in patch_lines:
-        if '|' not in patch_line and patch_line.strip():
-            raise ValueError(f"Invalid patch line: {patch_line}. Has to have the format +N|line or -N|line.")
+        if "|" not in patch_line and patch_line.strip():
+            raise ValueError(
+                f"Invalid patch line: {patch_line}. Has to have the format +N|line or -N|line."
+            )
         if not patch_line.strip():
             continue
         # Parse the patch line
-        action, index, content = patch_line[0], int(patch_line[1:].split('|')[0]) - 1, patch_line.split('|', 1)[1]
+        action, index, content = (
+            patch_line[0],
+            int(patch_line[1:].split("|")[0]) - 1,
+            patch_line.split("|", 1)[1],
+        )
 
         # Apply the patch line to the file content
-        if action == '-' and 0 <= index < len(file_lines):
+        if action == "-" and 0 <= index < len(file_lines):
             del file_lines[index]
             minus_lines += 1
-        elif action == '+' and 0 <= index <= len(file_lines) and content.strip():
-            file_lines.insert(index, content + '\n')
+        elif action == "+" and 0 <= index <= len(file_lines) and content.strip():
+            file_lines.insert(index, content + "\n")
             plus_lines += 1
-    return ''.join(file_lines), plus_lines, minus_lines
+    return "".join(file_lines), plus_lines, minus_lines
 
 
 @dataclass
@@ -173,19 +189,19 @@ class PatchFile(SimpleTool):
         :param args: The diff to apply to the files.
         :return: The result of the patch command as a string.
         """
-        filename, patch = strip_quotes(args).split('\n', 1)
+        filename, patch = strip_quotes(args).split("\n", 1)
         patch = strip_quotes(patch)
         filename = os.path.join(self.workdir, filename.strip())
         try:
             new_content, plus_lines, minus_lines = apply_patch(patch, filename)
         except Exception as e:
             return f"Error applying patch: {str(e)}\n"
-        with open(filename, 'w') as file:
+        with open(filename, "w") as file:
             file.write(new_content)
         return f"Successfully patched {filename} with {plus_lines} added lines and {minus_lines} removed lines."
 
 
-mr_prompt_template = '''You need to write a summary of the content of a file. You should provide an overview of what this file contains (classes, functions, content, etc.)
+mr_prompt_template = """You need to write a summary of the content of a file. You should provide an overview of what this file contains (classes, functions, content, etc.)
 Keep the line numbers, for instance, this is how your output should look like (output just that and nothing else) - this example is for a Python file:
 50| class Prompt - a class for a prompt that ...
 53| def format(self, **kwargs) - a method that formats the prompt
@@ -196,7 +212,7 @@ Note that if the file contains some text information/content, you should summari
 Here is the content (it may include the file and previously summarized content) you should summarize:
 
 {text}
-'''
+"""
 
 
 @dataclass
@@ -214,10 +230,14 @@ class SummarizeFile(SimpleTool):
 
     def __init__(self, wd: str = ".", model_name: str = "gpt-3.5-turbo"):
         self.workdir = wd
-        mr_prompt = PromptTemplate(template=mr_prompt_template, input_variables=["text"])
+        mr_prompt = PromptTemplate(
+            template=mr_prompt_template, input_variables=["text"]
+        )
         self.summary_agent = load_summarize_chain(
-            ChatOpenAI(model_name=model_name, request_timeout=140), chain_type="map_reduce", map_prompt=mr_prompt,
-            combine_prompt=mr_prompt
+            ChatOpenAI(model_name=model_name, request_timeout=140),
+            chain_type="map_reduce",
+            map_prompt=mr_prompt,
+            combine_prompt=mr_prompt,
         )
         self.text_splitter = RecursiveCharacterTextSplitter()
 
@@ -225,7 +245,7 @@ class SummarizeFile(SimpleTool):
         try:
             with open(os.path.join(self.workdir, args.strip()), "r") as f:
                 inp = f.readlines()
-                inp = ''.join([f"{i + 1}| {line}" for i, line in enumerate(inp)])
+                inp = "".join([f"{i + 1}| {line}" for i, line in enumerate(inp)])
                 texts = self.text_splitter.split_text(inp)
                 docs = [Document(page_content=t) for t in texts]
                 result = self.summary_agent.run(docs)

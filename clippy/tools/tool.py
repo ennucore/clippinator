@@ -13,6 +13,15 @@ class SimpleTool:
         return Tool(name=self.name, func=self.func, description=self.description)
 
 
+class WarningTool(SimpleTool):
+    name: str = "WarnAgent"
+    description: str = "A tool that can be used to warn the agent about something."
+
+    @staticmethod
+    def func(args: str) -> str:
+        return args
+
+
 class HumanInputTool(SimpleTool):
     name: str = "HumanInput"
     description: str = (

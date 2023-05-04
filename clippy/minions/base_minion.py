@@ -22,8 +22,14 @@ long_warning = (
 class CustomOutputParser(AgentOutputParser):
     def parse(self, llm_output: str) -> Union[AgentAction, AgentFinish]:
         # todo: check that there's no "Action:" together with the result
-        # Check if agent should finish
+        # Check if agent should finish"
         if "Final Result:" in llm_output:
+            if "Action" in llm_output:
+                return AgentAction(
+                    tool="WarnAgent",
+                    tool_input="Don't write 'Action' together with the Final Result.",
+                    log=llm_output,
+                )
             return AgentFinish(
                 # Return values is generally always a dictionary with a single `output` key
                 # It is not recommended to try anything else at the moment :)
@@ -34,35 +40,46 @@ class CustomOutputParser(AgentOutputParser):
         regex = r"Action\s*\d*\s*:(.*?)\nAction\s*\d*\s*Input\s*\d*\s*:[\s]*(.*)"
         match = re.search(regex, llm_output, re.DOTALL)
         if not match and llm_output.strip().split("\n")[-1].strip().startswith(
-                "Thought:"
+            "Thought:"
         ):
-            return AgentAction(tool="Python", tool_input="", log=llm_output)
+            return AgentAction(
+                tool="WarnAgent",
+                tool_input="don't stop after 'Thought:', continue the thought you had",
+                log=llm_output,
+            )
+
         if not match:
             if "Action:" in llm_output and "Action Input:" not in llm_output:
                 return AgentAction(
-                    tool="Python",
-                    tool_input='print("No Action Input specified.")',
+                    tool="WarnAgent",
+                    tool_input="No Action Input specified.",
                     log=llm_output,
                 )
+            else:
+                return AgentAction(
+                    tool="WarnAgent",
+                    tool_input="Continue with thoughts and actions*",
+                    log=llm_output,
+                )
+
+        if llm_output.count("Action Input") > 1:
             return AgentAction(
-                tool="Python",
-                tool_input='print("*Continue with thoughts and actions*")',
+                tool="WarnAgent",
+                tool_input="Only do one action at a time.",
                 log=llm_output,
             )
-        if not match:
-            raise ValueError(f"Could not parse LLM output: `{llm_output}`")
+
         action = match.group(1).strip().strip("`").strip('"').strip("'").strip()
         action_input = match.group(2)
         if "\nThought: " in action_input or "\nAction: " in action_input:
             return AgentAction(
-                tool="Python",
-                tool_input="print(\"Error: Write 'AResult: ' after each "
-                           'action. Execute all the actions without AResult again.")',
+                tool="WarnAgent",
+                tool_input="Error: Write 'AResult: ' after each action. Execute all the actions without AResult again.",
                 log=llm_output,
             )
-        if 'Subagent' in action:
-            action_input += ' ' + action.split('Subagent')[1].strip()
-            action = 'Subagent'
+        if "Subagent" in action:
+            action_input += " " + action.split("Subagent")[1].strip()
+            action = "Subagent"
 
         # Return the action and action input
         return AgentAction(
@@ -141,9 +158,7 @@ class BasicLLM:
 
 @dataclass
 class BaseMinion:
-    def __init__(
-            self, base_prompt, available_tools, model: str = "gpt-4"
-    ) -> None:
+    def __init__(self, base_prompt, available_tools, model: str = "gpt-4") -> None:
         llm = get_model(model)
 
         variable_names = extract_variable_names(base_prompt)
@@ -175,7 +190,10 @@ class BaseMinion:
 
     def run(self, **kwargs):
         kwargs["feedback"] = kwargs.get("feedback", "")
-        return self.agent_executor.run(**kwargs) or 'No result. The execution was probably unsuccessful.'
+        return (
+            self.agent_executor.run(**kwargs)
+            or "No result. The execution was probably unsuccessful."
+        )
 
 
 @dataclass
@@ -186,12 +204,12 @@ class FeedbackMinion:
     check_function: Callable[[str], Any]
 
     def __init__(
-            self,
-            minion: BaseMinion | BasicLLM,
-            eval_prompt: str,
-            feedback_prompt: str,
-            check_function: Callable[[str], Any] = lambda x: None,
-            model: str = "gpt-3.5-turbo",
+        self,
+        minion: BaseMinion | BasicLLM,
+        eval_prompt: str,
+        feedback_prompt: str,
+        check_function: Callable[[str], Any] = lambda x: None,
+        model: str = "gpt-3.5-turbo",
     ) -> None:
         llm = get_model(model)
         self.eval_llm = LLMChain(
@@ -209,8 +227,10 @@ class FeedbackMinion:
     def run(self, **kwargs):
         if "feedback" in kwargs:
             print("Rerunning a prompt with feedback:", kwargs["feedback"])
-            if len(kwargs['previous_result']) > 500:
-                kwargs["previous_result"] = kwargs["previous_result"][:500] + '\n...(truncated)\n'
+            if len(kwargs["previous_result"]) > 500:
+                kwargs["previous_result"] = (
+                    kwargs["previous_result"][:500] + "\n...(truncated)\n"
+                )
             kwargs["feedback"] = self.feedback_prompt.format(**kwargs)
         res = self.underlying_minion.run(**kwargs)
         try:

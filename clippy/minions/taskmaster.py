@@ -47,7 +47,7 @@ class CustomMemory(BaseMemory):
 
 
 class Taskmaster:
-    def __init__(self, project: Project, model: str = "gpt-3.5-turbo"):
+    def __init__(self, project: Project, model: str = "gpt-4"):
         self.project = project
         self.specialized_executioners = get_specialized_executioners(project)
         self.default_executioner = Executioner(project)

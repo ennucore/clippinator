@@ -326,6 +326,7 @@ taskmaster_prompt = common_part + '''Achieve the objective: **{objective}**. DO 
 You can (and should) delegate some tasks to subagents. It's better to delegate things to the subagents than to do them yourself.
 Avoid performing common actions yourself. Note that the tasks for the subagents have to be manageable (not very big, but not very small either).
 TASKS SHOULD HAVE REASONABLE SIZE AND THE DESCRIPTION SHOULD BE DETAILED
+IMPLEMENTING THE ENTIRE PROJECT IS FAR TOO BIG OF A TASK
 BEFORE DELEGATING TO AN AGENT, YOU SHOULD DECLARE THE PROJECT ARCHITECTURE USING THE CORRESPONDING TOOL. 
 To do that, think about the architecture and make sure you have all the pieces, then write all files and the important classes and functions in the architecture.
 Here's an example of what architecture looks like:
@@ -352,6 +353,7 @@ metaagent.py     # Main file which processes the data
 AResult: Architecture declared.
 
 Architecture should include **all** important classes and functions. You can also write with words what exactly should be inside the file (for html and css files, for instance).
+BEFORE DECLARING ARCHITECTURE, THINK ABOUT WHAT YOU NEED TO DEFINE. For instance, the database models and how they will be handled, the routes/views of an app, the templates, the submodules (like subcommands of a CLI or submodels of a webapp).
 
 To delegate, use the following syntax:
 Action: Subagent @SomeAgent
@@ -414,8 +416,7 @@ initial_planning = (
         common_planning
         + """
 Generate an initial plan using "Final result:". Do not execute the plan yourself. Do not create or modify any files. Only provide instructions for the agents to follow. Do not execute the plan yourself. Do not create or modify any files. Only provide instructions for the agents to follow.
-{agent_scratchpad}
-"""
+{agent_scratchpad}"""
 )
 
 _update_planning = (
@@ -427,6 +428,5 @@ Here's the existing plan:
 Here's the report from the last task:
 {report}
 Update the plan using "Final result:". Do not execute the plan yourself. Do not create or modify any files. Only provide instructions for the agents to follow. Do not execute the plan yourself. Do not create or modify any files. Only provide instructions for the agents to follow.
-{agent_scratchpad}
-"""
+{agent_scratchpad}"""
 )

@@ -12,6 +12,7 @@ from langchain.agents import (
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import StringPromptTemplate
 from langchain.schema import AgentAction, AgentFinish
+
 from clippy.tools.tool import WarningTool
 
 long_warning = (
@@ -41,11 +42,11 @@ class CustomOutputParser(AgentOutputParser):
         regex = r"Action\s*\d*\s*:(.*?)\nAction\s*\d*\s*Input\s*\d*\s*:[\s]*(.*)"
         match = re.search(regex, llm_output, re.DOTALL)
         if not match and llm_output.strip().split("\n")[-1].strip().startswith(
-            "Thought:"
+                "Thought:"
         ):
             return AgentAction(
                 tool="WarnAgent",
-                tool_input="don't stop after 'Thought:', continue the thought you had",
+                tool_input="don't stop after 'Thought:', continue with the next thought or action",
                 log=llm_output,
             )
 
@@ -59,14 +60,14 @@ class CustomOutputParser(AgentOutputParser):
             else:
                 return AgentAction(
                     tool="WarnAgent",
-                    tool_input="Continue with thoughts and actions*",
+                    tool_input="Continue.\n",
                     log=llm_output,
                 )
 
         if llm_output.count("Action Input") > 1:
             return AgentAction(
                 tool="WarnAgent",
-                tool_input="Only do one action at a time.",
+                tool_input="Error: Write 'AResult: ' after each action. Execute all the actions without AResult again.",
                 log=llm_output,
             )
 
@@ -106,11 +107,14 @@ class CustomPromptTemplate(StringPromptTemplate):
         intermediate_steps = kwargs.pop("intermediate_steps")
         thoughts = ""
         for action, AResult in intermediate_steps[::-1]:
-            thoughts = action.log + f"\nAResult: {AResult}\nThought: " + thoughts
+            if AResult.startswith('\r'):
+                thoughts = action.log + f"\nSystem note: {AResult[1:]}\nThought: " + thoughts
+            else:
+                thoughts = action.log + f"\nAResult: {AResult}\nThought: " + thoughts
         kwargs["tools"] = "\n".join(
-            [f"{tool.name}: {tool.description}" for tool in self.tools]
+            [f"{tool.name}: {tool.description}" for tool in self.tools if tool in self.agent_toolnames]
         )
-        kwargs["agent_scratchpad"] = thoughts
+        kwargs["agent_scratchpad"] = thoughts.removesuffix("\nThought: ")
         kwargs["tool_names"] = self.agent_toolnames
         result = self.template.format(**kwargs)
         return result
@@ -191,8 +195,8 @@ class BaseMinion:
     def run(self, **kwargs):
         kwargs["feedback"] = kwargs.get("feedback", "")
         return (
-            self.agent_executor.run(**kwargs)
-            or "No result. The execution was probably unsuccessful."
+                self.agent_executor.run(**kwargs)
+                or "No result. The execution was probably unsuccessful."
         )
 
 
@@ -204,12 +208,12 @@ class FeedbackMinion:
     check_function: Callable[[str], Any]
 
     def __init__(
-        self,
-        minion: BaseMinion | BasicLLM,
-        eval_prompt: str,
-        feedback_prompt: str,
-        check_function: Callable[[str], Any] = lambda x: None,
-        model: str = "gpt-3.5-turbo",
+            self,
+            minion: BaseMinion | BasicLLM,
+            eval_prompt: str,
+            feedback_prompt: str,
+            check_function: Callable[[str], Any] = lambda x: None,
+            model: str = "gpt-3.5-turbo",
     ) -> None:
         llm = get_model(model)
         self.eval_llm = LLMChain(
@@ -229,7 +233,7 @@ class FeedbackMinion:
             print("Rerunning a prompt with feedback:", kwargs["feedback"])
             if len(kwargs["previous_result"]) > 500:
                 kwargs["previous_result"] = (
-                    kwargs["previous_result"][:500] + "\n...(truncated)\n"
+                        kwargs["previous_result"][:500] + "\n...(truncated)\n"
                 )
             kwargs["feedback"] = self.feedback_prompt.format(**kwargs)
         res = self.underlying_minion.run(**kwargs)

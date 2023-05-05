@@ -1,17 +1,17 @@
 import os
 from dataclasses import dataclass
+from typing import Tuple
 
 from langchain import PromptTemplate
-from typing import Tuple
-from clippy.tools.tool import SimpleTool
-from langchain.chat_models import ChatOpenAI
-from langchain.chains.summarize import load_summarize_chain
 from langchain.chains.combine_documents.base import BaseCombineDocumentsChain
+from langchain.chains.summarize import load_summarize_chain
+from langchain.chat_models import ChatOpenAI
 from langchain.docstore.document import Document
 from langchain.text_splitter import (
-    CharacterTextSplitter,
     RecursiveCharacterTextSplitter,
 )
+
+from clippy.tools.tool import SimpleTool
 
 
 def strip_quotes(inp: str) -> str:
@@ -99,9 +99,9 @@ class ReadFile(SimpleTool):
                     out = "```\n" + "".join(lines) + "\n```"
                     if len(out) > 5000:
                         return (
-                            out[:5000]
-                            + "\n...\n```\nFile too long, use the summarizer or "
-                            "(preferably) request specific line ranges.\n"
+                                out[:5000]
+                                + "\n...\n```\nFile too long, use the summarizer or "
+                                  "(preferably) request specific line ranges.\n"
                         )
                     return out
             filename, line_range = args.split("[", 1)
@@ -189,6 +189,9 @@ class PatchFile(SimpleTool):
         :param args: The diff to apply to the files.
         :return: The result of the patch command as a string.
         """
+        if '\n' not in strip_quotes(args):
+            return 'Error: no newline found in input. ' \
+                   'The first line should be the filename, the rest should be the patch.'
         filename, patch = strip_quotes(args).split("\n", 1)
         patch = strip_quotes(patch)
         filename = os.path.join(self.workdir, filename.strip())

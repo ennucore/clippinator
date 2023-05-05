@@ -39,21 +39,21 @@ class RunBash:
                 commands,
                 shell=True,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
                 cwd=self.workdir,
-                timeout=120,
+                timeout=70,
             )
         except subprocess.TimeoutExpired as error:
             return "Command timed out, possibly due to asking for input."
 
         stdout_output = completed_process.stdout.decode()
-        stderr_output = completed_process.stderr.decode()
+        # stderr_output = completed_process.stderr.decode()
 
         if self.strip_newlines:
             stdout_output = stdout_output.strip()
-            stderr_output = stderr_output.strip()
+            # stderr_output = stderr_output.strip()
 
-        combined_output = stdout_output + "\n" + stderr_output
+        combined_output = stdout_output  # + "\n" + stderr_output
         return combined_output if combined_output.strip() else "(empty)"
 
 
@@ -136,6 +136,7 @@ class BashBackgroundSessions(SimpleTool):
                     process["pr"].terminate()
                     os.system(f"kill -9 {pid}")
                     os.system(f"kill -9 {pid + 1}")
+                    os.system(f"kill -9 {pid + 2}")
                     bash_processes.remove(process)
                     return f"Killed process with pid {pid}.\n"
             return f"Could not find process with pid {pid}.\n"

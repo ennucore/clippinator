@@ -3,6 +3,9 @@
   description: "implements a part of the architecture in a new or small file. Example task: 'Implement example.py according to the architecture'. Prefer using this agent when appropriate. It can even implement several connected files, but only a couple of specified files."
   prompt: |+
     Look at the architecture, then implement it using WriteFile. If the file already exists, read it first, then rewrite it.
+    Note that you don't need to create folders or files - they will be created automatically by WriteFile.
+    Also, you can see all files in the "current state of the project" section. If a file isn't there, it doesn't exist.
+    Try to implement everything you can. If there are parts of the implementation you skipped, tell about it in the Final Result.
   tool_names: [ "ReadFile", "WriteFile", "Bash" ]
 - name: "QA"
   description: "Helps test functionality"

@@ -16,13 +16,36 @@ from clippy.tools.tool import SimpleTool
 
 def strip_quotes(inp: str) -> str:
     inp = inp.strip()
-    inp = inp.removeprefix("```").removeprefix("'''").removeprefix('"""').strip()
-    inp = inp.removesuffix("\n```").removesuffix("\n'''").removesuffix('\n"""')
+    if ': ' in inp.split('\n', 1)[0] and ('``' in inp.split('\n', 1)[0] or "'''" in inp.split('\n', 1)[0]):
+        inp = inp.split(': ', 1)[-1].strip()
+    if inp.startswith('```'):
+        inp = inp.split('\n', 1)[1].removesuffix("```")
+    elif inp.startswith("'''"):
+        inp = inp.removeprefix("'''").strip().removesuffix("'''")
     return inp
 
 
 def strip_filename(inp: str) -> str:
     return inp.strip().strip("'").strip().split(': ')[-1].split(', ')[0].strip()
+
+
+patch_example = '''Action: ReadFile
+Action Input: filename[10:60]
+AResult:
+<lines will be here. Now you can patch the file>
+Action: PatchFile
+Action Input: filename
+-12|def hello():
++12|def hello(name):
+-36|    # start poling
++36|    # start polling
+-37|    updater.start_polling()    updater.idle()
++37|    updater.start_polling()
++38|    updater.idle()
+AResult: Patched successfully
+Action: ReadFile
+Action Input: filename[10:60]
+AResult: <check that it's okay>'''
 
 
 @dataclass
@@ -195,7 +218,8 @@ class PatchFile(SimpleTool):
         """
         if '\n' not in strip_quotes(args):
             return 'Error: no newline found in input. ' \
-                   'The first line should be the filename, the rest should be the patch.'
+                   'The first line should be the filename, the rest should be the patch.' \
+                   ' Here is an example of patching:\n' + patch_example
         filename, patch = strip_quotes(args).split("\n", 1)
         filename = strip_filename(filename)
         patch = strip_quotes(patch)

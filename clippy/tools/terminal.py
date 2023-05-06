@@ -11,6 +11,7 @@ from typing import List, Union
 
 from langchain.agents import Tool
 
+from .file_tools import strip_quotes
 from .tool import SimpleTool
 
 
@@ -31,7 +32,7 @@ class RunBash:
     def run(self, commands: Union[str, List[str]]) -> str:
         """Run commands and return final output."""
         if isinstance(commands, str):
-            commands = [commands]
+            commands = [strip_quotes(commands)]
         commands = ";".join(commands)
 
         try:
@@ -78,7 +79,7 @@ class RunPython:
             return ''
         try:
             completed_process = subprocess.run(
-                ['python', '-c', commands],
+                ['python', '-c', strip_quotes(commands)],
                 shell=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -175,6 +176,20 @@ class BashBackgroundSessions(SimpleTool):
             return f"Started process with pid {process.pid}.\n```\n{output}\n```\n"
 
 
+def get_pids() -> list[int]:
+    return [process["pr"].pid for process in bash_processes]
+
+
+def end_sessions(allow_pids: list[int] | None = None):
+    """End all bash sessions."""
+    allow_pids = allow_pids or []
+    global bash_processes
+    for process in bash_processes:
+        if process["pr"].pid not in allow_pids:
+            process["pr"].kill()
+    bash_processes = [pr for pr in bash_processes if pr["pr"].pid in allow_pids]
+
+
 class BashSession(Tool):
     name: str = "Bash Session"
 
@@ -204,7 +219,7 @@ class BashSession(Tool):
         return output
 
     def run(self, args: str) -> str:
-        return self.input(args)
+        return self.input(strip_quotes(args))
 
     def _read_output(self, timeout=0.1):
         output = []

@@ -1,5 +1,6 @@
 from clippy.minions.executioner import SpecializedExecutioner, Executioner
 from clippy.project import Project
+from .terminal import get_pids, end_sessions
 from .tool import SimpleTool
 from ..minions import extract_agent_name
 
@@ -18,11 +19,16 @@ class Subagent(SimpleTool):
         super().__init__()
 
     def func(self, args: str) -> str:
+        pids = get_pids()
         task, agent = extract_agent_name(args)
         print(f'Running task "{task}" with agent "{agent}"')
         runner = self.agents.get(agent, self.default)
-        result = runner.execute(task, self.project)
-        result = f'Completed, result: {result}.\nCurrent project state:\n{self.project.get_project_summary()}'
+        try:
+            result = runner.execute(task, self.project)
+        except Exception as e:
+            result = f'Error running agent, retry with another task or agent: {e}'
+        result = f'Completed, result: {result}.\nCurrent project state:\n{self.project.get_project_summary()}\n---\n'
+        end_sessions(pids)
         return result
 
 

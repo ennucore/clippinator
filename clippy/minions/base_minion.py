@@ -29,7 +29,7 @@ class CustomOutputParser(AgentOutputParser):
             if "Action" in llm_output:
                 return AgentAction(
                     tool="WarnAgent",
-                    tool_input="ERROR: Don't write 'Action' together with the Final Result. You need to redo your action, receive the 'AResult' and only then write your 'Final Result'",
+                    tool_input="ERROR: Don't write 'Action' together with the Final Result. You need to REDO your action(s), receive the 'AResult' and only then write your 'Final Result'",
                     log=llm_output,
                 )
             return AgentFinish(

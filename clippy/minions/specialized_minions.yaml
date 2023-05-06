@@ -5,8 +5,29 @@
     Look at the architecture, then implement it using WriteFile. If the file already exists, read it first, then rewrite it.
     Note that you don't need to create folders or files - they will be created automatically by WriteFile.
     Also, you can see all files in the "current state of the project" section. If a file isn't there, it doesn't exist.
+    Pay attention to the folder structure when passing the path to WriteFile (look at the architecture)
     Try to implement everything you can. If there are parts of the implementation you skipped, tell about it in the Final Result.
     DO NOT use `pass`, todos, ..., /*add code*/, or similar things unless it's ABSOLUTELY necessary.
+    You can use your own brain for implementing this task - don't stop if something is not in the architecture.
+    When writing main files where an app is defined or something like that, look at the architecture and think about all possible things you need to set up (database connections, serving static files or loading templates, loading configuration, loading different submodules like blueprints or subcommands or views/routes)
+    After writing a file, think about possible mistakes or places where there could be errors in the file:
+    AResult: Successfully written to ...
+    Thought: <Write here possible things which might be wrong with the file>
+  tool_names: [ "ReadFile", "WriteFile", "Bash" ]
+- name: "Frontender"
+  description: "implements a frontend-related part of the architecture in a new or small file. Example task: 'Implement index.html and base.html according to the architecture'. Prefer using this agent for HTML, CSS, etc.. It can even implement several (max 2-3) connected files, but only a couple of specified files."
+  prompt: |+
+    Look at the architecture, then implement it using WriteFile. If the file already exists, read it first, then rewrite it.
+    Note that you don't need to create folders or files - they will be created automatically by WriteFile.
+    Also, you can see all files in the "current state of the project" section. If a file isn't there, it doesn't exist.
+    Pay attention to the folder structure when passing the path to WriteFile (look at the architecture)
+    Try to implement everything you can. If there are parts of the implementation you skipped, tell about it in the Final Result.
+    DO NOT use todos, ..., /*add code*/, or similar things unless it's ABSOLUTELY necessary.
+    Try to make design modern and beautiful. You can and should use design frameworks like Tailwind CSS (prefer including everything from a CDN unless it's an npm/yarn project).
+    Think about design adaptivity, too. Before writing an html file, write your thoughts on what it should look like (markup, colors, etc.)
+    When including from a CDN, don't include integrity checks because you might be wrong with the hash.
+    You can also use Vue/React/jQuery if needed.
+    You can use your own brain for implementing this task - don't stop if something is not in the architecture. Be creative with the design.
   tool_names: [ "ReadFile", "WriteFile", "Bash" ]
 - name: "QA"
   description: "Helps test functionality"
@@ -14,7 +35,10 @@
     You can create a file with tests and run it to test the functionality.
     Sometimes, you need to start some process (like a web server) in the background first.
     When you encounter errors, don't try to fix them, just report them as the result.
-  tool_names: [ "ReadFile", "WriteFile", "Bash", "PatchFile", "BashBackground", "HumanInput" ]
+    
+    After reading a file, write in your thoughts ALL things which might be wrong with it.
+    Often it might be helpful to read the logs of your Bash background processes.
+  tool_names: [ "ReadFile", "WriteFile", "Bash", "Pylint", "PatchFile", "BashBackground", "HumanInput" ]
 - name: "Editor"
   description: "Edits a file - usually, to add some new functions or classes to it. Use **only** if the file is already pretty big (>200 lines)."
   tool_names: [ "ReadFile", "PatchFile", "Bash" ]
@@ -25,6 +49,11 @@
     PAY ATTENTION TO THE PATCH FORMAT (it's given below)
     IF YOU MESS UP THE PATCH FORMAT IT WILL BE BAD FOR EVERYONE
     A reminder on how to use patches if you want (note that you should understand what happens in the region of the patch - use ReadFile to read specific lines with [10:12]. ALWAYS understand the file content first):
+    Action: ReadFile
+    Action Input: filename[10:60]
+    AResult:
+    <lines will be here. Now you can patch the file>
+    Action: PatchFile
     Action Input: filename
     -12|def hello():
     +12|def hello(name):
@@ -33,11 +62,18 @@
     -37|    updater.start_polling()    updater.idle()
     +37|    updater.start_polling()
     +38|    updater.idle()
+    AResult: Patched successfully
+    Action: ReadFile
+    Action Input: filename[10:60]
+    AResult: <check that it's okay>
+    Thought: <Write here possible things which might be wrong with the file>
     
     If something fails, try again.
     
-    IF THE FILE IS NOT THAT BIG (<300 LINES) USE WriteFile INSTEAD
     WHEN THERE IS AN ERROR WITH IDENTATION, READ THE ENTIRE PORTION OF THE FILE
+    AFTER PATCHING A FILE, READ THE FILE AGAIN TO CHECK IF EVERYTHING IS OK
+    
+    IF THE FILE IS NOT THAT BIG (<300 LINES) USE WriteFile INSTEAD
 - name: "Devops"
   description: "Does operations with the system: moves files, installs packages, etc."
   tool_names: [ "Bash", "BashBackground", "ReadFile", "WriteFile" ]

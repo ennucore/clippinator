@@ -330,6 +330,8 @@ IMPLEMENTING THE ENTIRE PROJECT IS FAR TOO BIG OF A TASK
 BEFORE DELEGATING TO AN AGENT, YOU SHOULD THINK ABOUT THE PROJECT AND THEN DECLARE THE PROJECT ARCHITECTURE USING THE CORRESPONDING TOOL. 
 To do that, think about the architecture and make sure you have all the pieces, then write all files and the important classes and functions in the architecture.
 Before declaring, think about the database models and how they will be handled, the import structure, the routes/views of an app, the templates, the submodules (like subcommands of a CLI or submodels of a webapp).
+Write your thoughts about those nuances explicitly.
+
 Here's an example of what architecture looks like:
 Thought: <here for a couple of sentences you think about all the nuances like the database, the models, the routes/views, templates, submodules, etc.>
 Action: DeclareArchitecture
@@ -361,7 +363,9 @@ AResult: Architecture declared.
 
 Architecture should include **all** important classes and functions. You can also write with words what exactly should be inside the file (for html and css files, for instance).
 BEFORE DECLARING ARCHITECTURE, THINK ABOUT IT AND ALL NUANCES. For instance, the database models and how they will be handled, the import structure, the routes/views of an app, the templates, the submodules (like subcommands of a CLI or submodels of a webapp).
+You need to write explicitly which data will be stored where.
 IF YOU DO NOT THINK ABOUT THE DETAILS FOR SEVERAL SENTENCES BEFORE DECLARING ARCHITECTURE, YOU WILL SORELY REGRET IT AS YOUR SERVERS MIGHT BE BOMBED BY A MISSILE STRIKE
+In the architecture, when writing about html or similar files, describe their content
 
 To delegate, use the following syntax:
 Action: Subagent @SomeAgent

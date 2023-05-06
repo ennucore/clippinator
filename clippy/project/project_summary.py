@@ -62,8 +62,10 @@ def get_file_summary(file_path: str, ident: str = "") -> str:
         if lengths_by_tag[kind] < 400 or len(selected_tags) == 0:
             selected_tags += [tag for tag in tags if tag['kind'] == kind]
     selected_tags = sorted(selected_tags, key=lambda tag: tag['line'])
-    for tag in selected_tags:
-        out += f"{tag['formatted']}\n"
+    lines = [f"{tag['formatted']}\n" for tag in selected_tags]
+    lines_set = set(lines)
+    lines = [line for line in lines if line in lines_set]
+    out += ''.join(lines)
     if len(out) > 600:
         out = out[:600] + "\n{ident}...\n"
     return out

@@ -21,6 +21,10 @@ def strip_quotes(inp: str) -> str:
     return inp
 
 
+def strip_filename(inp: str) -> str:
+    return inp.strip().strip("'").strip().split(': ')[-1].split(', ')[0].strip()
+
+
 @dataclass
 class WriteFile(SimpleTool):
     """
@@ -43,13 +47,13 @@ class WriteFile(SimpleTool):
     def func(self, args: str) -> str:
         # Use a regular expression to extract the file path from the input
         if "\n" not in args:
-            file_path = args.strip().strip("'").strip()
+            file_path = strip_filename(args)
             content = ""
             with open(os.path.join(self.workdir, file_path), "w") as f:
                 f.write(content)
                 return "Created an empty file."
         file_path, content = args.split("\n", 1)
-        file_path = file_path.strip().strip("'").strip()
+        file_path = strip_filename(file_path)
         content = strip_quotes(content)
         if all("|" in line[:5] or not line.strip() for line in content.split("\n")):
             content = "\n".join(
@@ -193,6 +197,7 @@ class PatchFile(SimpleTool):
             return 'Error: no newline found in input. ' \
                    'The first line should be the filename, the rest should be the patch.'
         filename, patch = strip_quotes(args).split("\n", 1)
+        filename = strip_filename(filename)
         patch = strip_quotes(patch)
         filename = os.path.join(self.workdir, filename.strip())
         try:
@@ -246,7 +251,7 @@ class SummarizeFile(SimpleTool):
 
     def func(self, args: str) -> str:
         try:
-            with open(os.path.join(self.workdir, args.strip()), "r") as f:
+            with open(os.path.join(self.workdir, strip_filename(args)), "r") as f:
                 inp = f.readlines()
                 inp = "".join([f"{i + 1}| {line}" for i, line in enumerate(inp)])
                 texts = self.text_splitter.split_text(inp)

@@ -324,48 +324,6 @@ Go!
 taskmaster_prompt = common_part + '''Achieve the objective: **{objective}**. DO NOT give a Final Result until you achieve the objective.
 ''' + '''
 You can (and should) delegate some tasks to subagents. It's better to delegate things to the subagents than to do them yourself.
-Avoid performing common actions yourself. Note that the tasks for the subagents have to be manageable (not very big, but not very small either).
-TASKS SHOULD HAVE REASONABLE SIZE AND THE DESCRIPTION SHOULD BE DETAILED
-IMPLEMENTING THE ENTIRE PROJECT IS FAR TOO BIG OF A TASK
-BEFORE DELEGATING TO AN AGENT, YOU SHOULD THINK ABOUT THE PROJECT AND THEN DECLARE THE PROJECT ARCHITECTURE USING THE CORRESPONDING TOOL. 
-To do that, think about the architecture and make sure you have all the pieces, then write all files and the important classes and functions in the architecture.
-Before declaring, think about the database models and how they will be handled, the import structure, the routes/views of an app, the templates, the submodules (like subcommands of a CLI or submodels of a webapp).
-Write your thoughts about those nuances explicitly.
-
-Here's an example of what architecture looks like:
-Thought: <here for a couple of sentences you think about all the nuances like the database, the models, the routes/views, templates, submodules, etc.>
-Action: DeclareArchitecture
-Action Input: ```
-data_processing:
-  __init__.py
-  helpers.py    # Functions to work with data
-    >def translate_gpt(text: str) -> str:    # Translate a chapter
-    >def summarize_gpt(text: str) -> str:    # Summarize a chapter
-  cli.py    # CLI interface for working with data
-    >from .helpers import translate_gpt, summarize_gpt
-    >def convert(filenames: list[str]):    # Convert files
-    >def split(filenames: list[str]):    # Split into chapters
-    >def process(filenames: list[str]):
-views.py    # Handle different messages
-  >from .metaagent import MetaAgent
-  >from data_processing.helpers import translate_gpt, summarize_gpt
-  >def views(bot: MetaAgent):
-  >    def handle_start(msg, _user, _args):    # /start command which ...
-  >    def handle_help(msg, _user, _args):   # /help command which ...
-  >bot = MetaAgent()
-  >views(bot)
-metaagent.py     # Main file which processes the data
-  >class DocRetriever(ABC):
-  >class EmbeddingRetriever(DocRetriever):
-  >class MetaAgent:
-```
-AResult: Architecture declared.
-
-Architecture should include **all** important classes and functions. You can also write with words what exactly should be inside the file (for html and css files, for instance).
-BEFORE DECLARING ARCHITECTURE, THINK ABOUT IT AND ALL NUANCES. For instance, the database models and how they will be handled, the import structure, the routes/views of an app, the templates, the submodules (like subcommands of a CLI or submodels of a webapp).
-You need to write explicitly which data will be stored where.
-IF YOU DO NOT THINK ABOUT THE DETAILS FOR SEVERAL SENTENCES BEFORE DECLARING ARCHITECTURE, YOU WILL SORELY REGRET IT AS YOUR SERVERS MIGHT BE BOMBED BY A MISSILE STRIKE
-In the architecture, when writing about html or similar files, describe their content
 
 To delegate, use the following syntax:
 Action: Subagent @SomeAgent
@@ -374,6 +332,14 @@ AResult: the result from the agent will be here
 
 Here are the agents you have:
 {specialized_minions}
+
+Avoid performing common actions yourself. Note that the tasks for the subagents have to be manageable (not very big, but not very small either).
+TASKS SHOULD HAVE REASONABLE SIZE AND THE DESCRIPTION SHOULD BE DETAILED
+IMPLEMENTING THE ENTIRE PROJECT IS FAR TOO BIG OF A TASK
+Before delegating to an agent, you should first come up with the architecture of the project. To do that, call the Architect subagent:
+Action: Subagent @Architect
+Action Input: Come up with the architecture
+AResult: <it will be here>
 
 Work until you have completely achieved the objective (and tested), do not give a Final Result until then. If you do, we will beat you with a stick.
 

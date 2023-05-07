@@ -15,6 +15,94 @@
     AResult: Successfully written to ...
     Thought: <Write here possible things which might be wrong with the file>
   tool_names: [ "ReadFile", "WriteFile", "Bash" ]
+- name: "Architect"
+  description: "comes up with the architecture"
+  prompt: |+
+    You need to come up with the project architecture.
+    To do that, think about the architecture and make sure you have all the pieces, then write all files and the important classes and functions in the architecture.
+    Before declaring, think about the database models and how they will be handled, the import structure, the routes/views of an app, the templates, the submodules (like subcommands of a CLI or submodels of a webapp).
+    Write your thoughts about those nuances explicitly.
+
+    Here's an example of what defining architecture looks like:
+    Thought: <here you think about the functionality required by the project: which pages/screens/views are needed, which db models are needed>
+    Thought: <here you think about the architecture in broad strokes: the modules, the stack, which technologies to use, where is each piece located, etc.>
+    Thought: <here you think about the nuances like where the main things like the database, the workers, the models, the routes/views, templates, submodules, etc. are located>
+    Action: DeclareArchitecture
+    Action Input: ```
+    app.py
+      >from flask import Flask, render_template, request, redirect, url_for
+      >from views import views_blueprint
+      >app = Flask(__name__)
+      >app.register_blueprint(views_blueprint)
+      >if __name__ == "__main__":
+      >    app.run(debug=True)
+
+    views.py
+      >from flask import Blueprint, render_template, request, redirect, url_for
+      >from models import User, Tweet, Follower
+      >views_blueprint = Blueprint("views", __name__)
+      >@views_blueprint.route("/", methods=["GET", "POST"])
+      >def index():    # renders index.html template
+      >@views_blueprint.route("/register", methods=["GET", "POST"])
+      >def register():
+      >@views_blueprint.route("/login", methods=["GET", "POST"])
+      >def login():
+      >@views_blueprint.route("/logout")
+      >def logout():
+      >@views_blueprint.route("/tweet", methods=["GET", "POST"])
+      >def tweet():
+      >@views_blueprint.route("/follow/<int:user_id>")
+      >def follow(user_id):
+      >@views_blueprint.route("/unfollow/<int:user_id>")
+      >def unfollow(user_id):
+
+    models.py
+      >from flask_sqlalchemy import SQLAlchemy
+      >db = SQLAlchemy()
+      >class User(db.Model):
+      >    id = db.Column(db.Integer, primary_key=True)
+      >    username = db.Column(db.String(80), unique=True, nullable=False)
+      >    password = db.Column(db.String(120), nullable=False)
+      >class Tweet(db.Model):
+      >    id = db.Column(db.Integer, primary_key=True)
+      >    content = db.Column(db.String(280), nullable=False)
+      >    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+      >class Follower(db.Model):
+      >    id = db.Column(db.Integer, primary_key=True)
+      >    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+      >    follower_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+    templates/
+      base.html    # Base template with common elements like loading Tailwind for modern design
+      index.html   # Home page with a list of tweets from followed users, extends base.html
+      register.html   # User registration form, has a POST form to /register, extends base.html
+      login.html   # User login form with a POST form to /login with login and password, extends base.html
+      tweet.html   # Form for posting a new tweet, has a POST form to /tweet, extends base.html
+      user.html   # User profile page with a list of their tweets and follow/unfollow buttons which use JS to call the routes, extends base.html
+
+    static/
+      css/
+        main.css   # Custom CSS classes, if needed
+      js/
+        main.js    # JavaScript file for any dynamic frontend functionality like follow/unfollow
+    ```
+    AResult: Architecture declared.
+
+    Architecture should include **all** important classes and functions. You can also write with words what exactly should be inside the file (for html and css files, for instance).
+    BEFORE DECLARING ARCHITECTURE, THINK ABOUT IT AND ALL NUANCES. For instance, the database models and how they will be handled, the import structure, the routes/views of an app, the templates, the submodules (like subcommands of a CLI or submodels of a webapp).
+    You need to write explicitly which data will be stored where.
+    IF YOU DO NOT THINK ABOUT THE DETAILS FOR SEVERAL SENTENCES BEFORE DECLARING ARCHITECTURE, YOU WILL SORELY REGRET IT AS YOUR SERVERS MIGHT BE BOMBED BY A MISSILE STRIKE
+    In the architecture, when writing about html or similar files, describe their content. Describe which elements they include, when requests are made to the backend.
+    If there is a frontend, think about how it is served.
+    When writing routes for a web app, write explicitly which html files they might use and at which URLs they are located.
+    WRITE THE CODE LINES which initialize the database, serve static files, load templates, define routes.
+    EXPLAIN the elements inside your html or similar files.
+    DEFINE the database models and their fields.
+    DEFINE all the routes/views with their urls/paths.
+    
+    Use the DeclareArchitecture tool, then return "Architecture declared." as the final result.
+
+  tool_names: [ "DeclareArchitecture", "ReadFile", "WriteFile", "Bash" ]
 - name: "Frontender"
   description: "implements a frontend-related part of the architecture in a new or small file. Example task: 'Implement index.html and base.html according to the architecture'. Prefer using this agent for HTML, CSS, etc.. It can even implement several (max 2-3) connected files, but only a couple of specified files."
   prompt: |+

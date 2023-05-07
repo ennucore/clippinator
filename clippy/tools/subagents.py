@@ -1,8 +1,14 @@
-from clippy.minions.executioner import SpecializedExecutioner, Executioner
+from __future__ import annotations
+
+import typing
+
 from clippy.project import Project
 from .terminal import get_pids, end_sessions
 from .tool import SimpleTool
 from ..minions import extract_agent_name
+
+if typing.TYPE_CHECKING:
+    from clippy.minions.executioner import SpecializedExecutioner, Executioner
 
 
 class Subagent(SimpleTool):
@@ -21,12 +27,14 @@ class Subagent(SimpleTool):
     def func(self, args: str) -> str:
         pids = get_pids()
         task, agent = extract_agent_name(args)
-        print(f'Running task "{task}" with agent "{agent}"')
         runner = self.agents.get(agent, self.default)
+        print(f'Running task "{task}" with agent "{getattr(runner, "name", "default")}"')
         try:
             result = runner.execute(task, self.project)
         except Exception as e:
             result = f'Error running agent, retry with another task or agent: {e}'
+        if agent == 'Architect':
+            result = self.project.architecture
         result = f'Completed, result: {result}\nCurrent project state:\n{self.project.get_project_summary()}\n---\n'
         end_sessions(pids)
         return result

@@ -27,7 +27,7 @@ class Subagent(SimpleTool):
             result = runner.execute(task, self.project)
         except Exception as e:
             result = f'Error running agent, retry with another task or agent: {e}'
-        result = f'Completed, result: {result}.\nCurrent project state:\n{self.project.get_project_summary()}\n---\n'
+        result = f'Completed, result: {result}\nCurrent project state:\n{self.project.get_project_summary()}\n---\n'
         end_sessions(pids)
         return result
 

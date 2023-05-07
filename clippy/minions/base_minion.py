@@ -67,7 +67,8 @@ class CustomOutputParser(AgentOutputParser):
         if llm_output.count("Action Input") > 1:
             return AgentAction(
                 tool="WarnAgent",
-                tool_input="ERROR: Write 'AResult: ' after each action. Execute ALL the actions without AResult again.",
+                tool_input="ERROR: Write 'AResult: ' after each action. Execute ALL the past actions "
+                           "without AResult again. They weren't completed.",
                 log=llm_output,
             )
 

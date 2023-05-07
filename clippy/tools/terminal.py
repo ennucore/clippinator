@@ -3,6 +3,7 @@ import os
 import pty
 import re
 import select
+import signal
 import subprocess
 import time
 from abc import ABC
@@ -186,7 +187,7 @@ def end_sessions(allow_pids: list[int] | None = None):
     global bash_processes
     for process in bash_processes:
         if process["pr"].pid not in allow_pids:
-            process["pr"].kill()
+            os.kill(process["pr"].pid, signal.SIGKILL)
     bash_processes = [pr for pr in bash_processes if pr["pr"].pid in allow_pids]
 
 

@@ -5,3 +5,4 @@
 - Wget tool (for QA)
 - Browsing tool
 - Improve the QA agent
+- Using ^C to provide extra human input to the agents

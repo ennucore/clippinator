@@ -27,8 +27,11 @@
 
     Here's an example of what defining architecture looks like:
     Thought: <here you think about the functionality required by the project: which pages/screens/views are needed, which db models are needed>
+    Thought: <Once the app starts, it needs to ..., ..., ..., then the user will ... and in response the app will ... by ... ...>
     Thought: <here you think about the architecture in broad strokes: the modules, the stack, which technologies to use, where is each piece located, etc.>
     Thought: <here you think about the nuances like where the main things like the database, the workers, the models, the routes/views, templates, submodules, etc. are located>
+    <you can have more thoughts about important things. For instance, you can think about the important classes or other things>
+    <for complicated projects you might require a long train of thought about how different parts can interact>
     Action: DeclareArchitecture
     Action Input: ```
     app.py
@@ -36,7 +39,6 @@
       >from views import views_blueprint
       >app = Flask(__name__)
       >app.register_blueprint(views_blueprint)
-      >if __name__ == "__main__":
       >    app.run(debug=True)
 
     views.py
@@ -44,19 +46,19 @@
       >from models import User, Tweet, Follower
       >views_blueprint = Blueprint("views", __name__)
       >@views_blueprint.route("/", methods=["GET", "POST"])
-      >def index():    # renders index.html template
+      >def index() -> str:    # renders index.html template
       >@views_blueprint.route("/register", methods=["GET", "POST"])
-      >def register():
+      >def register() -> str:
       >@views_blueprint.route("/login", methods=["GET", "POST"])
-      >def login():
+      >def login() -> str:
       >@views_blueprint.route("/logout")
-      >def logout():
+      >def logout() -> str:
       >@views_blueprint.route("/tweet", methods=["GET", "POST"])
-      >def tweet():
+      >def tweet() -> str:
       >@views_blueprint.route("/follow/<int:user_id>")
-      >def follow(user_id):
+      >def follow(user_id: str) -> str:
       >@views_blueprint.route("/unfollow/<int:user_id>")
-      >def unfollow(user_id):
+      >def unfollow(user_id: str) -> str:
 
     models.py
       >from flask_sqlalchemy import SQLAlchemy
@@ -76,17 +78,28 @@
 
     templates/
       base.html    # Base template with common elements like loading Tailwind for modern design
-      index.html   # Home page with a list of tweets from followed users, extends base.html
-      register.html   # User registration form, has a POST form to /register, extends base.html
-      login.html   # User login form with a POST form to /login with login and password, extends base.html
+        > Loads Tailwind CSS, static/main.css, and static/main.js (using url_for)
+        > Has the content block
+      index.html   # Home page with a list of tweets from followed users
+        > extends base.html, overwrites the content block
+        > uses the tweets variable, the user variable
+      register.html   # User registration form, has a POST form to /register
+        > extends base.html
+        > Contains a POST form to register
+      login.html   # User login form with a POST form to /login with login and password
+        > extends base.html
+        > Contains a POST form to login
       tweet.html   # Form for posting a new tweet, has a POST form to /tweet, extends base.html
       user.html   # User profile page with a list of their tweets and follow/unfollow buttons which use JS to call the routes, extends base.html
+        > uses follow(user_id) js function to call the api 
 
     static/
       css/
         main.css   # Custom CSS classes, if needed
       js/
         main.js    # JavaScript file for any dynamic frontend functionality like follow/unfollow
+          > function follow(user_id)   # calls /follow/<user_id> using fetch
+          > function unfollow(user_id) # calls /unfollow/<user_id> using fetch
     ```
     AResult: Architecture declared.
 
@@ -98,9 +111,12 @@
     If there is a frontend, think about how it is served.
     When writing routes for a web app, write explicitly which html files they might use and at which URLs they are located.
     WRITE THE CODE LINES which initialize the database, create the tables (like db.create_all), serve static files, load templates, define routes.
-    EXPLAIN the elements inside your html or similar files.
-    DEFINE the database models and their fields.
-    DEFINE all the routes/views with their urls/paths.
+    DESCRIBE the elements inside your html, templates or similar files AND the variables/format they use.
+    DEFINE the database models and their fields, the main classes and types.
+    DEFINE all the routes/views with their urls/paths. When writing about templates, you HAVE to specify the variables they take in and the content.
+    When writing configs, SPECIFY their format.
+    DO NOT COPY from the example. You can use it as a reference, but you need to write your own architecture. For instance, there will not always be a Flask server.
+    For complicated functions, write how they work in a couple of sentences.
     
     Use the DeclareArchitecture tool, then return "Architecture declared." as the final result.
 

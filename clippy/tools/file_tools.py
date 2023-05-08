@@ -61,7 +61,7 @@ class WriteFile(SimpleTool):
         "line, "
         "and starting from the next line the desired content without any quotes or other formatting. "
         "The tool will completely overwrite the entire file, so be very careful with it, "
-        "avoid using it on non-empty files."
+        "avoid using it on non-empty files. DO NOT write anything on the first line except the path"
     )
 
     def __init__(self, wd: str = "."):
@@ -227,7 +227,7 @@ class PatchFile(SimpleTool):
         try:
             new_content, plus_lines, minus_lines = apply_patch(patch, filename)
         except Exception as e:
-            return f"Error applying patch: {str(e)}\n"
+            return f"Error applying patch: {str(e)}. Here's a reminder on how to patch:\n{patch_example}"
         with open(filename, "w") as file:
             file.write(new_content)
         return f"Successfully patched {filename} with {plus_lines} added lines and {minus_lines} removed lines."

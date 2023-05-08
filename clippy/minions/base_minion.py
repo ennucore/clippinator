@@ -64,11 +64,13 @@ class CustomOutputParser(AgentOutputParser):
                     log=llm_output,
                 )
 
+        actions = [line.split(':', 1)[1].strip() for line in llm_output.splitlines() if line.startswith("Action:")]
+
         if llm_output.count("Action Input") > 1:
             return AgentAction(
                 tool="WarnAgent",
                 tool_input="ERROR: Write 'AResult: ' after each action. Execute ALL the past actions "
-                           "without AResult again. They weren't completed.",
+                           f"without AResult again ({', '.join(actions)}). They weren't completed.",
                 log=llm_output,
             )
 
@@ -77,7 +79,8 @@ class CustomOutputParser(AgentOutputParser):
         if "\nThought: " in action_input or "\nAction: " in action_input:
             return AgentAction(
                 tool="WarnAgent",
-                tool_input="Error: Write 'AResult: ' after each action. Execute all the actions without AResult again.",
+                tool_input="Error: Write 'AResult: ' after each action. "
+                           f"Execute all the actions without AResult again ({', '.join(actions)}).",
                 log=llm_output,
             )
         if "Subagent" in action:

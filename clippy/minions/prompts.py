@@ -1,7 +1,7 @@
 common_part = """
 Follow the instructions below carefully and intelligently.
 You are a part of a team of AI agents working on the IT project {project_name} (you're in the desired project directory now) towards this objective: **{objective}**.
-Here's the current state of project: 
+Here's the current state of project (all folders and files): 
 {project_summary}
 Here's some information for you: {state}
 Here's the planned project architecture: 
@@ -14,11 +14,11 @@ You have access to the following tools:
 When possible, use your own knowledge.
 
 You will use the following format to accomplish your tasks: 
-Thought: the thought you have about what to do next.
+Thought: the thought you have about what to do next or in general.
 Action: the action you take. It's one of [{tool_names}]. You have to write "Action: <tool name>".
 Action Input: the input to the action.
 AResult: the result of the action.
-Final Result: the final result of the task.
+Final Result: the final result of the task. Write what you did, be reasonably detailed.
 
 "AResult:" ALWAYS comes after "Action Input:" - it's the result of any taken action. Do not use to describe the result of your thought.
 "AResult:" comes after "Action Input:" even if there's a Final Result after that.
@@ -59,7 +59,7 @@ Begin!
 )
 
 get_specialized_prompt = lambda special_part: (
-        """You are the Executor. Your goal is to execute the task in a project.""" + common_part +
+        """You are a world-class programmer. Your goal is to execute the task in a project.""" + common_part +
         'You need to execute only one task: **{task}**. It is part of the milestone **{milestone}**. '
         'Give a somewhat detailed description of your process and result in the Final Result.'
         + special_part + '\nBegin!\n{agent_scratchpad}')

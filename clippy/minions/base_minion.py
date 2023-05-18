@@ -60,11 +60,15 @@ class CustomOutputParser(AgentOutputParser):
             else:
                 return AgentAction(
                     tool="WarnAgent",
-                    tool_input="Continue.\n",
+                    tool_input="Continue with your next thought or action. Do not repeat yourself. \n",
                     log=llm_output,
                 )
 
-        actions = [line.split(':', 1)[1].strip() for line in llm_output.splitlines() if line.startswith("Action:")]
+        actions = [
+            line.split(":", 1)[1].strip()
+            for line in llm_output.splitlines()
+            if line.startswith("Action:")
+        ]
 
         if llm_output.count("Action Input") > 1:
             return AgentAction(
@@ -179,12 +183,104 @@ class BasicLLM:
         return self.llm.predict(**kwargs)
 
 
+class CustomPromptTemplate(StringPromptTemplate):
+    template: str
+    # The list of tools available
+    tools: List[Tool]
+    agent_toolnames: List[str]
+    summarize_every_n_steps: int = 4
+    keep_n_last_thoughts: int = 1
+    steps_since_last_summarize: int = 0
+    my_summarize_agent: Any = None
+    last_summary: str = ""
+
+    @property
+    def _prompt_type(self) -> str:
+        return "taskmaster"
+
+    def thought_log(self, thoughts: str) -> str:
+        result = ""
+        for action, AResult in thoughts:
+            if AResult.startswith("\r"):
+                result += action.log + f"\nSystem note: {AResult[1:]}\n"
+            else:
+                result += action.log + f"\nAResult: {AResult}\n"
+        return result
+
+    def format(self, **kwargs) -> str:
+        # Get the intermediate steps (AgentAction, AResult tuples)
+        # Format them in a particular way
+        intermediate_steps = kwargs.pop("intermediate_steps")
+        if (
+                self.steps_since_last_summarize == self.summarize_every_n_steps
+                and self.my_summarize_agent
+        ):
+            self.steps_since_last_summarize = 0
+            self.last_summary = self.my_summarize_agent.run(
+                summary=self.last_summary,
+                thought_process=self.thought_log(
+                    intermediate_steps[
+                    -self.summarize_every_n_steps: -self.keep_n_last_thoughts
+                    ]
+                ),
+            )
+
+        if self.my_summarize_agent:
+            kwargs["agent_scratchpad"] = (
+                    "Here is a summary of what has happened:\n" + self.last_summary
+            )
+            kwargs["agent_scratchpad"] += "\nEND OF SUMMARY\n"
+        else:
+            kwargs["agent_scratchpad"] = ""
+
+        kwargs["agent_scratchpad"] += "Here go your thoughts and actions:"
+
+        kwargs["agent_scratchpad"] += self.thought_log(
+            intermediate_steps[
+            -self.steps_since_last_summarize + self.keep_n_last_thoughts:
+            ]
+        )
+
+        self.steps_since_last_summarize += 1
+
+        kwargs["tools"] = "\n".join(
+            [
+                f"{tool.name}: {tool.description}"
+                for tool in self.tools
+                if tool in self.agent_toolnames
+            ]
+        )
+        kwargs["tool_names"] = self.agent_toolnames
+        print("Prompt:\n\n" + self.template.format(**kwargs) + "\n\n\n")
+        result = self.template.format(**kwargs)
+        print(result)
+        return result
+
+
+def extract_variable_names(prompt: str, interaction_enabled: bool = False):
+    variable_pattern = r"\{(\w+)\}"
+    variable_names = re.findall(variable_pattern, prompt)
+    if interaction_enabled:
+        for name in ["tools", "tool_names", "agent_scratchpad"]:
+            if name in variable_names:
+                variable_names.remove(name)
+        variable_names.append("intermediate_steps")
+    return variable_names
+
+
+def get_model(model: str = "gpt-4"):
+    return ChatOpenAI(
+        temperature=0,
+        model_name=model,
+        request_timeout=320,
+    )
+
+
 @dataclass
 class BaseMinion:
     def __init__(self, base_prompt, available_tools, model: str = "gpt-4") -> None:
         llm = get_model(model)
 
-        variable_names = extract_variable_names(base_prompt)
         agent_toolnames = [tool.name for tool in available_tools]
         available_tools.append(WarningTool().get_tool())
 
@@ -233,7 +329,7 @@ class FeedbackMinion:
             eval_prompt: str,
             feedback_prompt: str,
             check_function: Callable[[str], Any] = lambda x: None,
-            model: str = "gpt-3.5-turbo",
+            model: str = "gpt-4",
     ) -> None:
         llm = get_model(model)
         self.eval_llm = LLMChain(

@@ -14,9 +14,10 @@ from .base_minion import (
     CustomPromptTemplate,
     extract_variable_names,
     get_model,
+    BasicLLM,
 )
 from .executioner import Executioner, get_specialized_executioners
-from .prompts import taskmaster_prompt
+from .prompts import taskmaster_prompt, summarize_prompt
 
 
 class CustomMemory(BaseMemory):
@@ -55,7 +56,7 @@ class Taskmaster:
         tools = get_tools(project)
         tools.append(DeclareArchitecture(project).get_tool())
         agent_tool_names = [tool.name for tool in tools]
-        agent_tool_names.remove('PatchFile')
+        agent_tool_names.remove("PatchFile")
 
         tools.append(
             Subagent(
@@ -71,6 +72,7 @@ class Taskmaster:
                 taskmaster_prompt, interaction_enabled=True
             ),
             agent_toolnames=agent_tool_names,
+            my_summarize_agent=BasicLLM(base_prompt=summarize_prompt),
         )
 
         llm_chain = LLMChain(llm=llm, prompt=prompt)
@@ -95,6 +97,6 @@ class Taskmaster:
             minion.expl() for minion in self.specialized_executioners.values()
         )
         return (
-                self.agent_executor.run(**kwargs)
-                or "No result. The execution was probably unsuccessful."
+            self.agent_executor.run(**kwargs)
+            or "No result. The execution was probably unsuccessful."
         )

@@ -19,7 +19,12 @@ class Subagent(SimpleTool):
         "or 'Action: Subagent @AgentName', for example 'Action: Subagent @Writer'"
     )
 
-    def __init__(self, project: Project, agents: dict[str, SpecializedExecutioner], default: Executioner):
+    def __init__(
+            self,
+            project: Project,
+            agents: dict[str, SpecializedExecutioner],
+            default: Executioner,
+    ):
         self.agents = agents
         self.default = default
         self.project = project
@@ -29,12 +34,14 @@ class Subagent(SimpleTool):
         pids = get_pids()
         task, agent = extract_agent_name(args)
         runner = self.agents.get(agent, self.default)
-        print(f'Running task "{task}" with agent "{getattr(runner, "name", "default")}"')
+        print(
+            f'Running task "{task}" with agent "{getattr(runner, "name", "default")}"'
+        )
         try:
             result = runner.execute(task, self.project)
         except Exception as e:
-            result = f'Error running agent, retry with another task or agent: {e}'
-        if agent == 'Architect':
+            result = f"Error running agent, retry with another task or agent: {e}"
+        if agent == "Architect":
             result = self.project.architecture
         linter_result = lint_project(self.project.path)
         result = f'Completed, result: {result}\n' \
@@ -53,4 +60,4 @@ class DeclareArchitecture(SimpleTool):
 
     def func(self, args: str) -> str:
         self.project.architecture = args
-        return f'Architecture declared.'
+        return f"Architecture declared."

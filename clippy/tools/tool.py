@@ -1,5 +1,6 @@
 import typing
 
+import requests
 from langchain.agents import Tool
 from typer import prompt
 
@@ -33,3 +34,20 @@ class HumanInputTool(SimpleTool):
     def func(args: str) -> str:
         print()
         return prompt(args)
+
+
+class HTTPGetTool(SimpleTool):
+    name: str = "HTTPGet"
+    description: str = (
+        "A tool that can be used to make a HTTP GET request. "
+        "The input format is just the url."
+    )
+
+    @staticmethod
+    def func(args: str) -> str:
+        url = args
+        try:
+            response = requests.get(url)
+            return response.text
+        except Exception as e:
+            return str(e)

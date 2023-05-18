@@ -67,5 +67,5 @@ def get_file_summary(file_path: str, ident: str = "") -> str:
     lines = [line for line in lines if line in lines_set]
     out += ''.join(lines)
     if len(out) > 600:
-        out = out[:600] + "\n{ident}...\n"
+        out = out[:600] + f"\n{ident}...\n"
     return out

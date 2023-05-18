@@ -7,7 +7,7 @@ from clippy.project import Project
 from .code_tools import SearchInFiles, Pylint
 from .file_tools import WriteFile, ReadFile, PatchFile, SummarizeFile
 from .terminal import RunBash, BashBackgroundSessions, RunPython
-from .tool import HumanInputTool
+from .tool import HumanInputTool, HTTPGetTool
 
 
 def get_tools(project: Project) -> list[BaseTool]:
@@ -53,5 +53,6 @@ def get_tools(project: Project) -> list[BaseTool]:
         Pylint(project.path).get_tool(),
         # SearchInFiles(project.path).get_tool(),
         BashBackgroundSessions(project.path).get_tool(),
+        HTTPGetTool().get_tool(),
     ]
     return tools

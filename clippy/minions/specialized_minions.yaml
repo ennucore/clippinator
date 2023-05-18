@@ -172,13 +172,12 @@
     <lines will be here. Now you can patch the file>
     Action: PatchFile
     Action Input: filename
-    -12|def hello():
-    +12|def hello(name):
-    -36|    # start poling
-    +36|    # start polling
-    -37|    updater.start_polling()    updater.idle()
-    +37|    updater.start_polling()
-    +38|    updater.idle()
+    [2-3]
+    def greet(name):  
+    print(f"Hello, {name}!")
+    [5]
+      a = 123
+      c = 789
     AResult: Patched successfully
     Action: ReadFile
     Action Input: filename[10:60]

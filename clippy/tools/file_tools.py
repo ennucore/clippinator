@@ -16,36 +16,37 @@ from clippy.tools.tool import SimpleTool
 
 def strip_quotes(inp: str) -> str:
     inp = inp.strip()
-    if ': ' in inp.split('\n', 1)[0] and ('``' in inp.split('\n', 1)[0] or "'''" in inp.split('\n', 1)[0]):
-        inp = inp.split(': ', 1)[-1].strip()
-    if inp.startswith('```'):
-        inp = inp.split('\n', 1)[1].removesuffix("```")
+    if ": " in inp.split("\n", 1)[0] and (
+        "``" in inp.split("\n", 1)[0] or "'''" in inp.split("\n", 1)[0]
+    ):
+        inp = inp.split(": ", 1)[-1].strip()
+    if inp.startswith("```"):
+        inp = inp.split("\n", 1)[1].removesuffix("```")
     elif inp.startswith("'''"):
         inp = inp.removeprefix("'''").strip().removesuffix("'''")
     return inp
 
 
 def strip_filename(inp: str) -> str:
-    return inp.strip().strip("'").strip().split(': ')[-1].split(', ')[0].strip()
+    return inp.strip().strip("'").strip().split(": ")[-1].split(", ")[0].strip()
 
 
-patch_example = '''Action: ReadFile
+patch_example = """Action: ReadFile
 Action Input: filename[10:60]
 AResult:
 <lines will be here. Now you can patch the file>
 Action: PatchFile
 Action Input: filename
--12|def hello():
-+12|def hello(name):
--36|    # start poling
-+36|    # start polling
--37|    updater.start_polling()    updater.idle()
-+37|    updater.start_polling()
-+38|    updater.idle()
+[2-3]
+def greet(name):  
+    print(f"Hello, {name}!")
+[5]
+    a = 123
+    c = 789
 AResult: Patched successfully
 Action: ReadFile
 Action Input: filename[10:60]
-AResult: <check that it's okay>'''
+AResult: <check that it's okay>"""
 
 
 @dataclass
@@ -126,9 +127,9 @@ class ReadFile(SimpleTool):
                     out = "```\n" + "".join(lines) + "\n```"
                     if len(out) > 5000:
                         return (
-                                out[:5000]
-                                + "\n...\n```\nFile too long, use the summarizer or "
-                                  "(preferably) request specific line ranges.\n"
+                            out[:5000]
+                            + "\n...\n```\nFile too long, use the summarizer or "
+                            "(preferably) request specific line ranges.\n"
                         )
                     return out
             filename, line_range = args.split("[", 1)
@@ -153,36 +154,85 @@ class ReadFile(SimpleTool):
             return f"Error reading file: {str(e)}"
 
 
-def apply_patch(patch_str: str, file_path: str) -> Tuple[str, int, int]:
-    # Split the patch string into lines and remove the filename
-    patch_lines = patch_str.strip().split("\n")  # [1:]
-    with open(file_path.strip(), "r") as file:
-        file_lines = file.readlines()
+def apply_patch(file_content, patch):
+    # Split the content and patch into lines
+    content_lines = file_content.strip().split("\n")
+    patch_lines = patch.strip().split("\n")
 
-    plus_lines, minus_lines = 0, 0
-    # Loop through the patch lines
-    for patch_line in patch_lines:
-        if "|" not in patch_line and patch_line.strip():
-            raise ValueError(
-                f"Invalid patch line: {patch_line}. Has to have the format +N|line or -N|line."
-            )
-        if not patch_line.strip():
-            continue
-        # Parse the patch line
-        action, index, content = (
-            patch_line[0],
-            int(patch_line[1:].split("|")[0]) - 1,
-            patch_line.split("|", 1)[1],
-        )
+    content_index = 0
+    patch_index = 0
+    new_content = []
+    last_end_line = -1
 
-        # Apply the patch line to the file content
-        if action == "-" and 0 <= index < len(file_lines):
-            del file_lines[index]
-            minus_lines += 1
-        elif action == "+" and 0 <= index <= len(file_lines) and content.strip():
-            file_lines.insert(index, content + "\n")
-            plus_lines += 1
-    return "".join(file_lines), plus_lines, minus_lines
+    while content_index < len(content_lines) or patch_index < len(patch_lines):
+        if (
+            patch_index < len(patch_lines)
+            and patch_lines[patch_index].startswith("[")
+            and patch_lines[patch_index].endswith("]")
+        ):
+            # Parse the range from the patch
+            range_str = patch_lines[patch_index][1:-1]
+            try:
+                if "-" in range_str:
+                    range_start, range_end = map(int, range_str.split("-"))
+                else:
+                    range_start = range_end = int(range_str)
+            except ValueError:
+                raise ValueError(
+                    "Invalid line range format. Expected '[start-end]' or '[line]'."
+                )
+
+            # Convert to 0-indexed
+            range_start -= 1
+            range_end -= 1
+
+            if (
+                range_start > range_end
+                or range_start < 0
+                or range_end >= len(content_lines)
+            ):
+                raise ValueError(
+                    f"Invalid line range. Received '{range_start+1}-{range_end+1}' for a file with {len(content_lines)} lines."
+                )
+
+            # Check if the ranges overlap
+            if range_start <= last_end_line:
+                raise ValueError(
+                    f"Line ranges overlap. Previous range ends at line {last_end_line+1}, but next range starts at line {range_start+1}."
+                )
+
+            last_end_line = range_end
+
+            # Gather the replacement lines
+            patch_index += 1
+            replacements = []
+            while patch_index < len(patch_lines) and not (
+                patch_lines[patch_index].startswith("[")
+                and patch_lines[patch_index].endswith("]")
+            ):
+                replacements.append(patch_lines[patch_index])
+                patch_index += 1
+
+            if patch_index < len(patch_lines) and not replacements:
+                raise ValueError("Missing replacement text for line range.")
+
+            # Append lines from content that are before the range
+            while content_index < range_start:
+                new_content.append(content_lines[content_index])
+                content_index += 1
+
+            # Skip lines from content that are within the range
+            content_index = range_end + 1
+
+            # Append the replacement lines
+            new_content.extend(replacements)
+        else:
+            # If no range to replace, simply append the line from content
+            if content_index < len(content_lines):
+                new_content.append(content_lines[content_index])
+                content_index += 1
+
+    return "\n".join(new_content)
 
 
 @dataclass
@@ -192,45 +242,41 @@ class PatchFile(SimpleTool):
     """
 
     name = "PatchFile"
-    description = (
-        "a tool to patch a file: make amends to it using diffs. "
-        "Provide the diff in unified format, and the tool will apply it to the specified file."
-        "The first line of the action input is the filename, the rest is the diff. "
-        "The diff (the lines with - will be deleted from the original file) looks like this:\n"
-        "-36|# start poling\n"
-        "+36|# start polling\n"
-        "-37|    updater.start_polling()    updater.idle()\n"
-        "+37|    updater.start_polling()\n"
-        "+38|    updater.idle()\n"
-        "Remember to add 'AResult:' after."
-    )
+    description = """
+        The patch format is a text-based representation designed to apply modifications to another text, typically source code. 
+        Each modification is represented by a line range to be replaced, followed by the replacement content. 
+        The line range is specified in brackets, such as [start-end] or [line] for a single line, where the line numbers are 1-indexed. 
+        The replacement content follows the line range and can span multiple lines. Here is a sample patch:
+        ```
+        [2-3]
+        replacement for lines 2 and 3
+        [5]
+        replacement for line 5
+        ```
+        The patch lines are applied in order, and the ranges must not overlap or intersect. Any violation of this format will result in an error.
+        """
 
     def __init__(self, wd: str = "."):
         self.workdir = wd
 
     def func(self, args: str) -> str:
-        """
-        Apply the given diff (in unified or context format) to the specified files in the working directory.
-        The diff should be provided as a string in the args parameter.
-
-        :param args: The diff to apply to the files.
-        :return: The result of the patch command as a string.
-        """
-        if '\n' not in strip_quotes(args):
-            return 'Error: no newline found in input. ' \
-                   'The first line should be the filename, the rest should be the patch.' \
-                   ' Here is an example of patching:\n' + patch_example
+        if "\n" not in strip_quotes(args):
+            return (
+                "Error: no newline found in input. "
+                "The first line should be the filename, the rest should be the patch."
+                " Here is an example of patching:\n" + patch_example
+            )
         filename, patch = strip_quotes(args).split("\n", 1)
         filename = strip_filename(filename)
         patch = strip_quotes(patch)
         filename = os.path.join(self.workdir, filename.strip())
         try:
-            new_content, plus_lines, minus_lines = apply_patch(patch, filename)
+            new_content = apply_patch(open(filename).read(), patch)
         except Exception as e:
             return f"Error applying patch: {str(e)}. Here's a reminder on how to patch:\n{patch_example}"
         with open(filename, "w") as file:
             file.write(new_content)
-        return f"Successfully patched {filename} with {plus_lines} added lines and {minus_lines} removed lines."
+        return f"Successfully patched {filename}."
 
 
 mr_prompt_template = """You need to write a summary of the content of a file. You should provide an overview of what this file contains (classes, functions, content, etc.)

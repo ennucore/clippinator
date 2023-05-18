@@ -45,13 +45,12 @@ Avoid reading big files, strive to specify ranges in reading and use patch inste
 If you are writing to a new file, you have to use WriteFile (and write the desired code in the action input, as requested; base your code on the architecture).
 A reminder on how to use patches if you want (note that you should understand what happens in the region of the patch - use ReadFile to read specific lines with [l1:l2]. ALWAYS understand the file content first):
 Action Input: filename
--12|def hello():
-+12|def hello(name):
--36|    # start poling
-+36|    # start polling
--37|    updater.start_polling()    updater.idle()
-+37|    updater.start_polling()
-+38|    updater.idle()
+[2-3]
+def greet(name):  
+    print(f"Hello, {name}!")
+[5]
+    a = 123
+    c = 789
 
 Begin!
 

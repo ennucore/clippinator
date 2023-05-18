@@ -1,8 +1,8 @@
-from .tool import SimpleTool
-from dataclasses import dataclass
 import os
 import subprocess
+from dataclasses import dataclass
 
+from .tool import SimpleTool
 from .utils import skip_file
 
 
@@ -16,6 +16,65 @@ class SearchAndReplace(SimpleTool):
     pass
 
 
+def run_pylint_on_file(target: str) -> list[str]:
+    cmd = ["pylint", target, "-E", "--output-format", "text"]
+    process = subprocess.run(cmd, capture_output=True, text=True)
+    pylint_output = process.stdout.strip().split("\n")
+    return pylint_output
+
+
+def lint_file(file_path: str) -> str:
+    output = ''
+    if file_path.endswith(".py"):
+        try:
+            pylint_output = run_pylint_on_file(file_path)
+        except:
+            return ''
+        output = "\n".join(pylint_output)
+    if len(output) > 800:
+        output = output[:800] + "\n..."
+    return output
+
+
+def run_pylint_on_args(args: str, workdir: str) -> str:
+    targets = args.strip().split() if args.strip() else [workdir]
+    if args.strip() == '.':
+        targets = [workdir]
+    targets = [os.path.join(workdir, target) for target in targets]
+
+    pylint_output = []
+
+    for target in targets:
+        if os.path.isfile(target) and target.endswith(".py"):
+            pylint_output = run_pylint_on_file(target)
+        elif os.path.isdir(target):
+            for root, _, files in os.walk(target):
+                for file in files:
+                    if skip_file(file):
+                        continue
+                    if file.endswith(".py"):
+                        file_path = os.path.join(root, file)
+                        pylint_output.extend(run_pylint_on_file(file_path))
+        else:
+            return f"Target not found: {target}"
+
+    # Format the output for better readability
+    formatted_output = "\n".join(pylint_output)
+
+    return formatted_output
+
+
+def lint_project(workdir: str) -> str:
+    output = ''
+    try:
+        output = run_pylint_on_args("", workdir)
+    except:
+        pass
+    if len(output) > 800:
+        output = output[:800] + "\n..."
+    return output
+
+
 @dataclass
 class Pylint(SimpleTool):
     name = "Pylint"
@@ -27,38 +86,8 @@ class Pylint(SimpleTool):
     def __init__(self, wd: str = "."):
         self.workdir = wd
 
-    def run_pylint_on_file(self, target: str) -> list[str]:
-        cmd = ["pylint", target, "-E", "--output-format", "text"]
-        process = subprocess.run(cmd, capture_output=True, text=True)
-        pylint_output = process.stdout.strip().split("\n")
-        return pylint_output
-
     def func(self, args: str) -> str:
-        targets = args.strip().split() if args.strip() else [self.workdir]
-        if args.strip() == '.':
-            targets = [self.workdir]
-        targets = [os.path.join(self.workdir, target) for target in targets]
-
-        pylint_output = []
-
-        for target in targets:
-            if os.path.isfile(target) and target.endswith(".py"):
-                pylint_output = self.run_pylint_on_file(target)
-            elif os.path.isdir(target):
-                for root, _, files in os.walk(target):
-                    for file in files:
-                        if skip_file(file):
-                            continue
-                        if file.endswith(".py"):
-                            file_path = os.path.join(root, file)
-                            pylint_output.extend(self.run_pylint_on_file(file_path))
-            else:
-                return f"Target not found: {target}"
-
-        # Format the output for better readability
-        formatted_output = "\n".join(pylint_output)
-
-        return formatted_output
+        return run_pylint_on_args(args, self.workdir)
 
 
 class SearchInFiles(SimpleTool):

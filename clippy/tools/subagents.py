@@ -3,6 +3,7 @@ from __future__ import annotations
 import typing
 
 from clippy.project import Project
+from .code_tools import lint_project
 from .terminal import get_pids, end_sessions
 from .tool import SimpleTool
 from ..minions import extract_agent_name
@@ -35,7 +36,9 @@ class Subagent(SimpleTool):
             result = f'Error running agent, retry with another task or agent: {e}'
         if agent == 'Architect':
             result = self.project.architecture
-        result = f'Completed, result: {result}\nCurrent project state:\n{self.project.get_project_summary()}\n---\n'
+        linter_result = lint_project(self.project.path)
+        result = f'Completed, result: {result}\n' \
+                 f'Current project state:\n{self.project.get_project_summary()}\n--\n{linter_result}\n---\n'
         end_sessions(pids)
         return result
 

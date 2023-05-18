@@ -12,6 +12,7 @@ from langchain.text_splitter import (
 )
 
 from clippy.tools.tool import SimpleTool
+from .code_tools import lint_file
 
 
 def strip_quotes(inp: str) -> str:
@@ -26,6 +27,7 @@ def strip_quotes(inp: str) -> str:
 
 
 def strip_filename(inp: str) -> str:
+    inp = inp.split('=')[-1]
     return inp.strip().strip("'").strip().split(': ')[-1].split(', ')[0].strip()
 
 
@@ -69,6 +71,9 @@ class WriteFile(SimpleTool):
 
     def func(self, args: str) -> str:
         # Use a regular expression to extract the file path from the input
+        first_line, other_lines = args.split("\n", 1)
+        first_line = first_line.replace('path=', '').replace('filename=', '').replace('content=', '')
+        args = first_line + '\n' + other_lines
         if "\n" not in args:
             file_path = strip_filename(args)
             content = ""
@@ -97,6 +102,10 @@ class WriteFile(SimpleTool):
             with open(file_path, "w") as f:
                 f.write(content)
 
+            linter_output = lint_file(file_path)
+            if linter_output:
+                return f"Successfully written to {original_file_path}. Linter output:\n{linter_output}"
+
             return f"Successfully written to {original_file_path}."
         except Exception as e:
             return f"Error writing to file: {str(e)}"
@@ -120,7 +129,8 @@ class ReadFile(SimpleTool):
     def func(self, args: str) -> str:
         try:
             if "[" not in args:
-                with open(os.path.join(self.workdir, args.strip()), "r") as f:
+                filename = strip_filename(args)
+                with open(os.path.join(self.workdir, filename), "r") as f:
                     lines = f.readlines()
                     lines = [f"{i + 1}|{line}" for i, line in enumerate(lines)]
                     out = "```\n" + "".join(lines) + "\n```"
@@ -132,6 +142,7 @@ class ReadFile(SimpleTool):
                         )
                     return out
             filename, line_range = args.split("[", 1)
+            filename = strip_filename(filename)
             line_ranges = line_range.split("]")[0].split(",")
             line_ranges = [line_range.split(":") for line_range in line_ranges]
             line_ranges = [

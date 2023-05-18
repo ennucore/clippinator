@@ -95,6 +95,22 @@ class CustomOutputParser(AgentOutputParser):
         )
 
 
+def remove_project_summaries(text: str) -> str:
+    """
+    Remove all the project summaries from the text EXCEPT for the last occurrence
+    The project summary is between "Current project state:" and "---"
+    """
+    # Find all the project summaries
+    project_summaries = re.findall(
+        r"Current project state:.*?---", text, re.DOTALL
+    )
+    # Remove all the project summaries except for the last one
+    for project_summary in project_summaries[:-1]:
+        text = text.replace(project_summary, "", 1)
+    print(text)
+    return text
+
+
 class CustomPromptTemplate(StringPromptTemplate):
     template: str
     # The list of tools available
@@ -121,7 +137,7 @@ class CustomPromptTemplate(StringPromptTemplate):
         kwargs["agent_scratchpad"] = thoughts.removesuffix("\nThought: ")
         kwargs["tool_names"] = self.agent_toolnames
         result = self.template.format(**kwargs)
-        return result
+        return remove_project_summaries(result)
 
 
 def extract_variable_names(prompt: str, interaction_enabled: bool = False):

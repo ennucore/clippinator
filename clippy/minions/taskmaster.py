@@ -55,7 +55,7 @@ class Taskmaster:
         llm = get_model(model)
         tools = get_tools(project)
         tools.append(DeclareArchitecture(project).get_tool())
-        agent_tool_names = [tool.name for tool in tools]
+        agent_tool_names = [tool.name for tool in tools if tool.name != "HTTPGet"]
         agent_tool_names.remove("PatchFile")
 
         tools.append(
@@ -73,6 +73,7 @@ class Taskmaster:
             ),
             agent_toolnames=agent_tool_names,
             my_summarize_agent=BasicLLM(base_prompt=summarize_prompt),
+            project=project,
         )
 
         llm_chain = LLMChain(llm=llm, prompt=prompt)
@@ -89,6 +90,7 @@ class Taskmaster:
             agent=agent,
             tools=tools,
             verbose=True,
+            max_iterations=1000  # We have summarization
         )
 
     def run(self, **kwargs):
@@ -97,6 +99,6 @@ class Taskmaster:
             minion.expl() for minion in self.specialized_executioners.values()
         )
         return (
-            self.agent_executor.run(**kwargs)
-            or "No result. The execution was probably unsuccessful."
+                self.agent_executor.run(**kwargs)
+                or "No result. The execution was probably unsuccessful."
         )

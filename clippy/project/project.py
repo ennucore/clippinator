@@ -1,8 +1,10 @@
 from __future__ import annotations
-from dataclasses import dataclass
+
 import os
+from dataclasses import dataclass
 
 from clippy.project.project_summary import get_file_summary
+from clippy.tools.code_tools import lint_project
 
 
 @dataclass
@@ -53,6 +55,8 @@ class Project:
         if len(res) > 4000:
             print(f"Warning: long project summary at {path}, truncating to 4000 chars")
             res = res[:4000] + "..."
+        res += '\n--\n'
+        res += lint_project(path) + '\n---'
         return res
 
     def get_project_summary(self) -> str:

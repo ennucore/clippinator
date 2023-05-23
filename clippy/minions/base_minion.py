@@ -74,7 +74,7 @@ class CustomOutputParser(AgentOutputParser):
             return AgentAction(
                 tool="WarnAgent",
                 tool_input="ERROR: Write 'AResult: ' after each action. Execute ALL the past actions "
-                           f"without AResult again ({', '.join(actions)}). They weren't completed.",
+                           f"without AResult again ({', '.join(actions)}), one-by-one. They weren't completed.",
                 log=llm_output,
             )
 
@@ -193,6 +193,7 @@ class CustomPromptTemplate(StringPromptTemplate):
     steps_since_last_summarize: int = 0
     my_summarize_agent: Any = None
     last_summary: str = ""
+    project: Any | None = None
 
     @property
     def _prompt_type(self) -> str:
@@ -247,13 +248,15 @@ class CustomPromptTemplate(StringPromptTemplate):
             [
                 f"{tool.name}: {tool.description}"
                 for tool in self.tools
-                if tool in self.agent_toolnames
+                if tool.name in self.agent_toolnames
             ]
         )
         kwargs["tool_names"] = self.agent_toolnames
-        print("Prompt:\n\n" + self.template.format(**kwargs) + "\n\n\n")
+        if self.project:
+            for key, value in self.project.prompt_fields().items():
+                kwargs[key] = value
+        # print("Prompt:\n\n" + self.template.format(**kwargs) + "\n\n\n")
         result = self.template.format(**kwargs)
-        print(result)
         return result
 
 
@@ -278,7 +281,7 @@ def get_model(model: str = "gpt-4"):
 
 @dataclass
 class BaseMinion:
-    def __init__(self, base_prompt, available_tools, model: str = "gpt-4") -> None:
+    def __init__(self, base_prompt, available_tools, model: str = "gpt-4", max_iterations: int = 50) -> None:
         llm = get_model(model)
 
         agent_toolnames = [tool.name for tool in available_tools]
@@ -305,7 +308,7 @@ class BaseMinion:
         )
 
         self.agent_executor = AgentExecutor.from_agent_and_tools(
-            agent=agent, tools=available_tools, verbose=True, max_iterations=50
+            agent=agent, tools=available_tools, verbose=True, max_iterations=max_iterations
         )
 
     def run(self, **kwargs):

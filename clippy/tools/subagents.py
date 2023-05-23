@@ -42,7 +42,7 @@ class Subagent(SimpleTool):
         except Exception as e:
             result = f"Error running agent, retry with another task or agent: {e}"
         if agent == "Architect":
-            result = self.project.architecture
+            result = 'Architecture declared: ' + self.project.architecture
         linter_result = lint_project(self.project.path)
         result = f'Completed, result: {result}\n' \
                  f'Current project state:\n{self.project.get_project_summary()}\n--\n{linter_result}\n---\n'

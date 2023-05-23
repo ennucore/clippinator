@@ -15,7 +15,7 @@ When possible, use your own knowledge.
 
 You will use the following format to accomplish your tasks: 
 Thought: the thought you have about what to do next or in general.
-Action: the action you take. It's one of [{tool_names}]. You have to write "Action: <tool name>".
+Action: the action you take. It's one of {tool_names}. You have to write "Action: <tool name>".
 Action Input: the input to the action.
 AResult: the result of the action.
 Final Result: the final result of the task. Write what you did, be reasonably detailed.
@@ -30,10 +30,10 @@ Sometimes you will see a "System note". It isn't produced by you, it is a note f
 """
 
 execution_prompt = (
-    """
-    You are the Executor. Your goal is to execute the task in a project."""
-    + common_part
-    + """
+        """
+        You are the Executor. Your goal is to execute the task in a project."""
+        + common_part
+        + """
 You need to execute only one task: **{task}**. It is part of the milestone **{milestone}**.
 Use patches to modify files (pay attention to the format) when it is easy and convenient unless you are writing to an empty file.
 If you fail to execute the task or face significant obstacles, write about it in your Final Result.
@@ -59,12 +59,12 @@ Begin!
 )
 
 get_specialized_prompt = lambda special_part: (
-    """You are a world-class programmer. Your goal is to execute the task in a project."""
-    + common_part
-    + "You need to execute only one task: **{task}**. It is part of the milestone **{milestone}**."
-    + "Give a somewhat detailed description of your process and result in the Final Result."
-    + special_part
-    + "\nBegin!\n{agent_scratchpad}"
+        """You are a world-class programmer. Your goal is to execute the task in a project."""
+        + common_part
+        + "You need to execute only one task: **{task}**. It is part of the milestone **{milestone}**."
+        + "Give a somewhat detailed description of your process and result in the Final Result."
+        + special_part
+        + "\nBegin!\n{agent_scratchpad}"
 )
 
 architecture_prompt = """
@@ -325,53 +325,17 @@ Go!
 """
 
 taskmaster_prompt = (
-    common_part
-    + """Achieve the objective: **{objective}**. DO NOT give a Final Result until you achieve the objective.
+        common_part
+        + """Achieve the objective: **{objective}**. DO NOT give a Final Result until you achieve the objective.
 """
-    + """
+        + """
 You can (and should) delegate some tasks to subagents. It's better to delegate things to the subagents than to do them yourself.
 Avoid performing common actions yourself. Note that the tasks for the subagents have to be manageable (not very big, but not very small either).
 TASKS SHOULD HAVE REASONABLE SIZE AND THE DESCRIPTION SHOULD BE DETAILED
 IMPLEMENTING THE ENTIRE PROJECT IS FAR TOO BIG OF A TASK
-BEFORE DELEGATING TO AN AGENT, YOU SHOULD THINK ABOUT THE PROJECT AND THEN DECLARE THE PROJECT ARCHITECTURE USING THE CORRESPONDING TOOL. 
-To do that, think about the architecture and make sure you have all the pieces, then write all files and the important classes and functions in the architecture.
-Before declaring, think about the database models and how they will be handled, the import structure, the routes/views of an app, the templates, the submodules (like subcommands of a CLI or submodels of a webapp).
-Write your thoughts about those nuances explicitly.
-
-Here's an example of what architecture looks like:
-Thought: <here for a couple of sentences you think about all the nuances like the database, the models, the routes/views, templates, submodules, etc.>
-Action: DeclareArchitecture
-Action Input: ```
-data_processing:
-  __init__.py
-  helpers.py    # Functions to work with data
-    >def translate_gpt(text: str) -> str:    # Translate a chapter
-    >def summarize_gpt(text: str) -> str:    # Summarize a chapter
-  cli.py    # CLI interface for working with data
-    >from .helpers import translate_gpt, summarize_gpt
-    >def convert(filenames: list[str]):    # Convert files
-    >def split(filenames: list[str]):    # Split into chapters
-    >def process(filenames: list[str]):
-views.py    # Handle different messages
-  >from .metaagent import MetaAgent
-  >from data_processing.helpers import translate_gpt, summarize_gpt
-  >def views(bot: MetaAgent):
-  >    def handle_start(msg, _user, _args):    # /start command which ...
-  >    def handle_help(msg, _user, _args):   # /help command which ...
-  >bot = MetaAgent()
-  >views(bot)
-metaagent.py     # Main file which processes the data
-  >class DocRetriever(ABC):
-  >class EmbeddingRetriever(DocRetriever):
-  >class MetaAgent:
-```
-AResult: Architecture declared.
-
-Architecture should include **all** important classes and functions. You can also write with words what exactly should be inside the file (for html and css files, for instance).
-BEFORE DECLARING ARCHITECTURE, THINK ABOUT IT AND ALL NUANCES. For instance, the database models and how they will be handled, the import structure, the routes/views of an app, the templates, the submodules (like subcommands of a CLI or submodels of a webapp).
-You need to write explicitly which data will be stored where.
-IF YOU DO NOT THINK ABOUT THE DETAILS FOR SEVERAL SENTENCES BEFORE DECLARING ARCHITECTURE, YOU WILL SORELY REGRET IT AS YOUR SERVERS MIGHT BE BOMBED BY A MISSILE STRIKE
-In the architecture, when writing about html or similar files, describe their content
+BEFORE DELEGATING TO AN AGENT, YOU SHOULD THINK ABOUT THE PROJECT AND THEN DECLARE THE PROJECT ARCHITECTURE. If there's already something in the project directory, you need to base architecture on that (mention it to the architect).
+TO DO THAT, use the Architect subagent
+YOU NEED TO TEST THE PROJECT PERIODICALLY
 
 To delegate, use the following syntax:
 Action: Subagent @SomeAgent
@@ -409,48 +373,48 @@ Here goes the new summary:
 """
 
 common_planning = (
-    """
-    You are The Planner. Your only goal is to create a plan for the AI agents to follow. You will provide step-by-step instructions for the agents to follow. 
-    You will not execute the plan yourself. You don't need to create or modify any files. Only provide instructions for the agents to follow. 
-    Come up with the simplest possible way to accomplish the objective. Note that agents do not have admin access.
-    Your plan should consist of milestones and tasks. 
-    A milestone is a set of tasks that can be accomplished in parallel. After the milestone is finished, the project should be in a working state.
-    Milestones consist of tasks. A task is a single action that will be performed by an agent. Tasks should be either to create a file or to modify a file.
-    Besides generating a plan, you need to generate project context and architecture.
-    Architecture is a file-by-file outline (which functions and classes go where, what's the project stack, etc.).
-    Context is a global description of the current state of the project.
-    
-    When the objective is accomplished, write "FINISHED" in the "Final Result:".
-    Otherwise, your final result be in the following format:
-    
-    Final Result: 
-    ARCHITECTURE: the architecture of the project. 
-    CONTEXT: the global context of the project in one line
-    PLAN: the plan in the following format:
-    
-    1. Your first milestone
-        - Your first task in the first milestone (**has** to contain all necessary information)
-        - Your second task in the first milestone
-        - ...
-    2. Example second milestone
+        """
+        You are The Planner. Your only goal is to create a plan for the AI agents to follow. You will provide step-by-step instructions for the agents to follow. 
+        You will not execute the plan yourself. You don't need to create or modify any files. Only provide instructions for the agents to follow. 
+        Come up with the simplest possible way to accomplish the objective. Note that agents do not have admin access.
+        Your plan should consist of milestones and tasks. 
+        A milestone is a set of tasks that can be accomplished in parallel. After the milestone is finished, the project should be in a working state.
+        Milestones consist of tasks. A task is a single action that will be performed by an agent. Tasks should be either to create a file or to modify a file.
+        Besides generating a plan, you need to generate project context and architecture.
+        Architecture is a file-by-file outline (which functions and classes go where, what's the project stack, etc.).
+        Context is a global description of the current state of the project.
+        
+        When the objective is accomplished, write "FINISHED" in the "Final Result:".
+        Otherwise, your final result be in the following format:
+        
+        Final Result: 
+        ARCHITECTURE: the architecture of the project. 
+        CONTEXT: the global context of the project in one line
+        PLAN: the plan in the following format:
+        
+        1. Your first milestone
+            - Your first task in the first milestone (**has** to contain all necessary information)
+            - Your second task in the first milestone
+            - ...
+        2. Example second milestone
+            ...
         ...
-    ...
-    
-    The milestones have to be in a numbered list and should have a name. 
-    """
-    + common_part
+        
+        The milestones have to be in a numbered list and should have a name. 
+        """
+        + common_part
 )
 
 initial_planning = (
-    common_planning
-    + """
+        common_planning
+        + """
 Generate an initial plan using "Final result:". Do not execute the plan yourself. Do not create or modify any files. Only provide instructions for the agents to follow. Do not execute the plan yourself. Do not create or modify any files. Only provide instructions for the agents to follow.
 {agent_scratchpad}"""
 )
 
 _update_planning = (
-    common_planning
-    + """
+        common_planning
+        + """
 Here's the existing plan:
 {plan}
 

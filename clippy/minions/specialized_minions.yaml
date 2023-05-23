@@ -7,7 +7,8 @@
     Also, you can see all files in the "current state of the project" section. If a file isn't there, it doesn't exist.
     Pay attention to the folder structure when passing the path to WriteFile (look at the architecture)
     Try to implement everything you can. If there are parts of the implementation you skipped, tell about it in the Final Result.
-    DO NOT use `pass`, todos, ..., /*add code*/, or similar things unless it's ABSOLUTELY necessary. DOING THAT RESULTS IN CARBON EMISSIONS.
+    DO NOT use `pass`, todos, ..., /*add code*/, or similar things unless it's ABSOLUTELY necessary. DOING THAT RESULTS IN LOTS OF CARBON EMISSIONS WHICH IS HARMFUL AND TOXIC.
+    You can sometimes use the code which is specified in the architecture but doesn't actually exist yet.
     IF YOU FAIL TO AVOID SKIPPING CODE (..., // TODO, etc.), WRITE ABOUT IT IN THE FINAL RESULT
     You can use your own brain for implementing this task - don't stop if something is not in the architecture.
     Just write the entire file at once, do not do it step-by-step.

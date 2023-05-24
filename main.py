@@ -1,8 +1,9 @@
-import typer
-from dotenv import load_dotenv
-from clippy.clippy import Clippy
 import os
 
+import typer
+from dotenv import load_dotenv
+
+from clippy.clippy import Clippy
 from clippy.minions.taskmaster import Taskmaster
 from clippy.project import Project
 
@@ -48,8 +49,19 @@ def taskmaster(project_path: str, objective: str = ''):
     """
     Create a new project using clippy.
     """
-    if not objective:
+    if not objective and not os.path.exists(os.path.join(project_path, '.clippy.pkl')):
         objective = typer.prompt('What project do I need to create?\n')
+    if not objective and os.path.exists(os.path.join(project_path, '.clippy.pkl')):
+        tm = Taskmaster.load_from_file(os.path.join(project_path, '.clippy.pkl'))
+        tm.run(**tm.project.prompt_fields())
+        return
+    elif os.path.exists(os.path.join(project_path, '.clippy.pkl')):
+        tm = Taskmaster.load_from_file(os.path.join(project_path, '.clippy.pkl'))
+        project = tm.project
+        project.objective = objective
+        tm = Taskmaster(project)
+        tm.run(**project.prompt_fields())
+        return
     os.makedirs(project_path, exist_ok=True)
     project = Project(project_path, objective)
     tm = Taskmaster(project)

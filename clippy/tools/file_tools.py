@@ -1,6 +1,5 @@
 import os
 from dataclasses import dataclass
-from typing import Tuple
 
 from langchain import PromptTemplate
 from langchain.chains.combine_documents.base import BaseCombineDocumentsChain
@@ -18,7 +17,7 @@ from .code_tools import lint_file
 def strip_quotes(inp: str) -> str:
     inp = inp.strip()
     if ": " in inp.split("\n", 1)[0] and (
-        "``" in inp.split("\n", 1)[0] or "'''" in inp.split("\n", 1)[0]
+            "``" in inp.split("\n", 1)[0] or "'''" in inp.split("\n", 1)[0]
     ):
         inp = inp.split(": ", 1)[-1].strip()
     if inp.startswith("```"):
@@ -141,9 +140,9 @@ class ReadFile(SimpleTool):
                     out = "```\n" + "".join(lines) + "\n```"
                     if len(out) > 5000:
                         return (
-                            out[:5000]
-                            + "\n...\n```\nFile too long, use the summarizer or "
-                            "(preferably) request specific line ranges.\n"
+                                out[:5000]
+                                + "\n...\n```\nFile too long, use the summarizer or "
+                                  "(preferably) request specific line ranges.\n"
                         )
                     return out
             filename, line_range = args.split("[", 1)
@@ -151,7 +150,7 @@ class ReadFile(SimpleTool):
             line_ranges = line_range.split("]")[0].split(",")
             line_ranges = [line_range.split(":") for line_range in line_ranges]
             line_ranges = [
-                (int(line_range[0].strip()) - 1, int(line_range[1].strip()))
+                (int(line_range[0].strip().strip('l')) - 1, int(line_range[1].strip().strip('l')))
                 for line_range in line_ranges
             ]
             with open(os.path.join(self.workdir, filename.strip()), "r") as f:
@@ -181,9 +180,9 @@ def apply_patch(file_content, patch):
 
     while content_index < len(content_lines) or patch_index < len(patch_lines):
         if (
-            patch_index < len(patch_lines)
-            and patch_lines[patch_index].startswith("[")
-            and patch_lines[patch_index].endswith("]")
+                patch_index < len(patch_lines)
+                and patch_lines[patch_index].startswith("[")
+                and patch_lines[patch_index].endswith("]")
         ):
             # Parse the range from the patch
             range_str = patch_lines[patch_index][1:-1]
@@ -202,18 +201,18 @@ def apply_patch(file_content, patch):
             range_end -= 1
 
             if (
-                range_start > range_end
-                or range_start < 0
-                or range_end >= len(content_lines)
+                    range_start > range_end
+                    or range_start < 0
+                    or range_end >= len(content_lines)
             ):
                 raise ValueError(
-                    f"Invalid line range. Received '{range_start+1}-{range_end+1}' for a file with {len(content_lines)} lines."
+                    f"Invalid line range. Received '{range_start + 1}-{range_end + 1}' for a file with {len(content_lines)} lines."
                 )
 
             # Check if the ranges overlap
             if range_start <= last_end_line:
                 raise ValueError(
-                    f"Line ranges overlap. Previous range ends at line {last_end_line+1}, but next range starts at line {range_start+1}."
+                    f"Line ranges overlap. Previous range ends at line {last_end_line + 1}, but next range starts at line {range_start + 1}."
                 )
 
             last_end_line = range_end
@@ -222,8 +221,8 @@ def apply_patch(file_content, patch):
             patch_index += 1
             replacements = []
             while patch_index < len(patch_lines) and not (
-                patch_lines[patch_index].startswith("[")
-                and patch_lines[patch_index].endswith("]")
+                    patch_lines[patch_index].startswith("[")
+                    and patch_lines[patch_index].endswith("]")
             ):
                 replacements.append(patch_lines[patch_index])
                 patch_index += 1
@@ -277,9 +276,9 @@ class PatchFile(SimpleTool):
     def func(self, args: str) -> str:
         if "\n" not in strip_quotes(args):
             return (
-                "Error: no newline found in input. "
-                "The first line should be the filename, the rest should be the patch."
-                " Here is an example of patching:\n" + patch_example
+                    "Error: no newline found in input. "
+                    "The first line should be the filename, the rest should be the patch."
+                    " Here is an example of patching:\n" + patch_example
             )
         filename, patch = strip_quotes(args).split("\n", 1)
         filename = strip_filename(filename)

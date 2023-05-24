@@ -1,3 +1,5 @@
+import os.path
+import pickle
 from typing import List, Dict, Any
 
 from langchain import LLMChain
@@ -48,7 +50,7 @@ class CustomMemory(BaseMemory):
 
 
 class Taskmaster:
-    def __init__(self, project: Project, model: str = "gpt-4"):
+    def __init__(self, project: Project, model: str = "gpt-4", prompt: CustomPromptTemplate | None = None):
         self.project = project
         self.specialized_executioners = get_specialized_executioners(project)
         self.default_executioner = Executioner(project)
@@ -65,7 +67,7 @@ class Taskmaster:
         )
         tools.append(WarningTool().get_tool())
 
-        prompt = CustomPromptTemplate(
+        self.prompt = prompt or CustomPromptTemplate(
             template=taskmaster_prompt,
             tools=tools,
             input_variables=extract_variable_names(
@@ -75,8 +77,9 @@ class Taskmaster:
             my_summarize_agent=BasicLLM(base_prompt=summarize_prompt),
             project=project,
         )
+        self.prompt.hook = lambda _: self.save_to_file()
 
-        llm_chain = LLMChain(llm=llm, prompt=prompt)
+        llm_chain = LLMChain(llm=llm, prompt=self.prompt)
 
         output_parser = CustomOutputParser()
 
@@ -102,3 +105,23 @@ class Taskmaster:
                 self.agent_executor.run(**kwargs)
                 or "No result. The execution was probably unsuccessful."
         )
+
+    def save_to_file(self, path: str = ""):
+        path = path or os.path.join(self.project.path, f".clippy.pkl")
+        with open(path, "wb") as f:
+            prompt = {
+                'steps_since_last_summarize': self.prompt.steps_since_last_summarize,
+                'last_summary': self.prompt.last_summary,
+                'intermediate_steps': self.prompt.intermediate_steps,
+            }
+            pickle.dump((prompt, self.project), f)
+
+    @classmethod
+    def load_from_file(cls, path: str = ".clippy.pkl"):
+        with open(path, "rb") as f:
+            prompt, project = pickle.load(f)
+        self = cls(project)
+        self.prompt.steps_since_last_summarize = prompt['steps_since_last_summarize']
+        self.prompt.last_summary = prompt['last_summary']
+        self.prompt.intermediate_steps = prompt['intermediate_steps']
+        return self

@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from clippy.project.project_summary import get_file_summary
-from clippy.tools.code_tools import lint_project
 
 
 @dataclass
@@ -14,6 +13,7 @@ class Project:
     state: str = ""
     architecture: str = ""
     summary_cache: str = ""
+    memories: list[str] = field(default_factory=list)
 
     @classmethod
     def create(cls, path: str, objective: str) -> Project:
@@ -40,6 +40,7 @@ class Project:
                 file3.py
         """
         from clippy.tools.utils import skip_file
+        from clippy.tools.code_tools import lint_project
 
         res = ""
         for file in os.listdir(path):
@@ -81,4 +82,5 @@ class Project:
             "architecture": self.architecture,
             "project_name": self.name,
             "project_summary": self.get_project_summary(),
+            "memories": '  - ' + "\n  - ".join(self.memories),
         }

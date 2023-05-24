@@ -3,7 +3,6 @@ from __future__ import annotations
 import typing
 
 from clippy.project import Project
-from .code_tools import lint_project
 from .terminal import get_pids, end_sessions
 from .tool import SimpleTool
 from ..minions import extract_agent_name
@@ -43,9 +42,8 @@ class Subagent(SimpleTool):
             result = f"Error running agent, retry with another task or agent: {e}"
         if agent == "Architect":
             result = 'Architecture declared: ' + self.project.architecture
-        linter_result = lint_project(self.project.path)
         result = f'Completed, result: {result}\n' \
-                 f'Current project state:\n{self.project.get_project_summary()}\n--\n{linter_result}\n---\n'
+                 f'Current project state:\n{self.project.get_project_summary()}\n'
         end_sessions(pids)
         return result
 
@@ -61,3 +59,18 @@ class DeclareArchitecture(SimpleTool):
     def func(self, args: str) -> str:
         self.project.architecture = args
         return f"Architecture declared."
+
+
+class Remember(SimpleTool):
+    name = "Remember"
+    description = "remember a fact for later use which will be known globally " \
+                  "(e.g. some bugs, implementation details, something to be done later, etc.)"
+
+    def __init__(self, project: Project):
+        self.project = project
+        super().__init__()
+
+    def func(self, args: str) -> str:
+        self.project.memories.append(args)
+        self.project.memories = self.project.memories[-10:]
+        return f"Remembered {args}."

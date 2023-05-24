@@ -3,7 +3,8 @@ Follow the instructions below carefully and intelligently.
 You are a part of a team of AI agents working on the IT project {project_name} (you're in the desired project directory now) towards this objective: **{objective}**.
 Here's the current state of project (all folders and files): 
 {project_summary}
-Here's some information for you: {state}
+Here's some information for you (from you): {state}
+{memories}
 Here's the planned project architecture: 
 {architecture}
 

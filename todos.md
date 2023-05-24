@@ -5,12 +5,11 @@
 - [ ] Browsing tool
 - [ ] Improve the QA agent
 - [ ] Using ^C to provide extra human input to the agents
-- [ ] Storing intermediate Taskmaster states
-- [ ] Tests in architecture
-- [ ] Function descriptions (for the complex ones), typing in architecture
+- [X] Storing intermediate Taskmaster states
+- [ ] Function descriptions (for the complex ones), typing, tests in architecture
 - [ ] Architecture iteration
 - [ ] More info in result
-- [ ] "Remember" tool
+- [X] "Remember" tool
 - [X] Linter warnings at Patch and Write
 - [X] Better patches (just replacing lines)
 

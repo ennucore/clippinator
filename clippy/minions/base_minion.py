@@ -194,12 +194,15 @@ class CustomPromptTemplate(StringPromptTemplate):
     my_summarize_agent: Any = None
     last_summary: str = ""
     project: Any | None = None
+    intermediate_steps: list[(AgentAction, str)] = []
+    hook: Callable[[CustomPromptTemplate], None] | None = None
 
     @property
     def _prompt_type(self) -> str:
         return "taskmaster"
 
-    def thought_log(self, thoughts: str) -> str:
+    @staticmethod
+    def thought_log(thoughts: list[(AgentAction, str)]) -> str:
         result = ""
         for action, AResult in thoughts:
             if AResult.startswith("\r"):
@@ -212,6 +215,7 @@ class CustomPromptTemplate(StringPromptTemplate):
         # Get the intermediate steps (AgentAction, AResult tuples)
         # Format them in a particular way
         intermediate_steps = kwargs.pop("intermediate_steps")
+        self.intermediate_steps = intermediate_steps
         if (
                 self.steps_since_last_summarize == self.summarize_every_n_steps
                 and self.my_summarize_agent
@@ -223,7 +227,7 @@ class CustomPromptTemplate(StringPromptTemplate):
                     intermediate_steps[
                     -self.summarize_every_n_steps: -self.keep_n_last_thoughts
                     ]
-                ),
+                )
             )
 
         if self.my_summarize_agent:
@@ -257,6 +261,8 @@ class CustomPromptTemplate(StringPromptTemplate):
                 kwargs[key] = value
         # print("Prompt:\n\n" + self.template.format(**kwargs) + "\n\n\n")
         result = self.template.format(**kwargs)
+        if self.hook:
+            self.hook(self)
         return result
 
 

@@ -8,8 +8,9 @@
     Pay attention to the folder structure when passing the path to WriteFile (look at the architecture)
     Try to implement everything you can. If there are parts of the implementation you skipped, tell about it in the Final Result.
     DO NOT use `pass`, todos, ..., /*add code*/, or similar things unless it's ABSOLUTELY necessary. DOING THAT RESULTS IN LOTS OF CARBON EMISSIONS WHICH IS HARMFUL AND TOXIC.
+    Try to write the most complete version you can.
     You can sometimes use the code which is specified in the architecture but doesn't actually exist yet.
-    IF YOU FAIL TO AVOID SKIPPING CODE (..., // TODO, etc.), WRITE ABOUT IT IN THE FINAL RESULT
+    IF YOUR CODE IS INCOMPLETE (..., // TODO, missing functionality, reliance on missing objects, etc.), WRITE ABOUT IT IN THE FINAL RESULT
     You can use your own brain for implementing this task - don't stop if something is not in the architecture.
     Just write the entire file at once, do not do it step-by-step.
     Write all possible checks and so on, be careful. For instance, write initialization of the database.
@@ -17,10 +18,11 @@
     After writing a file, think about possible mistakes or places where there could be errors in the file:
     AResult: Successfully written to ...
     Thought: <Write here possible things which might be wrong with the file>
-  tool_names: [ "ReadFile", "WriteFile", "Bash" ]
+  tool_names: [ "ReadFile", "WriteFile", "Bash", "Remember" ]
 - name: "Architect"
   description: "comes up with the architecture"
   prompt: |+
+    You are The Architect, an entity with great attention to detail.
     You need to come up with the project architecture.
     To do that, think about the architecture and make sure you have all the pieces, then write all files and the important classes and functions in the architecture.
     Before declaring, think about the database models and how they will be handled, the import structure, the routes/views of an app, the templates, the submodules (like subcommands of a CLI or submodels of a webapp).
@@ -118,10 +120,11 @@
     When writing configs, SPECIFY their format.
     DO NOT COPY from the example. You can use it as a reference, but you need to write your own architecture. For instance, there will not always be a Flask server.
     For complicated functions, write how they work in a couple of sentences.
+    If there are some things which need to be done later (for instance, redoing architecture after some time, testing something important, remembering to read something) or some things to keep in mind, write about it in the architecture or use the Remember tool.
     
     Use the DeclareArchitecture tool, then return "Architecture declared." as the final result.
 
-  tool_names: [ "DeclareArchitecture", "ReadFile", "WriteFile", "Bash" ]
+  tool_names: [ "DeclareArchitecture", "ReadFile", "WriteFile", "Bash", "Remember" ]
 - name: "Frontender"
   description: "implements a frontend-related part of the architecture in a new or small file. Example task: 'Implement index.html and base.html according to the architecture'. Prefer using this agent for HTML, CSS, etc.. It can even implement several (max 2-3) connected files, but only a couple of specified files."
   prompt: |+
@@ -155,10 +158,10 @@
     
     After reading a file, write in your thoughts ALL things which might be wrong with it.
     Often it might be helpful to read the logs of your Bash background processes.
-  tool_names: [ "ReadFile", "WriteFile", "Bash", "Pylint", "PatchFile", "BashBackground", "HumanInput" ]
+  tool_names: [ "ReadFile", "WriteFile", "Bash", "Pylint", "PatchFile", "BashBackground", "HumanInput", "Remember" ]
 - name: "Editor"
   description: "Edits a file - usually, to add some new functions or classes to it. Use **only** if the file is already pretty big (>200 lines)."
-  tool_names: [ "ReadFile", "PatchFile", "WriteFile", "Bash" ]
+  tool_names: [ "ReadFile", "PatchFile", "WriteFile", "Bash", "Remember" ]
   prompt: |+
     Look at the architecture and the current code in the file, then use patch to add the new functionality to the file.
     READ THE FILE BEFORE PATCHING
@@ -207,7 +210,7 @@
 
 - name: "Devops"
   description: "Does operations with the system: moves files, installs packages, etc."
-  tool_names: [ "Bash", "BashBackground", "ReadFile", "WriteFile" ]
+  tool_names: [ "Bash", "BashBackground", "ReadFile", "WriteFile", "Remember" ]
   prompt: |+
     You can use Bash to do operations with the system. 
     Keep in mind that your Bash commands can't ask for stdin or run for a long time.

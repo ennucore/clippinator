@@ -1,9 +1,9 @@
-- [ ] Improve the bash tool (killing processes, etc.)
+- [X] Improve the bash tool (killing processes, etc.)
 - [X] Summarization
 - [X] Architect subagent
 - [X] Wget tool (for QA)
 - [ ] Browsing tool
-- [ ] Improve the QA agent
+- [ ] Improve the QA agent (somehow...)
 - [ ] Using ^C to provide extra human input to the agents
 - [X] Storing intermediate Taskmaster states
 - [ ] Function descriptions (for the complex ones), typing, tests in architecture

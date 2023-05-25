@@ -48,7 +48,7 @@ A reminder on how to use patches if you want (note that you should understand wh
 Action Input: filename
 [2-3]
 def greet(name):  
-    print(f"Hello, {name}!")
+    print("Hello, " + name + "!")
 [5]
     a = 123
     c = 789

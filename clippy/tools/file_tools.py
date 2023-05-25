@@ -40,7 +40,7 @@ Action: PatchFile
 Action Input: filename
 [2-3]
 def greet(name):  
-    print(f"Hello, {name}!")
+    print("Hello, " + name + "!")
 [5]
     a = 123
     c = 789
@@ -58,7 +58,7 @@ class WriteFile(SimpleTool):
 
     name = "WriteFile"
     description = (
-        "a tool that can be used to write files. "
+        "a tool that can be used to write (OVERWRITE) files. "
         "The input format is 'dir/filename' (the path is relative to the project directory) on the first "
         "line, "
         "and starting from the next line the desired content without any quotes or other formatting. "

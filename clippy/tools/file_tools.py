@@ -38,7 +38,7 @@ AResult:
 <lines will be here. Now you can patch the file>
 Action: PatchFile
 Action Input: filename
-[2-3]
+[2-4]
 def greet(name):  
     print("Hello, " + name + "!")
 [5]
@@ -149,18 +149,20 @@ class ReadFile(SimpleTool):
             filename = strip_filename(filename)
             line_ranges = line_range.split("]")[0].split(",")
             line_ranges = [line_range.split(":") for line_range in line_ranges]
-            line_ranges = [
-                (int(line_range[0].strip().strip('l')) - 1, int(line_range[1].strip().strip('l')))
-                for line_range in line_ranges
-            ]
+
             with open(os.path.join(self.workdir, filename.strip()), "r") as f:
                 lines = f.readlines()
+                line_ranges = [
+                    (
+                    int(line_range[0].strip().strip('l') or 1) - 1, int(line_range[1].strip().strip('l') or len(lines)))
+                    for line_range in line_ranges
+                ]
                 out = ""
                 for line_range in line_ranges:
                     out += "".join(
                         [
                             f"{i + 1}| {lines[i]}"
-                            for i in range(line_range[0], line_range[1] + 1)
+                            for i in range(line_range[0], min(line_range[1], len(lines)))
                         ]
                     )
                 return "```\n" + out + "\n```"
@@ -199,18 +201,20 @@ def apply_patch(file_content, patch):
             # Convert to 0-indexed
             range_start -= 1
             range_end -= 1
+            # End is not inclusive
+            range_end -= 1
 
             if (
-                    range_start > range_end
+                    range_start > range_end + 1
                     or range_start < 0
                     or range_end >= len(content_lines)
             ):
                 raise ValueError(
-                    f"Invalid line range. Received '{range_start + 1}-{range_end + 1}' for a file with {len(content_lines)} lines."
+                    f"Invalid line range. Received '{range_start + 1}-{range_end + 2}' for a file with {len(content_lines)} lines."
                 )
 
             # Check if the ranges overlap
-            if range_start <= last_end_line:
+            if range_start < last_end_line:
                 raise ValueError(
                     f"Line ranges overlap. Previous range ends at line {last_end_line + 1}, but next range starts at line {range_start + 1}."
                 )
@@ -259,15 +263,18 @@ class PatchFile(SimpleTool):
     description = """
         The patch format is a text-based representation designed to apply modifications to another text, typically source code. 
         Each modification is represented by a line range to be replaced, followed by the replacement content. 
-        The line range is specified in brackets, such as [start-end] or [line] for a single line, where the line numbers are 1-indexed. 
+        The line range is specified in brackets, such as [start-end] to replace from start to end (10-20 will erase lines 10, 11, ..., 19, 1-indexed, and replace them by the new content) or [line] to insert a line after the specified line, where the line numbers are 1-indexed. 
         The replacement content follows the line range and can span multiple lines. Here is a sample patch:
         ```
-        [2-3]
+        [2-4]
         replacement for lines 2 and 3
         [5]
-        replacement for line 5
+        insert after line 5
+        [20-21]
+        replacement for line 20
         ```
         The patch lines are applied in order, and the ranges must not overlap or intersect. Any violation of this format will result in an error.
+        Make sure to read the relevant part of the file before patching, especially if you're trying to fix something.
         """
 
     def __init__(self, wd: str = "."):

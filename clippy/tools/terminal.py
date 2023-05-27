@@ -118,6 +118,7 @@ class BashBackgroundSessions(SimpleTool):
             "    - `/killall` kills all background processes\n"
             "    - `/kill <pid>` kills the process with the given pid\n"
             "    - `/logs <pid>` gets the output of a process\n"
+            "    - `/list` lists all current processes\n"
         )
         self.description += 'Current processes:\n'
         for process in bash_processes:
@@ -155,6 +156,9 @@ class BashBackgroundSessions(SimpleTool):
                     output = '\n'.join([part.read() for part in ready_to_read])
                     return '```\n' + output + '\n```\n'
             return f"Could not find process with pid {pid}.\n"
+        elif args.startswith("/list"):
+            return 'Current processes:\n' + '\n'.join(
+                [f'    - pid: {process["pr"].pid}| `{process["args"][:50]}`' for process in bash_processes])
         else:
             process = subprocess.Popen(
                 ["bash"],

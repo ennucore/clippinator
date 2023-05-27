@@ -26,7 +26,7 @@ class Project:
     def name(self) -> str:
         return os.path.basename(self.path)
 
-    def get_folder_summary(self, path: str, ident: str = "") -> str:
+    def get_folder_summary(self, path: str, ident: str = "", add_linting: bool = True) -> str:
         """
         Get the summary of a folder in the project, recursively, file-by-file, using self.get_file_summary()
         path:
@@ -49,15 +49,16 @@ class Project:
                 continue
             if os.path.isdir(file_path):
                 res += f"{ident}{file}:\n"
-                res += self.get_folder_summary(file_path, ident + "  ")
+                res += self.get_folder_summary(file_path, ident + "  ", False)
             else:
                 res += f"{ident}{file}\n"
                 res += get_file_summary(file_path, ident + "  ")
         if len(res) > 4000:
             print(f"Warning: long project summary at {path}, truncating to 4000 chars")
             res = res[:4000] + "..."
-        res += '\n--\n'
-        res += lint_project(path) + '\n---'
+        if add_linting:
+            res += '\n--\n'
+            res += lint_project(path) + '\n---'
         return res
 
     def get_project_summary(self) -> str:

@@ -46,7 +46,7 @@ Avoid reading big files, strive to specify ranges in reading and use patch inste
 If you are writing to a new file, you have to use WriteFile (and write the desired code in the action input, as requested; base your code on the architecture).
 A reminder on how to use patches if you want (note that you should understand what happens in the region of the patch - use ReadFile to read specific lines with [l1:l2]. ALWAYS understand the file content first):
 Action Input: filename
-[2-3]
+[2-4]
 def greet(name):  
     print("Hello, " + name + "!")
 [5]
@@ -337,6 +337,7 @@ IMPLEMENTING THE ENTIRE PROJECT IS FAR TOO BIG OF A TASK
 BEFORE DELEGATING TO AN AGENT, YOU SHOULD THINK ABOUT THE PROJECT AND THEN DECLARE THE PROJECT ARCHITECTURE. If there's already something in the project directory, you need to base architecture on that (mention it to the architect).
 TO DO THAT, use the Architect subagent
 YOU NEED TO TEST THE PROJECT PERIODICALLY
+Note that when an agent writes that it did not write everything, you need to later delegate the task of finishing the work in question. You can't ignore it.
 
 To delegate, use the following syntax:
 Action: Subagent @SomeAgent

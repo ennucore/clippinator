@@ -10,7 +10,10 @@
     DO NOT use `pass`, todos, ..., /*add code*/, or similar things unless it's ABSOLUTELY necessary. DOING THAT RESULTS IN LOTS OF CARBON EMISSIONS WHICH IS HARMFUL AND TOXIC.
     Try to write the most complete version you can.
     You can sometimes use the code which is specified in the architecture but doesn't actually exist yet.
+    Also, note that architecture just outlines some of the functions you need to write, not all of them.
+    STRIVE TO WRITE COMPLETE CODE WITHOUT SKIPPING ANYTHING.
     IF YOUR CODE IS INCOMPLETE (..., // TODO, missing functionality, reliance on missing objects, etc.), WRITE ABOUT IT IN THE FINAL RESULT
+    If you left something incomplete or if there's some important piece of information, use the Remember tool.
     You can use your own brain for implementing this task - don't stop if something is not in the architecture.
     Just write the entire file at once, do not do it step-by-step.
     Write all possible checks and so on, be careful. For instance, write initialization of the database.
@@ -46,22 +49,23 @@
 
     views.py
       >from flask import Blueprint, render_template, request, redirect, url_for
+      >from flask_login import login_required, current_user
       >from models import User, Tweet, Follower
       >views_blueprint = Blueprint("views", __name__)
-      >@views_blueprint.route("/", methods=["GET", "POST"])
+      >@views_blueprint.route("/")
       >def index() -> str:    # renders index.html template
       >@views_blueprint.route("/register", methods=["GET", "POST"])
-      >def register() -> str:
+      >def register() -> str:   # register.html on get, create a new user and redir to / on post
       >@views_blueprint.route("/login", methods=["GET", "POST"])
-      >def login() -> str:
-      >@views_blueprint.route("/logout")
-      >def logout() -> str:
-      >@views_blueprint.route("/tweet", methods=["GET", "POST"])
-      >def tweet() -> str:
+      >def login() -> str:   # login.html on get, logging in + redir on post
+      >@views_blueprint.route("/tweet", methods=["POST"])
+      >def new_tweet() -> str:    # Create a new twit in the database, redirect to its page
+      >@views_blueprint.route("/tweet/<int:tweet_id")
+      >def tweet() -> str:    # view a tweet using tweet.html
       >@views_blueprint.route("/follow/<int:user_id>")
-      >def follow(user_id: str) -> str:
-      >@views_blueprint.route("/unfollow/<int:user_id>")
-      >def unfollow(user_id: str) -> str:
+      >def follow(user_id: str) -> str:    # follow a user
+      >@views_blueprint.route("/like/<int:tweet>")
+      >def like(tweet_id: str) -> str:    # toggle like on a tweet and return the new state
 
     models.py
       >from flask_sqlalchemy import SQLAlchemy
@@ -74,27 +78,34 @@
       >    id = db.Column(db.Integer, primary_key=True)
       >    content = db.Column(db.String(280), nullable=False)
       >    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+      >    timestamp = db.Column(db.DateTime, nullable=False)
       >class Follower(db.Model):
       >    id = db.Column(db.Integer, primary_key=True)
       >    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
       >    follower_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
     templates/
+      # Design notes: the background color is white, the overall design is modern and minimalistic, rounded corners, animations, the top header bar is dark blue, the primary color is blue
       base.html    # Base template with common elements like loading Tailwind for modern design
         > Loads Tailwind CSS, static/main.css, and static/main.js (using url_for)
-        > Has the content block
-      index.html   # Home page with a list of tweets from followed users
+        > Has the top header bar with navigation (login, profile [depending on the current user], etc.), some basic (modern) design of the base of the pages
+        > Has the content block which is centered
+      index.html   # Home page with a list of tweets from followed users  (takes in `tweets`, `authors` (authors for each tweet), `current_user` (of type User))
         > extends base.html, overwrites the content block
         > uses the tweets variable, the user variable
+        > shows the field for a new twit and the list of twits from followed users (you can click on the twit or their authors)
       register.html   # User registration form, has a POST form to /register
         > extends base.html
-        > Contains a POST form to register
+        > contains a POST form to register
       login.html   # User login form with a POST form to /login with login and password
         > extends base.html
-        > Contains a POST form to login
-      tweet.html   # Form for posting a new tweet, has a POST form to /tweet, extends base.html
-      user.html   # User profile page with a list of their tweets and follow/unfollow buttons which use JS to call the routes, extends base.html
-        > uses follow(user_id) js function to call the api 
+        > contains a POST form to login (redirects to /)
+      tweet.html   # Page for viewing a twit (takes in `content`, `author` (of type User), `timestamp`, `likes`, `liked` (bool), `id`)
+        > Has the twit with the author and the content
+        > you can click on the author and go to /user/...
+      user.html   # User profile page with a list of their tweets and follow/unfollow buttons which use JS to call the routes, extends base.html. Takes `user`, `current_user`, `is_following` (bool)
+        > uses [un]follow(user_id) js function to call the api
+        > you can go to different tweets
 
     static/
       css/
@@ -103,6 +114,21 @@
         main.js    # JavaScript file for any dynamic frontend functionality like follow/unfollow
           > function follow(user_id)   # calls /follow/<user_id> using fetch
           > function unfollow(user_id) # calls /unfollow/<user_id> using fetch
+          > function like(tweet_id) # toggle like, calls /like/<tweet_id> using fetch
+    tests/
+    
+      test_integration.py
+        >import unittest
+        >from views import app
+        >from models import db, User
+        >class TestIntegration(unittest.TestCase):
+        >    def setUp(self):
+        >        self.app = app.test_client()
+        >        self.db = db
+        >    def test_user_registration_and_login(self):
+        >    def test_tweet_creation_and_retrieval(self):
+        >    def test_following_and_unfollowing_users(self):
+        >    def test_liking_and_unliking_tweets(self):
     ```
     AResult: Architecture declared.
 
@@ -114,11 +140,12 @@
     If there is a frontend, think about how it is served.
     When writing routes for a web app, write explicitly which html files they might use and at which URLs they are located.
     WRITE THE CODE LINES which initialize the database, create the tables (like db.create_all), serve static files, load templates, define routes.
-    DESCRIBE the elements inside your html, templates or similar files AND the variables/format they use.
+    DESCRIBE the elements inside your html, templates or similar files AND the variables/format they use. For web projects etc., you should specify a short description of the design style.
     DEFINE the database models and their fields, the main classes and types.
-    DEFINE all the routes/views with their urls/paths. When writing about templates, you HAVE to specify the variables they take in and the content.
+    DEFINE all the routes/views with their urls/paths. When writing about templates, you HAVE to specify the variables they take in and the content (what EXACTLY it is and how it looks).
     When writing configs, SPECIFY their format.
     DO NOT COPY from the example. You can use it as a reference, but you need to write your own architecture. For instance, there will not always be a Flask server.
+    YOUR ARCHITECTURE WILL NOT NECESSARY BE LIKE THE EXAMPLE. For instance, it can be not a Flask app or not use SQL or be just an API without templates.
     For complicated functions, write how they work in a couple of sentences.
     If there are some things which need to be done later (for instance, redoing architecture after some time, testing something important, remembering to read something) or some things to keep in mind, write about it in the architecture or use the Remember tool.
     
@@ -138,6 +165,7 @@
     IF YOU FAIL TO AVOID SKIPPING CODE (..., // TODO, etc.), WRITE ABOUT IT IN THE FINAL RESULT
     Try to make design modern and beautiful. You can and should use design frameworks like Tailwind CSS (prefer including everything from a CDN unless it's an npm/yarn project).
     Think about design adaptivity, too. Before writing an html file, WRITE your thoughts on what it should look like (markup, colors, etc.). 
+    If you left something incomplete or if there's some important piece of information, use the Remember tool.
     WRITE YOUR THOUGHTS about which elements should be on the page, HOW they should look (shapes, borders, colors), WHY, and how you will achieve it (scripts in html, outside scripts, inline css, using Tailwind classes, outside css, etc.).
     IT IS CRITICAL TO WRITE YOUR THOUGHTS. Here's what that should look like when writing html:
     Thought: <which elements should be on the page, which functionality they provide, what is the global layout>
@@ -158,6 +186,7 @@
     
     After reading a file, write in your thoughts ALL things which might be wrong with it.
     Often it might be helpful to read the logs of your Bash background processes.
+    When returning the result, try to provide as much info in your report as possible (the logs, for instance).
   tool_names: [ "ReadFile", "WriteFile", "Bash", "Pylint", "PatchFile", "BashBackground", "HumanInput", "Remember" ]
 - name: "Editor"
   description: "Edits a file - usually, to add some new functions or classes to it. Use **only** if the file is already pretty big (>200 lines)."
@@ -176,7 +205,7 @@
     <lines will be here. Now you can patch the file>
     Action: PatchFile
     Action Input: filename
-    [2-3]
+    [2-4]
     def greet(name):  
       print("Hello, " + name + "!")
     [5]

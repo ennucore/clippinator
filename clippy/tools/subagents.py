@@ -32,7 +32,10 @@ class Subagent(SimpleTool):
     def func(self, args: str) -> str:
         pids = get_pids()
         task, agent = extract_agent_name(args)
+        if agent.strip() and agent not in self.agents:
+            return f"Unknown agent '{agent}', please choose from: {', '.join(self.agents.keys())}"
         runner = self.agents.get(agent, self.default)
+        prev_memories = self.project.memories.copy()
         print(
             f'Running task "{task}" with agent "{getattr(runner, "name", "default")}"'
         )
@@ -40,10 +43,13 @@ class Subagent(SimpleTool):
             result = runner.execute(task, self.project)
         except Exception as e:
             result = f"Error running agent, retry with another task or agent: {e}"
+        new_memories = [mem for mem in self.project.memories if mem not in prev_memories]
         if agent == "Architect":
-            result = 'Architecture declared: ' + self.project.architecture
+            result = 'Architecture declared: ' + self.project.architecture + '\n'
         result = f'Completed, result: {result}\n' \
                  f'Current project state:\n{self.project.get_project_summary()}\n'
+        if new_memories:
+            result += 'New memories:\n  - ' + '\n  - '.join(new_memories)
         end_sessions(pids)
         return result
 

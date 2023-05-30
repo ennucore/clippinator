@@ -8,10 +8,13 @@
 - [X] Storing intermediate Taskmaster states
 - [ ] Function descriptions (for the complex ones), typing, tests in architecture
 - [ ] Architecture iteration
+- [ ] Picked examples for	the architect
+- [ ] Summarization for project summary
 - [ ] More info in result
 - [X] "Remember" tool
 - [X] Linter warnings at Patch and Write
 - [X] Better patches (just replacing lines)
+- [ ] Integrate ESLint
 
 Ideas:
 

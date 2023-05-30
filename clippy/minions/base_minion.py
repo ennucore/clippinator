@@ -23,13 +23,19 @@ long_warning = (
 
 class CustomOutputParser(AgentOutputParser):
     def parse(self, llm_output: str) -> Union[AgentAction, AgentFinish]:
-        # todo: check that there's no "Action:" together with the result
+        actions = [
+            line.split(":", 1)[1].strip()
+            for line in llm_output.splitlines()
+            if line.startswith("Action:")
+        ]
         # Check if agent should finish"
         if "Final Result:" in llm_output:
             if "Action" in llm_output:
                 return AgentAction(
                     tool="WarnAgent",
-                    tool_input="ERROR: Don't write 'Action' together with the Final Result. You need to REDO your action(s), receive the 'AResult' and only then write your 'Final Result'",
+                    tool_input=f"ERROR: Don't write 'Action' together with the Final Result. "
+                               f"You need to REDO your action(s) ({', '.join(actions)}), "
+                               f"receive the 'AResult' and only then write your 'Final Result'",
                     log=llm_output,
                 )
             return AgentFinish(
@@ -63,12 +69,6 @@ class CustomOutputParser(AgentOutputParser):
                     tool_input="Continue with your next thought or action. Do not repeat yourself. \n",
                     log=llm_output,
                 )
-
-        actions = [
-            line.split(":", 1)[1].strip()
-            for line in llm_output.splitlines()
-            if line.startswith("Action:")
-        ]
 
         if llm_output.count("Action Input") > 1:
             return AgentAction(

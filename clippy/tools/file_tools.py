@@ -154,7 +154,8 @@ class ReadFile(SimpleTool):
                 lines = f.readlines()
                 line_ranges = [
                     (
-                    int(line_range[0].strip().strip('l') or 1) - 1, int(line_range[1].strip().strip('l') or len(lines)))
+                        int(line_range[0].strip().strip('l') or 1) - 1,
+                        int(line_range[1].strip().strip('l') or len(lines)))
                     for line_range in line_ranges
                 ]
                 out = ""
@@ -269,7 +270,7 @@ class PatchFile(SimpleTool):
         [2-4]
         replacement for lines 2 and 3
         [5]
-        insert after line 5
+        insert after line 5 (btw, use [5-6] with nothing after it to delete the fifth line)
         [20-21]
         replacement for line 20
         ```

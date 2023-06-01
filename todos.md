@@ -2,21 +2,17 @@
 - [X] Summarization
 - [X] Architect subagent
 - [X] Wget tool (for QA)
-- [ ] Browsing tool
+- [ ] Browsing tool (selenium+html2text)
 - [ ] Improve the QA agent (somehow...)
+- [ ] Feedback in specialized agents
 - [ ] Using ^C to provide extra human input to the agents
 - [X] Storing intermediate Taskmaster states
 - [ ] Function descriptions (for the complex ones), typing, tests in architecture
-- [ ] Architecture iteration
-- [ ] Picked examples for	the architect
-- [ ] Summarization for project summary
-- [ ] More info in result
+- [ ] Architecture iteration: taskmaster has to ask for simplified architecture (that can be updated after) and then ask
+  to update it. Maybe use git to commit intermediate versions
+- [ ] Picked examples for the architect
+- [ ] Summarization in project summary
 - [X] "Remember" tool
 - [X] Linter warnings at Patch and Write
 - [X] Better patches (just replacing lines)
 - [ ] Integrate ESLint
-
-Ideas:
-
-- Iterative development with working intermediate versions
-- Critique (of the architecture, at least)

@@ -194,6 +194,7 @@ def apply_patch(file_content, patch):
                     range_start, range_end = map(int, range_str.split("-"))
                 else:
                     range_start = range_end = int(range_str)
+                    range_end -= 1
             except ValueError:
                 raise ValueError(
                     "Invalid line range format. Expected '[start-end]' or '[line]'."
@@ -202,8 +203,6 @@ def apply_patch(file_content, patch):
             # Convert to 0-indexed
             range_start -= 1
             range_end -= 1
-            # End is not inclusive
-            range_end -= 1
 
             if (
                     range_start > range_end + 1
@@ -211,11 +210,11 @@ def apply_patch(file_content, patch):
                     or range_end >= len(content_lines)
             ):
                 raise ValueError(
-                    f"Invalid line range. Received '{range_start + 1}-{range_end + 2}' for a file with {len(content_lines)} lines."
+                    f"Invalid line range. Received '{range_start + 1}-{range_end + 1}' for a file with {len(content_lines)} lines."
                 )
 
             # Check if the ranges overlap
-            if range_start < last_end_line:
+            if range_start <= last_end_line:
                 raise ValueError(
                     f"Line ranges overlap. Previous range ends at line {last_end_line + 1}, but next range starts at line {range_start + 1}."
                 )
@@ -267,11 +266,11 @@ class PatchFile(SimpleTool):
         The line range is specified in brackets, such as [start-end] to replace from start to end (10-20 will erase lines 10, 11, ..., 19, 1-indexed, and replace them by the new content) or [line] to insert a line after the specified line, where the line numbers are 1-indexed. 
         The replacement content follows the line range and can span multiple lines. Here is a sample patch:
         ```
-        [2-4]
+        [2-3]
         replacement for lines 2 and 3
         [5]
-        insert after line 5 (btw, use [5-6] with nothing after it to delete the fifth line)
-        [20-21]
+        insert after line 5 (btw, use [5-5] with nothing after it if you want to delete the fifth line)
+        [20-20]
         replacement for line 20
         ```
         The patch lines are applied in order, and the ranges must not overlap or intersect. Any violation of this format will result in an error.

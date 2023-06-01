@@ -14,6 +14,7 @@ from langchain.agents import Tool
 
 from .file_tools import strip_quotes
 from .tool import SimpleTool
+from .utils import trim_extra
 
 
 class RunBash:
@@ -55,7 +56,7 @@ class RunBash:
             stdout_output = stdout_output.strip()
             # stderr_output = stderr_output.strip()
 
-        combined_output = stdout_output  # + "\n" + stderr_output
+        combined_output = trim_extra(stdout_output)  # + "\n" + stderr_output
         return combined_output if combined_output.strip() else "(empty)"
 
 
@@ -97,7 +98,7 @@ class RunPython:
             stdout_output = stdout_output.strip()
             stderr_output = stderr_output.strip()
 
-        combined_output = stdout_output + "\n" + stderr_output
+        combined_output = trim_extra(stdout_output + "\n" + stderr_output)
         return combined_output if combined_output.strip() else "(empty)"
 
 
@@ -177,7 +178,7 @@ class BashBackgroundSessions(SimpleTool):
             time.sleep(3)
             # Read current output
             ready_to_read, _, _ = select.select([process.stdout], [], [], 0)
-            output = '\n'.join([part.read() for part in ready_to_read])
+            output = trim_extra('\n'.join([part.read() for part in ready_to_read]))
             return f"Started process with pid {process.pid}.\n```\n{output}\n```\n"
 
 

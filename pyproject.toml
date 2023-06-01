@@ -18,6 +18,9 @@ python-telegram-bot = "^20.2"
 unidiff = "^0.7.5"
 patch = "^1.16"
 tiktoken = "^0.3.3"
+html2text = "^2020.1.16"
+beautifulsoup4 = "^4.12.2"
+selenium = "^4.9.1"
 
 
 [tool.poetry.group.dev.dependencies]

@@ -2,7 +2,7 @@
 - [X] Summarization
 - [X] Architect subagent
 - [X] Wget tool (for QA)
-- [ ] Browsing tool (selenium+html2text)
+- [X] Browsing tool (selenium+html2text)
 - [ ] Improve the QA agent (somehow...)
 - [ ] Feedback in specialized agents
 - [ ] Using ^C to provide extra human input to the agents

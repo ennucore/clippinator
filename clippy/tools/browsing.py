@@ -12,6 +12,13 @@ class SeleniumTool(SimpleTool):
     name = "Selenium"
     description = "A tool that can be used to interact with webpages using Selenium."
 
+    def ensure_driver(self):
+        if not self.driver:
+            # Set the logging preferences
+            d = DesiredCapabilities.CHROME
+            d['goog:loggingPrefs'] = {'browser': 'ALL'}
+            self.driver = webdriver.Chrome(desired_capabilities=d)
+
     def __init__(self):
         self.description = (
             "A tool that can be used to interact with webpages using Selenium. "
@@ -25,12 +32,7 @@ class SeleniumTool(SimpleTool):
             "    - `/eval code` evaluates a Python expression which uses Selenium's `driver` variable\n"
         )
 
-        # Set the logging preferences
-        d = DesiredCapabilities.CHROME
-        d['goog:loggingPrefs'] = {'browser': 'ALL'}
-
-        # Start the WebDriver
-        self.driver = webdriver.Chrome(desired_capabilities=d)
+        self.driver = None
         self.h = html2text.HTML2Text()
         self.h.ignore_links = False
 
@@ -53,8 +55,10 @@ class SeleniumTool(SimpleTool):
         return f"Title: {title}\nURL: {self.driver.current_url}\nContent:\n{text}\nNew console logs:\n{new_console_logs}"
 
     def func(self, args: str) -> str:
-        command = args.split(" ", 1)[0]
+        args = args.strip()
+        command = args.split(" ", 1)[0].strip()
         argument = args.split(" ", 1)[1] if len(args.split(" ", 1)) > 1 else ""
+        self.ensure_driver()
 
         if command == "/open":
             self.driver.get(argument)
@@ -62,14 +66,14 @@ class SeleniumTool(SimpleTool):
             return self.render_content()
 
         elif command == "/click":
-            element = self.driver.find_element_by_xpath(argument)
+            element = self.driver.find_element("xpath", argument)
             element.click()
             time.sleep(1)  # Wait for the page to load
             return self.render_content()
 
         elif command == "/type":
             xpath, text = argument.split(" ", 1)
-            element = self.driver.find_element_by_xpath(xpath)
+            element = self.driver.find_element("xpath", xpath)
             element.send_keys(text)
             return "Text entered.\n"
 
@@ -87,7 +91,7 @@ class SeleniumTool(SimpleTool):
             return self.render_content()
 
         elif command == "/eval":
-            return str(eval(argument, {"driver": self.driver}))
+            return str(eval(argument, {"driver": self.driver, "time": time}))
 
         else:
             return "Unknown command.\n"

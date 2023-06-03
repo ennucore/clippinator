@@ -6,6 +6,7 @@ from langchain import LLMChain
 from langchain.agents import AgentExecutor, LLMSingleActionAgent
 from langchain.memory import ConversationSummaryMemory
 from langchain.schema import BaseMemory
+from langchain.schema import AgentAction
 
 from clippy.project import Project
 from clippy.tools import get_tools
@@ -22,35 +23,13 @@ from .executioner import Executioner, get_specialized_executioners
 from .prompts import taskmaster_prompt, summarize_prompt
 
 
-class CustomMemory(BaseMemory):
-    """Memory class for storing information about entities."""
-
-    def __init__(self, project: Project):
-        super().__init__()
-        self.project = project
-        self.summary_buffer = ConversationSummaryMemory()
-
-    def clear(self):
-        self.summary_buffer.clear()
-
-    @property
-    def memory_variables(self) -> List[str]:
-        """Define the variables we are providing to the prompt."""
-        return ["project_summary", "summary"]
-
-    def load_memory_variables(self, inputs: Dict[str, Any]) -> Dict[str, str]:
-        """Load the memory variables, in this case the entity key."""
-        return {
-            "project_summary": self.project.get_project_summary(),
-            "summary": self.summary_buffer.load_memory_variables(inputs)["history"],
-        }
-
-    def save_context(self, inputs: Dict[str, Any], outputs: Dict[str, str]) -> None:
-        self.summary_buffer.save_context(inputs, outputs)
-
-
 class Taskmaster:
-    def __init__(self, project: Project, model: str = "gpt-4", prompt: CustomPromptTemplate | None = None):
+    def __init__(
+        self,
+        project: Project,
+        model: str = "gpt-4",
+        prompt: CustomPromptTemplate | None = None,
+    ):
         self.project = project
         self.specialized_executioners = get_specialized_executioners(project)
         self.default_executioner = Executioner(project)
@@ -93,26 +72,41 @@ class Taskmaster:
             agent=agent,
             tools=tools,
             verbose=True,
-            max_iterations=1000  # We have summarization
+            max_iterations=1000,  # We have summarization
         )
 
     def run(self, **kwargs):
-        kwargs["feedback"] = kwargs.get("feedback", "")
         kwargs["specialized_minions"] = "\n".join(
             minion.expl() for minion in self.specialized_executioners.values()
         )
-        return (
+        try:
+            return (
                 self.agent_executor.run(**kwargs)
                 or "No result. The execution was probably unsuccessful."
-        )
+            )
+        except KeyboardInterrupt:
+            feedback = input("\nAI interrupted. Enter your feedback: ")
+            self.prompt.intermediate_steps += [
+                (
+                    AgentAction(
+                        tool="AgentFeedback",
+                        tool_input="",
+                        log="Here is feedback from your supervisor: ",
+                    ),
+                    feedback,
+                )
+            ]
+            return self.run(**kwargs)
 
     def save_to_file(self, path: str = ""):
         path = path or os.path.join(self.project.path, f".clippy.pkl")
         with open(path, "wb") as f:
             prompt = {
-                'steps_since_last_summarize': self.prompt.steps_since_last_summarize,
-                'last_summary': self.prompt.last_summary,
-                'intermediate_steps': self.prompt.intermediate_steps,
+                "current_context_length": self.prompt.current_context_length,
+                "model_steps_processed": self.prompt.model_steps_processed,
+                "all_steps_processed": self.prompt.all_steps_processed,
+                "intermediate_steps": self.prompt.intermediate_steps,
+                "last_summary": self.prompt.last_summary,
             }
             pickle.dump((prompt, self.project), f)
 
@@ -121,7 +115,9 @@ class Taskmaster:
         with open(path, "rb") as f:
             prompt, project = pickle.load(f)
         self = cls(project)
-        self.prompt.steps_since_last_summarize = prompt['steps_since_last_summarize']
-        self.prompt.last_summary = prompt['last_summary']
-        self.prompt.intermediate_steps = prompt['intermediate_steps']
+        self.prompt.current_context_length = prompt["current_context_length"]
+        self.prompt.model_steps_processed = prompt["model_steps_processed"]
+        self.prompt.all_steps_processed = prompt["all_steps_processed"]
+        self.prompt.intermediate_steps = prompt["intermediate_steps"]
+        self.prompt.last_summary = prompt["last_summary"]
         return self

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 from dataclasses import dataclass
 from typing import List, Union, Callable, Any
@@ -34,8 +36,8 @@ class CustomOutputParser(AgentOutputParser):
                 return AgentAction(
                     tool="WarnAgent",
                     tool_input=f"ERROR: Don't write 'Action' together with the Final Result. "
-                               f"You need to REDO your action(s) ({', '.join(actions)}), "
-                               f"receive the 'AResult' and only then write your 'Final Result'",
+                    f"You need to REDO your action(s) ({', '.join(actions)}), "
+                    f"receive the 'AResult' and only then write your 'Final Result'",
                     log=llm_output,
                 )
             return AgentFinish(
@@ -48,7 +50,7 @@ class CustomOutputParser(AgentOutputParser):
         regex = r"Action\s*\d*\s*:(.*?)\nAction\s*\d*\s*Input\s*\d*\s*:[\s]*(.*)"
         match = re.search(regex, llm_output, re.DOTALL)
         if not match and llm_output.strip().split("\n")[-1].strip().startswith(
-                "Thought:"
+            "Thought:"
         ):
             return AgentAction(
                 tool="WarnAgent",
@@ -74,7 +76,7 @@ class CustomOutputParser(AgentOutputParser):
             return AgentAction(
                 tool="WarnAgent",
                 tool_input="ERROR: Write 'AResult: ' after each action. Execute ALL the past actions "
-                           f"without AResult again ({', '.join(actions)}), one-by-one. They weren't completed.",
+                f"without AResult again ({', '.join(actions)}), one-by-one. They weren't completed.",
                 log=llm_output,
             )
 
@@ -84,14 +86,14 @@ class CustomOutputParser(AgentOutputParser):
             return AgentAction(
                 tool="WarnAgent",
                 tool_input="Error: Write 'AResult: ' after each action. "
-                           f"Execute all the actions without AResult again ({', '.join(actions)}).",
+                f"Execute all the actions without AResult again ({', '.join(actions)}).",
                 log=llm_output,
             )
         if "Subagent" in action:
             action_input += " " + action.split("Subagent")[1].strip()
             action = "Subagent"
 
-        # Return the action and action input
+        # Return the action and action inputx
         return AgentAction(
             tool=action,
             tool_input=action_input.strip(" ").split("\nThought: ")[0],
@@ -105,43 +107,12 @@ def remove_project_summaries(text: str) -> str:
     The project summary is between "Current project state:" and "---"
     """
     # Find all the project summaries
-    project_summaries = re.findall(
-        r"Current project state:.*?---", text, re.DOTALL
-    )
+    project_summaries = re.findall(r"Current project state:.*?---", text, re.DOTALL)
     # Remove all the project summaries except for the last one
     for project_summary in project_summaries[:-1]:
         text = text.replace(project_summary, "", 1)
     print(text)
     return text
-
-
-class CustomPromptTemplate(StringPromptTemplate):
-    template: str
-    # The list of tools available
-    tools: List[Tool]
-    agent_toolnames: List[str]
-
-    @property
-    def _prompt_type(self) -> str:
-        return "taskmaster"
-
-    def format(self, **kwargs) -> str:
-        # Get the intermediate steps (AgentAction, AResult tuples)
-        # Format them in a particular way
-        intermediate_steps = kwargs.pop("intermediate_steps")
-        thoughts = ""
-        for action, AResult in intermediate_steps[::-1]:
-            if AResult.startswith('\r'):
-                thoughts = action.log + f"\nSystem note: {AResult[1:]}\nThought: " + thoughts
-            else:
-                thoughts = action.log + f"\nAResult: {AResult}\nThought: " + thoughts
-        kwargs["tools"] = "\n".join(
-            [f"{tool.name}: {tool.description}" for tool in self.tools if tool in self.agent_toolnames]
-        )
-        kwargs["agent_scratchpad"] = thoughts.removesuffix("\nThought: ")
-        kwargs["tool_names"] = self.agent_toolnames
-        result = self.template.format(**kwargs)
-        return remove_project_summaries(result)
 
 
 def extract_variable_names(prompt: str, interaction_enabled: bool = False):
@@ -188,9 +159,11 @@ class CustomPromptTemplate(StringPromptTemplate):
     # The list of tools available
     tools: List[Tool]
     agent_toolnames: List[str]
-    summarize_every_n_steps: int = 4
+    max_context_length: int = 4
     keep_n_last_thoughts: int = 1
-    steps_since_last_summarize: int = 0
+    current_context_length: int = 0
+    model_steps_processed: int = 0
+    all_steps_processed: int = 0
     my_summarize_agent: Any = None
     last_summary: str = ""
     project: Any | None = None
@@ -205,8 +178,10 @@ class CustomPromptTemplate(StringPromptTemplate):
     def thought_log(thoughts: list[(AgentAction, str)]) -> str:
         result = ""
         for action, AResult in thoughts:
-            if AResult.startswith("\r"):
-                result += action.log + f"\nSystem note: {AResult[1:]}\n"
+            if action.tool == "WarnAgent":
+                result += action.log + f"\nSystem note: {AResult}\n"
+            elif action.tool == "AgentFeedback":
+                result += action.log + AResult + "\n"
             else:
                 result += action.log + f"\nAResult: {AResult}\n"
         return result
@@ -214,25 +189,33 @@ class CustomPromptTemplate(StringPromptTemplate):
     def format(self, **kwargs) -> str:
         # Get the intermediate steps (AgentAction, AResult tuples)
         # Format them in a particular way
-        intermediate_steps = kwargs.pop("intermediate_steps")
-        self.intermediate_steps = intermediate_steps
+        model_steps = kwargs.pop("intermediate_steps")
+        self.intermediate_steps += model_steps[self.model_steps_processed :]
+        self.model_steps_processed = len(model_steps)
+        intermediate_steps = self.intermediate_steps
+
+        self.current_context_length += (
+            len(intermediate_steps) - self.all_steps_processed
+        )
+        self.all_steps_processed = len(intermediate_steps)
+
         if (
-                self.steps_since_last_summarize == self.summarize_every_n_steps
-                and self.my_summarize_agent
+            self.current_context_length >= self.max_context_length
+            and self.my_summarize_agent
         ):
-            self.steps_since_last_summarize = 0
             self.last_summary = self.my_summarize_agent.run(
                 summary=self.last_summary,
                 thought_process=self.thought_log(
                     intermediate_steps[
-                    -self.summarize_every_n_steps: -self.keep_n_last_thoughts
+                        -self.current_context_length : -self.keep_n_last_thoughts
                     ]
-                )
+                ),
             )
+            self.current_context_length = self.keep_n_last_thoughts
 
         if self.my_summarize_agent:
             kwargs["agent_scratchpad"] = (
-                    "Here is a summary of what has happened:\n" + self.last_summary
+                "Here is a summary of what has happened:\n" + self.last_summary
             )
             kwargs["agent_scratchpad"] += "\nEND OF SUMMARY\n"
         else:
@@ -241,12 +224,8 @@ class CustomPromptTemplate(StringPromptTemplate):
         kwargs["agent_scratchpad"] += "Here go your thoughts and actions:"
 
         kwargs["agent_scratchpad"] += self.thought_log(
-            intermediate_steps[
-            -self.steps_since_last_summarize + self.keep_n_last_thoughts:
-            ]
+            intermediate_steps[-self.current_context_length :]
         )
-
-        self.steps_since_last_summarize += 1
 
         kwargs["tools"] = "\n".join(
             [
@@ -287,7 +266,13 @@ def get_model(model: str = "gpt-4"):
 
 @dataclass
 class BaseMinion:
-    def __init__(self, base_prompt, available_tools, model: str = "gpt-4", max_iterations: int = 50) -> None:
+    def __init__(
+        self,
+        base_prompt,
+        available_tools,
+        model: str = "gpt-4",
+        max_iterations: int = 50,
+    ) -> None:
         llm = get_model(model)
 
         agent_toolnames = [tool.name for tool in available_tools]
@@ -314,14 +299,17 @@ class BaseMinion:
         )
 
         self.agent_executor = AgentExecutor.from_agent_and_tools(
-            agent=agent, tools=available_tools, verbose=True, max_iterations=max_iterations
+            agent=agent,
+            tools=available_tools,
+            verbose=True,
+            max_iterations=max_iterations,
         )
 
     def run(self, **kwargs):
         kwargs["feedback"] = kwargs.get("feedback", "")
         return (
-                self.agent_executor.run(**kwargs)
-                or "No result. The execution was probably unsuccessful."
+            self.agent_executor.run(**kwargs)
+            or "No result. The execution was probably unsuccessful."
         )
 
 
@@ -333,12 +321,12 @@ class FeedbackMinion:
     check_function: Callable[[str], Any]
 
     def __init__(
-            self,
-            minion: BaseMinion | BasicLLM,
-            eval_prompt: str,
-            feedback_prompt: str,
-            check_function: Callable[[str], Any] = lambda x: None,
-            model: str = "gpt-4",
+        self,
+        minion: BaseMinion | BasicLLM,
+        eval_prompt: str,
+        feedback_prompt: str,
+        check_function: Callable[[str], Any] = lambda x: None,
+        model: str = "gpt-4",
     ) -> None:
         llm = get_model(model)
         self.eval_llm = LLMChain(
@@ -358,7 +346,7 @@ class FeedbackMinion:
             print("Rerunning a prompt with feedback:", kwargs["feedback"])
             if len(kwargs["previous_result"]) > 500:
                 kwargs["previous_result"] = (
-                        kwargs["previous_result"][:500] + "\n...(truncated)\n"
+                    kwargs["previous_result"][:500] + "\n...(truncated)\n"
                 )
             kwargs["feedback"] = self.feedback_prompt.format(**kwargs)
         res = self.underlying_minion.run(**kwargs)

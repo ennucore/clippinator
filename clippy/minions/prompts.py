@@ -31,10 +31,10 @@ Sometimes you will see a "System note". It isn't produced by you, it is a note f
 """
 
 execution_prompt = (
-        """
+    """
         You are the Executor. Your goal is to execute the task in a project."""
-        + common_part
-        + """
+    + common_part
+    + """
 You need to execute only one task: **{task}**. It is part of the milestone **{milestone}**.
 Use patches to modify files (pay attention to the format) when it is easy and convenient unless you are writing to an empty file.
 If you fail to execute the task or face significant obstacles, write about it in your Final Result.
@@ -60,12 +60,12 @@ Begin!
 )
 
 get_specialized_prompt = lambda special_part: (
-        """You are a world-class programmer. Your goal is to execute the task in a project."""
-        + common_part
-        + "You need to execute only one task: **{task}**. It is part of the milestone **{milestone}**."
-        + "Give a somewhat detailed description of your process and result in the Final Result."
-        + special_part
-        + "\nBegin!\n{agent_scratchpad}"
+    """You are a world-class programmer. Your goal is to execute the task in a project."""
+    + common_part
+    + "You need to execute only one task: **{task}**. It is part of the milestone **{milestone}**."
+    + "Give a somewhat detailed description of your process and result in the Final Result."
+    + special_part
+    + "\nBegin!\n{agent_scratchpad}"
 )
 
 architecture_prompt = """
@@ -326,10 +326,10 @@ Go!
 """
 
 taskmaster_prompt = (
-        common_part
-        + """Achieve the objective: **{objective}**. DO NOT give a Final Result until you achieve the objective.
+    common_part
+    + """Achieve the objective: **{objective}**. DO NOT give a Final Result until you achieve the objective.
 """
-        + """
+    + """
 You can (and should) delegate some tasks to subagents. It's better to delegate things to the subagents than to do them yourself.
 Avoid performing common actions yourself. Note that the tasks for the subagents have to be manageable (not very big, but not very small either).
 TASKS SHOULD HAVE REASONABLE SIZE AND THE DESCRIPTION SHOULD BE DETAILED
@@ -375,7 +375,7 @@ Here goes the new summary:
 """
 
 common_planning = (
-        """
+    """
         You are The Planner. Your only goal is to create a plan for the AI agents to follow. You will provide step-by-step instructions for the agents to follow. 
         You will not execute the plan yourself. You don't need to create or modify any files. Only provide instructions for the agents to follow. 
         Come up with the simplest possible way to accomplish the objective. Note that agents do not have admin access.
@@ -404,19 +404,19 @@ common_planning = (
         
         The milestones have to be in a numbered list and should have a name. 
         """
-        + common_part
+    + common_part
 )
 
 initial_planning = (
-        common_planning
-        + """
+    common_planning
+    + """
 Generate an initial plan using "Final result:". Do not execute the plan yourself. Do not create or modify any files. Only provide instructions for the agents to follow. Do not execute the plan yourself. Do not create or modify any files. Only provide instructions for the agents to follow.
 {agent_scratchpad}"""
 )
 
 _update_planning = (
-        common_planning
-        + """
+    common_planning
+    + """
 Here's the existing plan:
 {plan}
 

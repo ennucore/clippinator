@@ -20,7 +20,7 @@ class WarningTool(SimpleTool):
 
     @staticmethod
     def func(args: str) -> str:
-        return '\r' + args + '\n'
+        return args + "\n"
 
 
 class HumanInputTool(SimpleTool):

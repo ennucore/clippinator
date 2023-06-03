@@ -155,7 +155,7 @@ class BashBackgroundSessions(SimpleTool):
                     fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
                     ready_to_read, _, _ = select.select([process["pr"].stdout], [], [], 0)
                     output = '\n'.join([part.read() for part in ready_to_read])
-                    return '```\n' + output + '\n```\n'
+                    return '```\n' + trim_extra(output) + '\n```\n'
             return f"Could not find process with pid {pid}.\n"
         elif args.startswith("/list"):
             return 'Current processes:\n' + '\n'.join(

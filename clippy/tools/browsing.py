@@ -58,40 +58,43 @@ class SeleniumTool(SimpleTool):
         args = args.strip()
         command = args.split(" ", 1)[0].strip()
         argument = args.split(" ", 1)[1] if len(args.split(" ", 1)) > 1 else ""
-        self.ensure_driver()
+        try:
+            self.ensure_driver()
 
-        if command == "/open":
-            self.driver.get(argument)
-            time.sleep(1)  # Wait for the page to load
-            return self.render_content()
+            if command == "/open":
+                self.driver.get(argument)
+                time.sleep(1)  # Wait for the page to load
+                return self.render_content()
 
-        elif command == "/click":
-            element = self.driver.find_element("xpath", argument)
-            element.click()
-            time.sleep(1)  # Wait for the page to load
-            return self.render_content()
+            elif command == "/click":
+                element = self.driver.find_element("xpath", argument)
+                element.click()
+                time.sleep(1)  # Wait for the page to load
+                return self.render_content()
 
-        elif command == "/type":
-            xpath, text = argument.split(" ", 1)
-            element = self.driver.find_element("xpath", xpath)
-            element.send_keys(text)
-            return "Text entered.\n"
+            elif command == "/type":
+                xpath, text = argument.split(" ", 1)
+                element = self.driver.find_element("xpath", xpath)
+                element.send_keys(text)
+                return "Text entered.\n"
 
-        elif command == "/html":
-            return self.driver.page_source
+            elif command == "/html":
+                return self.driver.page_source
 
-        elif command == "/refresh":
-            self.driver.refresh()
-            time.sleep(1)  # Wait for the page to load
-            return self.render_content()
+            elif command == "/refresh":
+                self.driver.refresh()
+                time.sleep(1)  # Wait for the page to load
+                return self.render_content()
 
-        elif command == "/back":
-            self.driver.back()
-            time.sleep(1)  # Wait for the page to load
-            return self.render_content()
+            elif command == "/back":
+                self.driver.back()
+                time.sleep(1)  # Wait for the page to load
+                return self.render_content()
 
-        elif command == "/eval":
-            return str(eval(argument, {"driver": self.driver, "time": time}))
+            elif command == "/eval":
+                return str(eval(argument, {"driver": self.driver, "time": time}))
 
-        else:
-            return "Unknown command.\n"
+            else:
+                return "Unknown command.\n"
+        except Exception as e:
+            return 'error: ' + str(e) + '\n'

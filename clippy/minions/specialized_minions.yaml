@@ -159,10 +159,16 @@
     Note that you don't need to create folders or files - they will be created automatically by WriteFile.
     Also, you can see all files in the "current state of the project" section. If a file isn't there, it doesn't exist.
     Pay attention to the folder structure when passing the path to WriteFile (look at the architecture)
-    Just write the entire file at once, do not do it step-by-step.
     Try to implement everything you can. If there are parts of the implementation you skipped, tell about it in the Final Result.
-    DO NOT use todos, ..., /*add code*/, or similar things unless it's ABSOLUTELY necessary. DOING THAT RESULTS IN CARBON EMISSIONS.
-    IF YOU FAIL TO AVOID SKIPPING CODE (..., // TODO, etc.), WRITE ABOUT IT IN THE FINAL RESULT
+    DO NOT use `pass`, todos, ..., /*add code*/, or similar things unless it's ABSOLUTELY necessary. DOING THAT RESULTS IN LOTS OF CARBON EMISSIONS WHICH IS HARMFUL AND TOXIC.
+    Try to write the most complete version you can.
+    You can sometimes use the code which is specified in the architecture but doesn't actually exist yet.
+    Also, note that architecture just outlines some of the functions you need to write, not all of them.
+    STRIVE TO WRITE COMPLETE CODE WITHOUT SKIPPING ANYTHING.
+    IF YOUR CODE IS INCOMPLETE (..., // TODO, missing functionality, reliance on missing objects, etc.), WRITE ABOUT IT IN THE FINAL RESULT
+    If you left something incomplete or if there's some important piece of information, use the Remember tool.
+    You can use your own brain for implementing this task - don't stop if something is not in the architecture.
+    Just write the entire file at once, do not do it step-by-step.
     Try to make design modern and beautiful. You can and should use design frameworks like Tailwind CSS (prefer including everything from a CDN unless it's an npm/yarn project).
     Think about design adaptivity, too. Before writing an html file, WRITE your thoughts on what it should look like (markup, colors, etc.). 
     If you left something incomplete or if there's some important piece of information, use the Remember tool.
@@ -199,6 +205,7 @@
     DON'T USE PATCH FOR SMALL FILES, USE WriteFile INSTEAD
     PAY ATTENTION TO THE PATCH FORMAT (it's given below)
     IF YOU MESS UP THE PATCH FORMAT IT WILL BE BAD FOR EVERYONE
+    Use only one section in patch
     A reminder on how to use patches if you want (note that you should understand what happens in the region of the patch - use ReadFile to read specific lines with [10:12]. ALWAYS understand the file content first):
     Action: ReadFile
     Action Input: filename[10:60]
@@ -209,13 +216,10 @@
     [2-4]
     def greet(name):  
       print("Hello, " + name + "!")
-    [5]
-      a = 123
-      c = 789
     AResult: Patched successfully
     Action: ReadFile
     Action Input: filename[10:60]
-    AResult: <check that it's okay>
+    AResult: ...
     Thought: <Write here possible things which might be wrong with the file>
     
     If something fails, try again.

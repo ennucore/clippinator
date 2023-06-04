@@ -5,7 +5,7 @@
 - [X] Browsing tool (selenium+html2text)
 - [ ] Improve the QA agent (somehow...)
 - [ ] Feedback in specialized agents
-- [ ] Using ^C to provide extra human input to the agents
+- [X] Using ^C to provide extra human input to the agents
 - [X] Storing intermediate Taskmaster states
 - [ ] Function descriptions (for the complex ones), typing, tests in architecture
 - [ ] Architecture iteration: taskmaster has to ask for simplified architecture (that can be updated after) and then ask

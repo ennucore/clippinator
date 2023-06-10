@@ -24,6 +24,10 @@ long_warning = (
 )
 
 
+def remove_surrogates(text):
+    return "".join(c for c in text if not ('\ud800' <= c <= '\udfff'))
+
+
 class CustomOutputParser(AgentOutputParser):
     def parse(self, llm_output: str) -> Union[AgentAction, AgentFinish]:
         actions = [
@@ -112,7 +116,6 @@ def remove_project_summaries(text: str) -> str:
     # Remove all the project summaries except for the last one
     for project_summary in project_summaries[:-1]:
         text = text.replace(project_summary, "", 1)
-    print(text)
     return text
 
 
@@ -240,7 +243,7 @@ class CustomPromptTemplate(StringPromptTemplate):
             for key, value in self.project.prompt_fields().items():
                 kwargs[key] = value
         # print("Prompt:\n\n" + self.template.format(**kwargs) + "\n\n\n")
-        result = self.template.format(**kwargs)
+        result = remove_surrogates(remove_project_summaries(self.template.format(**kwargs)))
         if self.hook:
             self.hook(self)
         if self.project:

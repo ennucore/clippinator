@@ -179,6 +179,7 @@ def apply_patch(file_content, patch):
     content_index = 0
     patch_index = 0
     new_content = []
+    modified_lines: list[(int, str)] = list()
     last_end_line = -1
 
     while content_index < len(content_lines) or patch_index < len(patch_lines):

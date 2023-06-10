@@ -6,6 +6,7 @@ from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 from .tool import SimpleTool
+from .utils import trim_extra
 
 
 class SeleniumTool(SimpleTool):
@@ -50,7 +51,7 @@ class SeleniumTool(SimpleTool):
         for tag in soup.findAll(True):
             if tag.get('id'):
                 tag.string = f"[#{tag['id']}] {tag.text}"
-        text = self.h.handle(str(soup))
+        text = trim_extra(self.h.handle(str(soup)))
 
         return f"Title: {title}\nURL: {self.driver.current_url}\nContent:\n{text}\nNew console logs:\n{new_console_logs}"
 

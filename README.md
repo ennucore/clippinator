@@ -10,7 +10,7 @@ _A code assistant_
 4. Install `ctags`.
 5. For pylint, install it and [pylint-venv](https://github.com/jgosmann/pylint-venv/).
 6. Install dependencies: `poetry install`.
-7. Run: `poetry run python main.py --help`. To create a new project, use `poetry run python main.py new PROJECT_PATH`
+7. Run: `poetry run python main.py --help`. To run it on a project, use `poetry run python main.py taskmaster PROJECT_PATH`
 
 ### Details
 

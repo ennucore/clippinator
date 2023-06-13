@@ -14,8 +14,10 @@ _A code assistant_
 
 ### Details
 
-This tool has a planning agent which creates a plan with milestones and tasks.
-Then, it calls the execution agent. 
-It also has a shared context for important information and a bunch of tools.
+This tool has the main agent called Taskmaster. It is responsible for the overall development. To be able to run for a long time, the history is summarized.
+
+Then, Taskmaster calls the subagents. They are specialized for specific tasks. One important subagent is the Architect who comes up with the architecture.
+All agents have access to the planned project architecture, current project structure, errors from the linter, memory.
+The agents use different tools, like writing to files, using bash (including running background commands), using the browser with Selenium, etc.
 
 This is based on GPT-4 which runs for a long time, so it's quite expensive in terms of OpenAI API.

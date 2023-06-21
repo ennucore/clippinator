@@ -42,6 +42,7 @@ class Subagent(SimpleTool):
         try:
             result = runner.execute(task, self.project)
         except Exception as e:
+            raise e
             result = f"Error running agent, retry with another task or agent: {e}"
         new_memories = [mem for mem in self.project.memories if mem not in prev_memories]
         if agent == "Architect":

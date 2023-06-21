@@ -12,6 +12,7 @@ from langchain.text_splitter import (
 
 from clippy.tools.tool import SimpleTool
 from .code_tools import lint_file
+from .utils import trim_extra, unjson
 
 
 def strip_quotes(inp: str) -> str:
@@ -65,9 +66,39 @@ class WriteFile(SimpleTool):
         "The tool will completely overwrite the entire file, so be very careful with it, "
         "avoid using it on non-empty files. DO NOT write anything on the first line except the path"
     )
+    structured_desc = (
+        "a tool that can be used to write (OVERWRITE) files. "
+        "It accepts {filename: content} as input (filenames and contents are strings). "
+        "The tool will completely overwrite the entire file, so be very careful with it, "
+        "avoid using it on non-empty files. "
+    )
 
     def __init__(self, wd: str = "."):
         self.workdir = wd
+
+    def structured_func(self, to_write: dict[str, str]):
+        to_write = unjson(to_write)
+        result = ""
+        for filename, content in to_write.items():
+            filename = strip_filename(filename)
+            file_path = os.path.join(self.workdir, filename)
+            try:
+                directory = os.path.dirname(file_path)
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
+
+                # Write the content to the file
+                with open(file_path, "w") as f:
+                    f.write(content)
+
+                linter_output = lint_file(file_path)
+                if linter_output:
+                    result += f"Successfully written to {filename}. Linter output:\n{linter_output}\n\n"
+
+                result += f"Successfully written to {filename}.\n\n"
+            except Exception as e:
+                result += f"Error writing to {filename}: {str(e)}\n\n"
+        return result.strip()
 
     def func(self, args: str) -> str:
         # Use a regular expression to extract the file path from the input
@@ -92,27 +123,7 @@ class WriteFile(SimpleTool):
                 line.split("|", 1)[1] if line.strip() else line
                 for line in content.split("\n")
             )
-
-        original_file_path = file_path
-        file_path = os.path.join(self.workdir, file_path)
-
-        try:
-            # Check if the directory exists, if not create it
-            directory = os.path.dirname(file_path)
-            if not os.path.exists(directory):
-                os.makedirs(directory)
-
-            # Write the content to the file
-            with open(file_path, "w") as f:
-                f.write(content)
-
-            linter_output = lint_file(file_path)
-            if linter_output:
-                return f"Successfully written to {original_file_path}. Linter output:\n{linter_output}"
-
-            return f"Successfully written to {original_file_path}."
-        except Exception as e:
-            return f"Error writing to file: {str(e)}"
+        return self.structured_func({file_path: content})
 
 
 @dataclass
@@ -126,49 +137,75 @@ class ReadFile(SimpleTool):
         "a tool that can be used to read files. The input is just the file path. "
         "Optionally, you can add [l1:l2] to the end of the file path to specify a range of lines to read."
     )
+    structured_desc = (
+        "a tool that can be used to read files. "
+        "It accepts a list as input, where each element is either a filename string or an object of the form "
+        "{'filename': filename, 'start': int, 'end': int}. Start and end are line numbers from which to read. "
+        "If only a filename is provided, the entire file will be read. "
+        "Example input: ['file1.py', {'filename': 'file2.py', 'start': 10, 'end': 20}]"
+    )
 
     def __init__(self, wd: str = "."):
         self.workdir = wd
 
-    def func(self, args: str) -> str:
-        try:
-            if "[" not in args:
-                filename = strip_filename(args)
-                with open(os.path.join(self.workdir, filename), "r") as f:
-                    lines = f.readlines()
-                    lines = [f"{i + 1}|{line}" for i, line in enumerate(lines)]
-                    out = "```\n" + "".join(lines) + "\n```"
-                    if len(out) > 5000:
-                        return (
-                                out[:5000]
-                                + "\n...\n```\nFile too long, use the summarizer or "
-                                  "(preferably) request specific line ranges.\n"
-                        )
-                    return out
-            filename, line_range = args.split("[", 1)
-            filename = strip_filename(filename)
-            line_ranges = line_range.split("]")[0].split(",")
-            line_ranges = [line_range.split(":") for line_range in line_ranges]
+    def structured_func(self, to_read: list[str | dict[str, str | int]]):
+        to_read = unjson(to_read)
+        result = ''
+        for item in to_read:
+            if isinstance(item, str):
+                # same behavior as before, but without using func
+                try:
+                    with open(os.path.join(self.workdir, item), "r") as f:
+                        lines = f.readlines()
+                        lines = [f"{i + 1}|{line}" for i, line in enumerate(lines)]
+                        out = "```\n" + "".join(lines) + "\n```"
+                        if len(out) > 4000:
+                            result += (
+                                    trim_extra(out, 4000)
+                                    + "\n```\nFile too long, use the summarizer or "
+                                      "(preferably) request specific line ranges.\n\n"
+                            )
+                        else:
+                            result += out + '\n\n'
+                except Exception as e:
+                    result += f"Error reading file: {str(e)}\n\n"
+            elif isinstance(item, dict):
+                # read a specific range
+                try:
+                    filename = item['filename']
+                    start = item.get('start', 1)
+                    end = item.get('end', None)
+                    with open(os.path.join(self.workdir, filename), "r") as f:
+                        lines = f.readlines()
+                        lines = [f"{i + 1}|{line}" for i, line in enumerate(lines)]
+                        out = "```\n" + "".join(lines[start - 1:end]) + "\n```"
+                        if len(out) > 4000:
+                            result += (
+                                    trim_extra(out, 4000)
+                                    + "\n```\nFile too long, use the summarizer or "
+                                      "(preferably) request specific line ranges.\n\n"
+                            )
+                        else:
+                            result += out + '\n\n'
+                except Exception as e:
+                    result += f"Error reading file: {str(e)}\n\n"
+        return result.strip()
 
-            with open(os.path.join(self.workdir, filename.strip()), "r") as f:
-                lines = f.readlines()
-                line_ranges = [
-                    (
-                        int(line_range[0].strip().strip('l') or 1) - 1,
-                        int(line_range[1].strip().strip('l') or len(lines)))
-                    for line_range in line_ranges
-                ]
-                out = ""
-                for line_range in line_ranges:
-                    out += "".join(
-                        [
-                            f"{i + 1}| {lines[i]}"
-                            for i in range(line_range[0], min(line_range[1], len(lines)))
-                        ]
-                    )
-                return "```\n" + out + "\n```"
-        except Exception as e:
-            return f"Error reading file: {str(e)}"
+    def func(self, args: str) -> str:
+        if "[" not in args:
+            filename = strip_filename(args)
+            return self.structured_func([filename])
+        filename, line_range = args.split("[", 1)
+        filename = strip_filename(filename)
+        line_ranges = line_range.split("]")[0].split(",")
+        line_ranges = [line_range.split(":") for line_range in line_ranges]
+        line_ranges = [
+            (
+                int(line_range[0].strip().strip('l') or 1) - 1,
+                int(line_range[1].strip().strip('l') or None))
+            for line_range in line_ranges
+        ]
+        return self.structured_func([{'filename': filename, 'start': start, 'end': end} for start, end in line_ranges])
 
 
 def apply_patch(file_content, patch):

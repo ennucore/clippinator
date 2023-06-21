@@ -2,7 +2,7 @@ import yaml
 
 from clippy import tools
 from clippy.project import Project
-from .base_minion import BaseMinion
+from .base_minion import BaseMinion, BaseMinionOpenAI
 from .prompts import execution_prompt, get_specialized_prompt
 from ..tools.subagents import DeclareArchitecture
 
@@ -12,10 +12,13 @@ class Executioner:
     The minion responsible for executing a task.
     Can be specialized for different types of tasks (research, operations, code writing).
     """
-    execution_agent: BaseMinion
+    execution_agent: BaseMinion | BaseMinionOpenAI
 
-    def __init__(self, project: Project):
-        self.execution_agent = BaseMinion(execution_prompt, tools.get_tools(project))
+    def __init__(self, project: Project, use_openai: bool = True):
+        if use_openai:
+            self.execution_agent = BaseMinionOpenAI(execution_prompt, tools.get_tools(project, True))
+        else:
+            self.execution_agent = BaseMinion(execution_prompt, tools.get_tools(project))
 
     def execute(self, task: str, project: Project, milestone: str = '') -> str:
         return self.execution_agent.run(task=task, milestone=milestone, **project.prompt_fields())
@@ -34,9 +37,9 @@ def specialized_executioner(name: str, description: str, prompt: str, tool_names
     class SpecializedExecutionerN(SpecializedExecutioner):
         def __init__(self, project: Project):
             super().__init__(project)
-            all_tools = tools.get_tools(project) + [DeclareArchitecture(project).get_tool()]
+            all_tools = tools.get_tools(project, True) + [DeclareArchitecture(project).get_tool()]
             spe_tools = [tool for tool in all_tools if tool.name in tool_names or tool.name == 'Python']
-            self.execution_agent = BaseMinion(get_specialized_prompt(prompt), spe_tools)
+            self.execution_agent = BaseMinionOpenAI(get_specialized_prompt(prompt), spe_tools)
             self.name = name
             self.description = description
 

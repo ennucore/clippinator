@@ -1,7 +1,9 @@
 import typing
+from typing import Any
 
 import requests
 from langchain.agents import Tool
+from langchain.tools import StructuredTool
 from typer import prompt
 
 
@@ -9,8 +11,15 @@ class SimpleTool:
     name: str
     description: str
     func: typing.Callable[[str], str]
+    structured_func: typing.Callable[..., str] | None = None
+    structured_desc: str | None = None
+    args_schema: Any | None = None
 
-    def get_tool(self):
+    def get_tool(self, try_structured: bool = True) -> Tool | StructuredTool:
+        if self.structured_func and try_structured:
+            return StructuredTool.from_function(self.structured_func, name=self.name,
+                                                description=self.structured_desc or self.description,
+                                                args_schema=self.args_schema)
         return Tool(name=self.name, func=self.func, description=self.description)
 
 

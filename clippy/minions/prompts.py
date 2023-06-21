@@ -10,7 +10,10 @@ Here's the planned project architecture:
 {architecture}
 
 Note that the architecture may be significantly different from the current project state.
+{format_description}
+"""
 
+format_description = """
 You have access to the following tools:
 {tools}
 When possible, use your own knowledge. When there's something important, use the Remember tool

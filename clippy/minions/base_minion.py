@@ -12,11 +12,13 @@ from langchain.agents import (
     LLMSingleActionAgent,
     AgentOutputParser,
 )
+from langchain.agents.openai_functions_agent.base import OpenAIFunctionsAgent
 from langchain.chat_models import ChatOpenAI
 from langchain.prompts import StringPromptTemplate
 from langchain.schema import AgentAction, AgentFinish
 
 from clippy.tools.tool import WarningTool
+from .prompts import format_description
 
 long_warning = (
     "WARNING: You have been working for a very long time. Please, finish ASAP. "
@@ -193,43 +195,44 @@ class CustomPromptTemplate(StringPromptTemplate):
     def format(self, **kwargs) -> str:
         # Get the intermediate steps (AgentAction, AResult tuples)
         # Format them in a particular way
-        model_steps = kwargs.pop("intermediate_steps")
-        self.intermediate_steps += model_steps[self.model_steps_processed:]
-        self.model_steps_processed = len(model_steps)
-        intermediate_steps = self.intermediate_steps
+        if 'intermediate_steps' in kwargs:
+            model_steps = kwargs.pop("intermediate_steps")
+            self.intermediate_steps += model_steps[self.model_steps_processed:]
+            self.model_steps_processed = len(model_steps)
+            intermediate_steps = self.intermediate_steps
 
-        self.current_context_length += (
-                len(intermediate_steps) - self.all_steps_processed
-        )
-        self.all_steps_processed = len(intermediate_steps)
-
-        if (
-                self.current_context_length >= self.max_context_length
-                and self.my_summarize_agent
-        ):
-            self.last_summary = self.my_summarize_agent.run(
-                summary=self.last_summary,
-                thought_process=self.thought_log(
-                    intermediate_steps[
-                    -self.current_context_length: -self.keep_n_last_thoughts
-                    ]
-                ),
+            self.current_context_length += (
+                    len(intermediate_steps) - self.all_steps_processed
             )
-            self.current_context_length = self.keep_n_last_thoughts
+            self.all_steps_processed = len(intermediate_steps)
 
-        if self.my_summarize_agent:
-            kwargs["agent_scratchpad"] = (
-                    "Here is a summary of what has happened:\n" + self.last_summary
+            if (
+                    self.current_context_length >= self.max_context_length
+                    and self.my_summarize_agent
+            ):
+                self.last_summary = self.my_summarize_agent.run(
+                    summary=self.last_summary,
+                    thought_process=self.thought_log(
+                        intermediate_steps[
+                        -self.current_context_length: -self.keep_n_last_thoughts
+                        ]
+                    ),
+                )
+                self.current_context_length = self.keep_n_last_thoughts
+
+            if self.my_summarize_agent:
+                kwargs["agent_scratchpad"] = (
+                        "Here is a summary of what has happened:\n" + self.last_summary
+                )
+                kwargs["agent_scratchpad"] += "\nEND OF SUMMARY\n"
+            else:
+                kwargs["agent_scratchpad"] = ""
+
+            kwargs["agent_scratchpad"] += "Here go your thoughts and actions:"
+
+            kwargs["agent_scratchpad"] += self.thought_log(
+                intermediate_steps[-self.current_context_length:]
             )
-            kwargs["agent_scratchpad"] += "\nEND OF SUMMARY\n"
-        else:
-            kwargs["agent_scratchpad"] = ""
-
-        kwargs["agent_scratchpad"] += "Here go your thoughts and actions:"
-
-        kwargs["agent_scratchpad"] += self.thought_log(
-            intermediate_steps[-self.current_context_length:]
-        )
 
         kwargs["tools"] = "\n".join(
             [
@@ -314,6 +317,42 @@ class BaseMinion:
 
     def run(self, **kwargs):
         kwargs["feedback"] = kwargs.get("feedback", "")
+        kwargs["format_description"] = format_description
+        return (
+                self.agent_executor.run(**kwargs)
+                or "No result. The execution was probably unsuccessful."
+        )
+
+
+@dataclass
+class BaseMinionOpenAI:
+    def __init__(self, base_prompt, available_tools, model: str = "gpt-4") -> None:
+        if not model.endswith('-0613'):
+            model += '-0613'
+        llm = get_model(model)
+        agent_toolnames = [tool.name for tool in available_tools]
+        prompt = CustomPromptTemplate(
+            template=base_prompt,
+            tools=available_tools,
+            input_variables=extract_variable_names(
+                base_prompt
+            ),
+            agent_toolnames=agent_toolnames,
+        )
+        agent = OpenAIFunctionsAgent(llm=llm, prompt=prompt, tools=available_tools)
+        # self.agent_executor = initialize_agent(available_tools, llm, agent=AgentType.OPENAI_FUNCTIONS, verbose=True,
+        #                                        prompt=prompt)
+        self.agent_executor = AgentExecutor.from_agent_and_tools(
+            agent=agent,
+            tools=available_tools,
+            verbose=True,
+            max_iterations=50,
+        )
+
+    def run(self, **kwargs):
+        kwargs["feedback"] = kwargs.get("feedback", "")
+        kwargs["format_description"] = ''
+        kwargs['input'] = ''
         return (
                 self.agent_executor.run(**kwargs)
                 or "No result. The execution was probably unsuccessful."

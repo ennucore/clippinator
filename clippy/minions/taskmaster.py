@@ -1,11 +1,8 @@
 import os.path
 import pickle
-from typing import List, Dict, Any
 
 from langchain import LLMChain
 from langchain.agents import AgentExecutor, LLMSingleActionAgent
-from langchain.memory import ConversationSummaryMemory
-from langchain.schema import BaseMemory
 from langchain.schema import AgentAction
 
 from clippy.project import Project
@@ -20,15 +17,15 @@ from .base_minion import (
     BasicLLM,
 )
 from .executioner import Executioner, get_specialized_executioners
-from .prompts import taskmaster_prompt, summarize_prompt
+from .prompts import taskmaster_prompt, summarize_prompt, format_description
 
 
 class Taskmaster:
     def __init__(
-        self,
-        project: Project,
-        model: str = "gpt-4",
-        prompt: CustomPromptTemplate | None = None,
+            self,
+            project: Project,
+            model: str = "gpt-4",
+            prompt: CustomPromptTemplate | None = None,
     ):
         self.project = project
         self.specialized_executioners = get_specialized_executioners(project)
@@ -79,10 +76,11 @@ class Taskmaster:
         kwargs["specialized_minions"] = "\n".join(
             minion.expl() for minion in self.specialized_executioners.values()
         )
+        kwargs["format_description"] = format_description
         try:
             return (
-                self.agent_executor.run(**kwargs)
-                or "No result. The execution was probably unsuccessful."
+                    self.agent_executor.run(**kwargs)
+                    or "No result. The execution was probably unsuccessful."
             )
         except KeyboardInterrupt:
             feedback = input("\nAI interrupted. Enter your feedback: ")

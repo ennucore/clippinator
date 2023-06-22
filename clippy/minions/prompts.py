@@ -16,9 +16,9 @@ Note that the architecture may be significantly different from the current proje
 format_description = """
 You have access to the following tools:
 {tools}
-When possible, use your own knowledge. When there's something important, use the Remember tool
+When possible, use your own knowledge. When there's something important, use the Remember tool.
 
-You will use the following format to accomplish your tasks: 
+You will use the following format to accomplish your tasks (note that you should respond with as much as you can generate): 
 Thought: the thought you have about what to do next or in general.
 Action: the action you take. It's one of {tool_names}. You have to write "Action: <tool name>".
 Action Input: the input to the action.
@@ -334,8 +334,13 @@ taskmaster_prompt = (
         + """Achieve the objective: **{objective}**. DO NOT give a Final Result until you achieve the objective.
 """
         + """
+First, you need to clarify the objective for yourself. If needed, you can ask the human specific questions for additional information using the Human tool.
+After clarifying it and stating the requirements clearly, you might want to pass the full elaborate objective to the Architect (note that its input may have several lines).
+Tell the architect things to pay attention to in the architecture.
+You should also think about the overall plan of implementing the objective.
 You can (and should) delegate some tasks to subagents. It's better to delegate things to the subagents than to do them yourself.
 Avoid performing common actions yourself. Note that the tasks for the subagents have to be manageable (not very big, but not very small either).
+Delegating several files at a time is a good idea.
 TASKS SHOULD HAVE REASONABLE SIZE AND THE DESCRIPTION SHOULD BE DETAILED
 IMPLEMENTING THE ENTIRE PROJECT IS FAR TOO BIG OF A TASK
 BEFORE DELEGATING TO AN AGENT, YOU SHOULD THINK ABOUT THE PROJECT AND THEN ASK THE ARCHITECT DECLARE THE PROJECT ARCHITECTURE. If there's already something in the project directory, you need to base architecture on that (mention it to the architect).

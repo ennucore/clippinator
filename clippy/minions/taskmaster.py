@@ -33,8 +33,7 @@ class Taskmaster:
         llm = get_model(model)
         tools = get_tools(project)
         tools.append(DeclareArchitecture(project).get_tool())
-        agent_tool_names = [tool.name for tool in tools if tool.name != "HTTPGet"]
-        agent_tool_names.remove("PatchFile")
+        agent_tool_names = ['DeclareArchitecture', 'Bash', 'Python', 'BaseBackground', 'Human', 'Remember']
 
         tools.append(
             Subagent(

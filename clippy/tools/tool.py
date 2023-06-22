@@ -33,7 +33,7 @@ class WarningTool(SimpleTool):
 
 
 class HumanInputTool(SimpleTool):
-    name: str = "HumanInput"
+    name: str = "Human"
     description: str = (
         "A tool that can be used to ask a human for something (only if it's required). "
         "For instance, it can be useful if you need some kind of API token. Use only if absolutely necessary. "

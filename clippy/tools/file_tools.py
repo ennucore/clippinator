@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass
+from typing import Any
 
 from langchain import PromptTemplate
 from langchain.chains.combine_documents.base import BaseCombineDocumentsChain
@@ -76,7 +77,7 @@ class WriteFile(SimpleTool):
     def __init__(self, wd: str = "."):
         self.workdir = wd
 
-    def structured_func(self, to_write: dict[str, str]):
+    def structured_func(self, to_write: dict[str, str] | Any):
         to_write = unjson(to_write)
         result = ""
         for filename, content in to_write.items():
@@ -148,12 +149,16 @@ class ReadFile(SimpleTool):
     def __init__(self, wd: str = "."):
         self.workdir = wd
 
-    def structured_func(self, to_read: list[str | dict[str, str | int]]):
-        to_read = unjson(to_read)
+    def structured_func(self, to_read: list[str | dict[str, str | int] | Any]):
+        if '{' in str(to_read):
+            to_read = unjson(to_read)
+        if isinstance(to_read, str):
+            to_read = [to_read]
         result = ''
         for item in to_read:
             if isinstance(item, str):
                 # same behavior as before, but without using func
+                item = strip_filename(item)
                 try:
                     with open(os.path.join(self.workdir, item), "r") as f:
                         lines = f.readlines()
@@ -172,7 +177,7 @@ class ReadFile(SimpleTool):
             elif isinstance(item, dict):
                 # read a specific range
                 try:
-                    filename = item['filename']
+                    filename = strip_filename(item['filename'])
                     start = item.get('start', 1)
                     end = item.get('end', None)
                     with open(os.path.join(self.workdir, filename), "r") as f:
@@ -208,18 +213,14 @@ class ReadFile(SimpleTool):
         return self.structured_func([{'filename': filename, 'start': start, 'end': end} for start, end in line_ranges])
 
 
-def apply_patch(file_content, patch):
-    # Split the content and patch into lines
-    content_lines = file_content.strip().split("\n")
+def parse_patch(patch):
+    # Split the patch into lines
     patch_lines = patch.strip().split("\n")
 
-    content_index = 0
     patch_index = 0
-    new_content = []
-    modified_lines: list[(int, str)] = list()
-    last_end_line = -1
+    patches = []
 
-    while content_index < len(content_lines) or patch_index < len(patch_lines):
+    while patch_index < len(patch_lines):
         if (
                 patch_index < len(patch_lines)
                 and patch_lines[patch_index].startswith("[")
@@ -230,8 +231,10 @@ def apply_patch(file_content, patch):
             try:
                 if "-" in range_str:
                     range_start, range_end = map(int, range_str.split("-"))
+                    type = 'remove' if range_start == range_end else 'replace'
                 else:
                     range_start = range_end = int(range_str)
+                    type = 'insert'
                     range_end -= 1
             except ValueError:
                 raise ValueError(
@@ -241,23 +244,6 @@ def apply_patch(file_content, patch):
             # Convert to 0-indexed
             range_start -= 1
             range_end -= 1
-
-            if (
-                    range_start > range_end + 1
-                    or range_start < 0
-                    or range_end >= len(content_lines)
-            ):
-                raise ValueError(
-                    f"Invalid line range. Received '{range_start + 1}-{range_end + 1}' for a file with {len(content_lines)} lines."
-                )
-
-            # Check if the ranges overlap
-            if range_start <= last_end_line:
-                raise ValueError(
-                    f"Line ranges overlap. Previous range ends at line {last_end_line + 1}, but next range starts at line {range_start + 1}."
-                )
-
-            last_end_line = range_end
 
             # Gather the replacement lines
             patch_index += 1
@@ -269,24 +255,55 @@ def apply_patch(file_content, patch):
                 replacements.append(patch_lines[patch_index])
                 patch_index += 1
 
-            if patch_index < len(patch_lines) and not replacements:
-                raise ValueError("Missing replacement text for line range.")
+            patch_dict = {'type': type, 'start': range_start, 'end': range_end}
+            if replacements:
+                patch_dict['content'] = "\n".join(replacements)
 
-            # Append lines from content that are before the range
-            while content_index < range_start:
-                new_content.append(content_lines[content_index])
-                content_index += 1
+            patches.append(patch_dict)
+    return patches
 
+
+def apply_patch_str(file_content: str, patch: str):
+    patches = parse_patch(patch)
+    return apply_patch(file_content, patches)
+
+
+def apply_patch(file_content: str, patches: list[dict[str, Any]]):
+    # Split the content into lines
+    content_lines = file_content.strip().split("\n")
+
+    new_content = []
+    last_end_line = -1
+
+    for patch in patches:
+        # Check if the ranges overlap
+        if patch['start'] <= last_end_line:
+            raise ValueError(
+                f"Line ranges overlap. Previous range ends at line {last_end_line + 1}, but next range starts at line {patch['start'] + 1}."
+            )
+
+        last_end_line = patch['end']
+
+        # Append lines from content that are before the range
+        while last_end_line < patch['start']:
+            new_content.append(content_lines[last_end_line])
+            last_end_line += 1
+
+        # Handle replace and remove
+        if patch['type'] in ('replace', 'remove'):
             # Skip lines from content that are within the range
-            content_index = range_end + 1
+            last_end_line = patch['end'] + 1
 
             # Append the replacement lines
-            new_content.extend(replacements)
-        else:
-            # If no range to replace, simply append the line from content
-            if content_index < len(content_lines):
-                new_content.append(content_lines[content_index])
-                content_index += 1
+            if patch['type'] == 'replace':
+                new_content.extend(patch['content'].split("\n"))
+
+        # Handle insert
+        elif patch['type'] == 'insert':
+            new_content.extend(patch['content'].split("\n"))
+
+    # Append any remaining lines from content
+    new_content.extend(content_lines[last_end_line:])
 
     return "\n".join(new_content)
 
@@ -299,24 +316,41 @@ class PatchFile(SimpleTool):
 
     name = "PatchFile"
     description = """
-        The patch format is a text-based representation designed to apply modifications to another text, typically source code. 
-        Each modification is represented by a line range to be replaced, followed by the replacement content. 
-        The line range is specified in brackets, such as [start-end] to replace from start to end (10-20 will erase lines 10, 11, ..., 19, 1-indexed, and replace them by the new content) or [line] to insert a line after the specified line, where the line numbers are 1-indexed. 
-        The replacement content follows the line range and can span multiple lines. Here is a sample patch:
-        ```
-        [2-3]
-        replacement for lines 2 and 3
-        [5]
-        insert after line 5 (btw, use [5-5] with nothing after it if you want to delete the fifth line)
-        [20-20]
-        replacement for line 20
-        ```
-        The patch lines are applied in order, and the ranges must not overlap or intersect. Any violation of this format will result in an error.
-        Make sure to read the relevant part of the file before patching, especially if you're trying to fix something.
-        """
+The patch format is a text-based representation designed to apply modifications to another text, typically source code. 
+Each modification is represented by a line range to be replaced, followed by the replacement content. 
+The line range is specified in brackets, such as [start-end] to replace from start to end (10-20 will erase lines 10, 11, ..., 19, 1-indexed, and replace them by the new content) or [line] to insert a line after the specified line, where the line numbers are 1-indexed. 
+The replacement content follows the line range and can span multiple lines. Here is a sample patch:
+```
+[2-3]
+replacement for lines 2 and 3
+[5]
+insert after line 5 (btw, use [5-5] with nothing after it if you want to delete the fifth line)
+[20-20]
+replacement for line 20
+```
+The patch lines are applied in order, and the ranges must not overlap or intersect. Any violation of this format will result in an error.
+Make sure to read the relevant part of the file before patching, especially if you're trying to fix something.
+"""
+    structured_desc = """
+The patch tool is used to apply modifications to a file. It takes the filename and the changes. 
+The patches are a list of modifications, each of them can be one of the following:
+{'type': 'remove', 'start': line number from which to delete, 'end': ...}: to delete lines from the content. The 'start' and 'end' keys specify the range of lines to be deleted (0-indexed). 
+{'type': 'replace', 'start' ..., 'end': ..., 'content': 'new content here'}: to replace lines in the content. The 'start' and 'end' keys specify the range of lines to be replaced, and the 'content' key provides the new content.
+{'type': 'insert', 'after_line': ..., 'content': '...}: to insert lines into the content. The 'after_line' key specifies the line after which new content will be inserted, and the 'content' key provides the new content.
+"""
 
     def __init__(self, wd: str = "."):
         self.workdir = wd
+
+    def structured_func(self, filename: str, patches: list[dict[str, Any]]) -> str:
+        filename = os.path.join(self.workdir, filename)
+        try:
+            new_content = apply_patch(open(filename).read(), patches)
+        except Exception as e:
+            return f"Error applying patch: {str(e)}."
+        with open(filename, "w") as file:
+            file.write(new_content)
+        return f"Successfully patched {filename}."
 
     def func(self, args: str) -> str:
         if "\n" not in strip_quotes(args):
@@ -330,7 +364,7 @@ class PatchFile(SimpleTool):
         patch = strip_quotes(patch)
         filename = os.path.join(self.workdir, filename.strip())
         try:
-            new_content = apply_patch(open(filename).read(), patch)
+            new_content = apply_patch_str(open(filename).read(), patch)
         except Exception as e:
             return f"Error applying patch: {str(e)}. Here's a reminder on how to patch:\n{patch_example}"
         with open(filename, "w") as file:

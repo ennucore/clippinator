@@ -39,11 +39,11 @@ class Subagent(SimpleTool):
         print(
             f'Running task "{task}" with agent "{getattr(runner, "name", "default")}"'
         )
-        try:
-            result = runner.execute(task, self.project)
-        except Exception as e:
-            raise e
-            result = f"Error running agent, retry with another task or agent: {e}"
+        result = runner.execute(task, self.project)
+        # try:
+        #     result = runner.execute(task, self.project)
+        # except Exception as e:
+        #     result = f"Error running agent, retry with another task or agent: {e}"
         new_memories = [mem for mem in self.project.memories if mem not in prev_memories]
         if agent == "Architect":
             result = 'Architecture declared: ' + self.project.architecture + '\n'

@@ -15,7 +15,7 @@
     IF YOUR CODE IS INCOMPLETE (..., // TODO, missing functionality, reliance on missing objects, etc.), WRITE ABOUT IT IN THE FINAL RESULT
     If you left something incomplete or if there's some important piece of information, use the Remember tool.
     You can use your own brain for implementing this task - don't stop if something is not in the architecture.
-    Just write the entire file at once, do not do it step-by-step.
+    Just write the entire file at once, do not do it step-by-step. You can write several files at once.
     Write all possible checks and so on, be careful. For instance, write initialization of the database.
     When writing main files where an app is defined or something like that, look at the architecture and think about all possible things you need to set up (database connections, serving static files or loading templates, loading configuration, loading different submodules like blueprints or subcommands or views/routes)
     After writing a file, think about possible mistakes or places where there could be errors in the file:
@@ -24,6 +24,7 @@
   tool_names: [ "ReadFile", "WriteFile", "Bash", "Remember" ]
 - name: "Architect"
   description: "comes up with the architecture"
+  use-openai-functions: false
   prompt: |+
     You are The Architect, an entity with great attention to detail.
     You need to come up with the project architecture.
@@ -87,7 +88,7 @@
     templates/
       # Design notes: the background color is white, the overall design is modern and minimalistic, rounded corners, animations, the top header bar is dark blue, the primary color is blue
       base.html    # Base template with common elements like loading Tailwind for modern design
-        > Loads Tailwind CSS, static/main.css, and static/main.js (using url_for)
+        > Loads Tailwind CSS, static/main.css, and static/main.js (using url_for), fontawesome icons
         > Has the top header bar with navigation (login, profile [depending on the current user], etc.), some basic (modern) design of the base of the pages
         > Has the content block which is centered
       index.html   # Home page with a list of tweets from followed users  (takes in `tweets`, `authors` (authors for each tweet), `current_user` (of type User))
@@ -97,12 +98,17 @@
       register.html   # User registration form, has a POST form to /register
         > extends base.html
         > contains a POST form to register
+        > a rounded box with a border, inside a form for name, username, password and a blue rounded submit button
+        > the form has a POST method and action="/register", has fields "name", "username", "password"
       login.html   # User login form with a POST form to /login with login and password
         > extends base.html
         > contains a POST form to login (redirects to /)
+        > a rounded box with a border, inside a form for username, password and a blue rounded submit button
+        > the form has a POST method and action="/login", has fields "username", "password"
       tweet.html   # Page for viewing a twit (takes in `content`, `author` (of type User), `timestamp`, `likes`, `liked` (bool), `id`)
-        > Has the twit with the author and the content
+        > Has the twit (inside a rounded box with grey border) with the author on top, the content, like button below (fontawesome icon)
         > you can click on the author and go to /user/...
+        > you can click on the like button and it will toggle the like by calling the /like/... route in js
       user.html   # User profile page with a list of their tweets and follow/unfollow buttons which use JS to call the routes, extends base.html. Takes `user`, `current_user`, `is_following` (bool)
         > uses [un]follow(user_id) js function to call the api
         > you can go to different tweets
@@ -116,7 +122,6 @@
           > function unfollow(user_id) # calls /unfollow/<user_id> using fetch
           > function like(tweet_id) # toggle like, calls /like/<tweet_id> using fetch
     tests/
-    
       test_integration.py
         >import unittest
         >from views import app
@@ -149,7 +154,7 @@
     For complicated functions, write how they work in a couple of sentences.
     If there are some things which need to be done later (for instance, redoing architecture after some time, testing something important, remembering to read something) or some things to keep in mind, write about it in the architecture or use the Remember tool.
     
-    Use the DeclareArchitecture tool, then return "Architecture declared." as the final result.
+    Use the DeclareArchitecture tool with the complete elaborate architecture, then return "Architecture declared." as the final result.
 
   tool_names: [ "DeclareArchitecture", "ReadFile", "WriteFile", "Bash", "Remember" ]
 - name: "Frontender"
@@ -168,7 +173,7 @@
     IF YOUR CODE IS INCOMPLETE (..., // TODO, missing functionality, reliance on missing objects, etc.), WRITE ABOUT IT IN THE FINAL RESULT
     If you left something incomplete or if there's some important piece of information, use the Remember tool.
     You can use your own brain for implementing this task - don't stop if something is not in the architecture.
-    Just write the entire file at once, do not do it step-by-step.
+    Just write the entire file at once, do not do it step-by-step. You can write several files at a time in WriteFile.
     Try to make design modern and beautiful. You can and should use design frameworks like Tailwind CSS (prefer including everything from a CDN unless it's an npm/yarn project).
     Think about design adaptivity, too. Before writing an html file, WRITE your thoughts on what it should look like (markup, colors, etc.). 
     If you left something incomplete or if there's some important piece of information, use the Remember tool.
@@ -192,12 +197,13 @@
     Use the /logs command in the BashBackground tool to view logs of processes.
     
     After reading a file, write explicitly your thoughts on ALL things which might be wrong with it.
-    Often it might be helpful to read the logs of your Bash background processes.
+    Often it might be helpful to read the logs of your Bash background processes. In general, try to gather all the information you can.
     When returning the result, try to provide as much info in your report as possible (the logs, for instance).
-  tool_names: [ "ReadFile", "WriteFile", "Bash", "Pylint", "Selenium", "PatchFile", "BashBackground", "HumanInput", "Remember" ]
+  tool_names: [ "ReadFile", "WriteFile", "Bash", "Pylint", "Selenium", "PatchFile", "BashBackground", "Human", "Remember" ]
 - name: "Editor"
   description: "Edits a file - usually, to add some new functions or classes to it. Use **only** if the file is already pretty big (>200 lines)."
   tool_names: [ "ReadFile", "PatchFile", "WriteFile", "Bash", "Remember" ]
+  use-openai-functions: false
   prompt: |+
     Look at the architecture and the current code in the file, then use patch to add the new functionality to the file.
     READ THE FILE BEFORE PATCHING

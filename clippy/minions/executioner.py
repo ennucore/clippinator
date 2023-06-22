@@ -33,13 +33,17 @@ class SpecializedExecutioner(Executioner):
         return f'    @{cls.name} - {cls.description}\n'
 
 
-def specialized_executioner(name: str, description: str, prompt: str, tool_names: list[str]):
+def specialized_executioner(name: str, description: str, prompt: str,
+                            tool_names: list[str], use_openai_functions: bool = True):
     class SpecializedExecutionerN(SpecializedExecutioner):
         def __init__(self, project: Project):
             super().__init__(project)
-            all_tools = tools.get_tools(project, True) + [DeclareArchitecture(project).get_tool()]
+            all_tools = tools.get_tools(project, use_openai_functions) + [DeclareArchitecture(project).get_tool()]
             spe_tools = [tool for tool in all_tools if tool.name in tool_names or tool.name == 'Python']
-            self.execution_agent = BaseMinionOpenAI(get_specialized_prompt(prompt), spe_tools)
+            if use_openai_functions:
+                self.execution_agent = BaseMinionOpenAI(get_specialized_prompt(prompt), spe_tools)
+            else:
+                self.execution_agent = BaseMinion(get_specialized_prompt(prompt), spe_tools)
             self.name = name
             self.description = description
 
@@ -54,5 +58,5 @@ def specialized_executioner(name: str, description: str, prompt: str, tool_names
 def get_specialized_executioners(project) -> dict[str, SpecializedExecutioner]:
     with open('clippy/minions/specialized_minions.yaml') as f:
         data = yaml.load(f, Loader=yaml.FullLoader)
-        return {line['name']: specialized_executioner(**line)(project)
+        return {line['name']: specialized_executioner(**{k.replace('-', '_'): v for k, v in line.items()})(project)
                 for line in data}

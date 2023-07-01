@@ -66,7 +66,7 @@ class CustomOutputParser(AgentOutputParser):
             )
 
         if not match:
-            if "Action:" in llm_output and "Action Input:" not in llm_output:
+            if "Action:" in llm_output and "\nAction Input:" not in llm_output:
                 return AgentAction(
                     tool="WarnAgent",
                     tool_input="No Action Input specified.",
@@ -79,7 +79,7 @@ class CustomOutputParser(AgentOutputParser):
                     log=llm_output,
                 )
 
-        if llm_output.count("Action Input") > 1:
+        if llm_output.count("\nAction Input:") > 1:
             return AgentAction(
                 tool="WarnAgent",
                 tool_input="ERROR: Write 'AResult: ' after each action. Execute ALL the past actions "
@@ -114,7 +114,7 @@ def remove_project_summaries(text: str) -> str:
     The project summary is between "Current project state:" and "---"
     """
     # Find all the project summaries
-    project_summaries = re.findall(r"Current project state:.*?---", text, re.DOTALL)
+    project_summaries = re.findall(r"Current project state:.*?-----", text, re.DOTALL)
     # Remove all the project summaries except for the last one
     for project_summary in project_summaries[:-1]:
         text = text.replace(project_summary, "", 1)
@@ -246,7 +246,8 @@ class CustomPromptTemplate(StringPromptTemplate):
             for key, value in self.project.prompt_fields().items():
                 kwargs[key] = value
         # print("Prompt:\n\n" + self.template.format(**kwargs) + "\n\n\n")
-        result = remove_surrogates(remove_project_summaries(self.template.format(**kwargs)))
+        result = remove_surrogates(
+            remove_project_summaries(self.template.format(**kwargs).replace('{tools}', kwargs['tools'])))
         if self.hook:
             self.hook(self)
         if self.project:

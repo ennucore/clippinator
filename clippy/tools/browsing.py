@@ -1,12 +1,25 @@
 import time
 
 import html2text
+import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 from .tool import SimpleTool
 from .utils import trim_extra
+
+h2t = html2text.HTML2Text()
+h2t.ignore_links = False
+
+
+def render_page(html: str):
+    soup = BeautifulSoup(html, 'html.parser')
+    for tag in soup.findAll(True):
+        if tag.get('id'):
+            tag.string = f"[#{tag['id']}] {tag.text}"
+    text = trim_extra(h2t.handle(str(soup)))
+    return text
 
 
 class SeleniumTool(SimpleTool):
@@ -34,8 +47,6 @@ class SeleniumTool(SimpleTool):
         )
 
         self.driver = None
-        self.h = html2text.HTML2Text()
-        self.h.ignore_links = False
 
         self.last_log_timestamp = 0
 
@@ -47,11 +58,7 @@ class SeleniumTool(SimpleTool):
         self.last_log_timestamp = max(
             [log['timestamp'] for log in console_logs]) if console_logs else self.last_log_timestamp
 
-        soup = BeautifulSoup(html, 'html.parser')
-        for tag in soup.findAll(True):
-            if tag.get('id'):
-                tag.string = f"[#{tag['id']}] {tag.text}"
-        text = trim_extra(self.h.handle(str(soup)))
+        text = render_page(html)
 
         return f"Title: {title}\nURL: {self.driver.current_url}\nContent:\n{text}\nNew console logs:\n{new_console_logs}"
 
@@ -99,3 +106,20 @@ class SeleniumTool(SimpleTool):
                 return "Unknown command.\n"
         except Exception as e:
             return 'error: ' + str(e) + '\n'
+
+
+class GetPage(SimpleTool):
+    name: str = "GetPage"
+    description: str = (
+        "A tool that can be used to read a page from some url in a good (rendered) format. "
+        "The input format is just the url."
+    )
+
+    @staticmethod
+    def func(args: str) -> str:
+        url = args
+        try:
+            response = requests.get(url)
+            return render_page(response.text)
+        except Exception as e:
+            return str(e)

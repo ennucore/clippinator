@@ -12,6 +12,8 @@
   to update it. Maybe use git to commit intermediate versions
 - [ ] Picked examples for the architect
 - [ ] Summarization in project summary
+- [ ] Find usages or documentation of a function
+- [ ] Self-setup: commands to run for project summary, after writing files, to run a project
 - [X] "Remember" tool
 - [X] Linter warnings at Patch and Write
 - [X] Better patches (just replacing lines)

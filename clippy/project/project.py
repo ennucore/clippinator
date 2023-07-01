@@ -39,7 +39,7 @@ class Project:
             dir2:
                 file3.py
         """
-        from clippy.tools.utils import skip_file
+        from clippy.tools.utils import skip_file, trim_extra
         from clippy.tools.code_tools import lint_project
 
         res = ""
@@ -55,12 +55,13 @@ class Project:
                 res += get_file_summary(file_path, ident + "  ")
         if len(res) > 4000:
             print(f"Warning: long project summary at {path}, truncating to 4000 chars")
-            res = res[:4000] + "..."
+            res = trim_extra(res, 3650)
         if not res.replace('-', '').strip() and top_level:
             return "(nothing in the project directory)"
         if add_linting:
             res += '\n--\n'
-            res += lint_project(path) + '\n---'
+            res += lint_project(path)
+        res += '\n-----\n'
         return res
 
     def get_project_summary(self) -> str:

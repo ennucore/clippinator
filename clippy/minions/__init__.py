@@ -7,5 +7,6 @@ def extract_agent_name(task: str) -> (str, str):
     """
     if "@" not in task:
         return task, None
-    task, agent = task.split("@", 1)
+    agent = task.strip().split("@")[-1]
+    task = '@'.join(task.strip().split("@")[:-1])
     return task.strip().strip('(').strip(), agent.strip().strip(')')

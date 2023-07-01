@@ -47,7 +47,7 @@ class Subagent(SimpleTool):
         new_memories = [mem for mem in self.project.memories if mem not in prev_memories]
         if agent == "Architect":
             result = 'Architecture declared: ' + self.project.architecture + '\n'
-        result = f'Completed, result: {result}\n' \
+        result = f'Completed, result: {result}\n\n' \
                  f'Current project state:\n{self.project.get_project_summary()}\n'
         if new_memories:
             result += 'New memories:\n  - ' + '\n  - '.join(new_memories)

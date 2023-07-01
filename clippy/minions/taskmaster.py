@@ -33,7 +33,8 @@ class Taskmaster:
         llm = get_model(model)
         tools = get_tools(project)
         tools.append(DeclareArchitecture(project).get_tool())
-        agent_tool_names = ['DeclareArchitecture', 'Bash', 'Python', 'BaseBackground', 'Human', 'Remember']
+        agent_tool_names = ['DeclareArchitecture', 'ReadFile', 'WriteFile', 'Bash', 'Python', 'BaseBackground', 'Human',
+                            'Remember', 'GetPage']
 
         tools.append(
             Subagent(

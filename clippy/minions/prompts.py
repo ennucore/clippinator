@@ -356,6 +356,8 @@ AResult: the result from the agent will be here
 Here are the agents you have:
 {specialized_minions}
 
+AVOID USING THE TOOLS OR DOING THINGS YOURSELF, DELEGATE THE TASKS TO THE AGENTS
+
 Work until you have completely achieved the objective (and tested), do not give a Final Result until then. If you do, we will beat you with a stick.
 
 Begin!

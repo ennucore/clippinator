@@ -1,10 +1,11 @@
+## Todos and ideas
+
 - [X] Improve the bash tool (killing processes, etc.)
 - [X] Summarization
 - [X] Architect subagent
 - [X] Wget tool (for QA)
 - [X] Browsing tool (selenium+html2text)
 - [ ] Improve the QA agent (somehow...)
-- [ ] Feedback in specialized agents
 - [X] Using ^C to provide extra human input to the agents
 - [X] Storing intermediate Taskmaster states
 - [ ] Function descriptions (for the complex ones), typing, tests in architecture
@@ -18,3 +19,5 @@
 - [X] Linter warnings at Patch and Write
 - [X] Better patches (just replacing lines)
 - [ ] Integrate ESLint
+- [ ] Bring back the search tool
+- [ ] Maybe feedback in specialized agents

@@ -5,6 +5,7 @@ import re
 from dataclasses import dataclass
 from typing import List, Union, Callable, Any
 
+import langchain.schema
 from langchain import LLMChain, PromptTemplate
 from langchain.agents import (
     Tool,
@@ -269,7 +270,7 @@ def extract_variable_names(prompt: str, interaction_enabled: bool = False):
 
 def get_model(model: str = "gpt-4"):
     return ChatOpenAI(
-        temperature=0,
+        temperature=0.05,
         model_name=model,
         request_timeout=320,
     )
@@ -354,10 +355,24 @@ class BaseMinionOpenAI:
         kwargs["feedback"] = kwargs.get("feedback", "")
         kwargs["format_description"] = ''
         kwargs['input'] = ''
-        return (
-                self.agent_executor.run(**kwargs)
-                or "No result. The execution was probably unsuccessful."
-        )
+        initial_temperature = 0
+        if 'temperature' in kwargs:
+            try:
+                initial_temperature = self.agent_executor.agent.llm.temperature
+                self.agent_executor.agent.llm.temperature = kwargs['temperature']
+            except AttributeError:
+                pass
+        try:
+            result = (
+                    self.agent_executor.run(**kwargs)
+                    or "No result. The execution was probably unsuccessful."
+            )
+            self.agent_executor.agent.llm.temperature = initial_temperature
+            return result
+        except langchain.schema.OutputParserException as e:
+            print(e)
+            kwargs['temperature'] = 0.7
+            return self.run(**kwargs)
 
 
 @dataclass

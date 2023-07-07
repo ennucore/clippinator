@@ -4,7 +4,7 @@ from clippy import tools
 from clippy.project import Project
 from .base_minion import BaseMinion, BaseMinionOpenAI
 from .prompts import execution_prompt, get_specialized_prompt
-from ..tools.subagents import DeclareArchitecture
+from ..tools.architectural import DeclareArchitecture
 
 
 class Executioner:

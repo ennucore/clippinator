@@ -61,7 +61,7 @@ class Project:
         if add_linting:
             res += '\n--\n'
             res += lint_project(path)
-        res += '\n-----\n'
+            res += '\n-----\n'
         return res
 
     def get_project_summary(self) -> str:

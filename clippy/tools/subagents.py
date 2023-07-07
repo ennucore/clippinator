@@ -53,31 +53,3 @@ class Subagent(SimpleTool):
             result += 'New memories:\n  - ' + '\n  - '.join(new_memories)
         end_sessions(pids)
         return result
-
-
-class DeclareArchitecture(SimpleTool):
-    name = "DeclareArchitecture"
-    description = "declare the architecture of the project for the subagents"
-
-    def __init__(self, project: Project):
-        self.project = project
-        super().__init__()
-
-    def func(self, args: str) -> str:
-        self.project.architecture = args
-        return f"Architecture declared."
-
-
-class Remember(SimpleTool):
-    name = "Remember"
-    description = "remember a fact for later use which will be known globally " \
-                  "(e.g. some bugs, implementation details, something to be done later, etc.)"
-
-    def __init__(self, project: Project):
-        self.project = project
-        super().__init__()
-
-    def func(self, args: str) -> str:
-        self.project.memories.append(args)
-        self.project.memories = self.project.memories[-10:]
-        return f"Remembered {args}."

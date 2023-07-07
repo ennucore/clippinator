@@ -7,7 +7,7 @@ from langchain.schema import AgentAction
 
 from clippy.project import Project
 from clippy.tools import get_tools
-from clippy.tools.subagents import Subagent, DeclareArchitecture
+from clippy.tools.subagents import Subagent
 from clippy.tools.tool import WarningTool
 from .base_minion import (
     CustomOutputParser,
@@ -18,6 +18,7 @@ from .base_minion import (
 )
 from .executioner import Executioner, get_specialized_executioners
 from .prompts import taskmaster_prompt, summarize_prompt, format_description
+from ..tools.architectural import DeclareArchitecture
 
 
 class Taskmaster:

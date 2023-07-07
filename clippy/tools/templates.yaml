@@ -1,6 +1,6 @@
 - name: "Django"
   setup: |+
-    django-admin startproject 
+    django-admin startproject \
       --template=https://github.com/jpadilla/django-project-template/archive/master.zip \
       --name=Procfile \
       --extension=py,md,env \
@@ -124,10 +124,10 @@
   setup: |+
     git clone git@github.com:rochacbruno/fastapi-project-template.git {project_name}
     cd {project_name}
-    find . -type f -exec sed -i 's/project_name/{project_name}/g' \{\} \;
+    find . -type f -exec sed -i 's/project_name/{project_name}/g' {br} \;
     mv project_name {project_name}
-    find . -type f -exec sed -i 's/a_flask_test/{project_name}/g' \{\} \;
-    find . -type f -exec sed -i 's/a-flask-test/{project_name}/g' \{\} \;
+    find . -type f -exec sed -i 's/a_flask_test/{project_name}/g' {br} \;
+    find . -type f -exec sed -i 's/a-flask-test/{project_name}/g' {br} \;
     make switch-to-poetry
     poetry install
   info: |+

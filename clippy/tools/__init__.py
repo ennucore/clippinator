@@ -2,7 +2,7 @@ from langchain.agents import Tool
 from langchain.tools import BaseTool
 
 from clippy.project import Project
-from .architectural import Remember
+from .architectural import Remember, TemplateInfo, TemplateSetup
 from .browsing import SeleniumTool, GetPage
 from .code_tools import SearchInFiles, Pylint
 from .file_tools import WriteFile, ReadFile, PatchFile, SummarizeFile
@@ -26,6 +26,8 @@ def fixed_tools(project: Project) -> list[SimpleTool]:
         HTTPGetTool(),
         Remember(project),
         GetPage(),
+        TemplateInfo(),
+        TemplateSetup(project),
     ]
     tool_cache[project.path] = result
     return result

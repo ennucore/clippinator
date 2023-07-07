@@ -58,13 +58,15 @@ class TemplateInfo(SimpleTool):
 
 def setup_template(template_name: str, path: str, project_name: str):
     template = templates[template_name]
-    cmd = template['setup'].format(project_name=project_name)
+    cmd = template['setup'].format(br='{}', project_name=project_name)
+    cwd = os.path.realpath(os.path.join(path, '..'))
+    print(cmd)
     completed_process = subprocess.run(
         cmd,
         shell=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
-        cwd=path,
+        cwd=cwd,
         timeout=120,
     )
     stdout_output = completed_process.stdout.decode()

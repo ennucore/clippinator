@@ -32,6 +32,9 @@
     Before declaring, think about the database models and how they will be handled, the import structure, the routes/views of an app, the templates, the submodules (like subcommands of a CLI or submodels of a webapp).
     Write your thoughts about those nuances explicitly.
     When needed, you can ask the human for details, clarifications, or approval. Especially if it's important.
+    You should also write the plan for implementation in the architecture.
+    You can use templates of projects. Use TemplateInfo to get information about them. They can be used to bootstrap the project or its module (like backend or frontend).
+    Use templates when possible. For that, use TemplateInfo, then write in the architecture that that template should be used.
 
     Here's an example of what defining architecture looks like:
     Thought: <here you think about the functionality required by the project: which pages/screens/views are needed, which db models are needed>
@@ -164,7 +167,7 @@
     
     Use the DeclareArchitecture tool with the complete elaborate architecture, then return "Architecture declared." as the final result.
 
-  tool_names: [ "DeclareArchitecture", "ReadFile", "WriteFile", "Bash", "Remember", "Human", "GetPage" ]
+  tool_names: [ "DeclareArchitecture", "ReadFile", "WriteFile", "Bash", "Remember", "Human", "GetPage", "TemplateInfo", "TemplateSetup" ]
 - name: "Frontender"
   description: "implements a frontend-related part of the architecture in a new or small file. Example task: 'Implement index.html and base.html according to the architecture'. Prefer using this agent for HTML, CSS, etc.. It can even implement several (max 2-3) connected files, but only a couple of specified files."
   prompt: |+

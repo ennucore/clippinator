@@ -12,7 +12,6 @@ from langchain.text_splitter import (
 )
 
 from clippy.tools.tool import SimpleTool
-from .code_tools import lint_file
 from .utils import trim_extra, unjson
 
 
@@ -74,8 +73,9 @@ class WriteFile(SimpleTool):
         "avoid using it on non-empty files. "
     )
 
-    def __init__(self, wd: str = "."):
-        self.workdir = wd
+    def __init__(self, project):
+        self.project = project
+        self.workdir = project.path
 
     def structured_func(self, to_write: dict[str, str] | Any):
         to_write = unjson(to_write)
@@ -92,7 +92,7 @@ class WriteFile(SimpleTool):
                 with open(file_path, "w") as f:
                     f.write(content)
 
-                linter_output = lint_file(file_path)
+                linter_output = self.project.lint_file(file_path)
                 if linter_output:
                     result += f"Successfully written to {filename}. Linter output:\n{linter_output}\n\n"
 

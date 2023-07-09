@@ -229,7 +229,7 @@ class CustomPromptTemplate(StringPromptTemplate):
             else:
                 kwargs["agent_scratchpad"] = ""
 
-            kwargs["agent_scratchpad"] += "Here go your thoughts and actions:"
+            kwargs["agent_scratchpad"] += "Here go your thoughts and actions:\n"
 
             kwargs["agent_scratchpad"] += self.thought_log(
                 intermediate_steps[-self.current_context_length:]

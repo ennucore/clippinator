@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import subprocess
 from dataclasses import dataclass, field
 
 from clippy.project.project_summary import get_file_summary
@@ -13,6 +14,7 @@ class Project:
     state: str = ""
     architecture: str = ""
     summary_cache: str = ""
+    ci_commands: dict[str, str] = field(default_factory=dict)  # keys: 'run', 'lint', 'lint_file', 'test'
     memories: list[str] = field(default_factory=list)
 
     @classmethod
@@ -40,7 +42,6 @@ class Project:
                 file3.py
         """
         from clippy.tools.utils import skip_file, trim_extra
-        from clippy.tools.code_tools import lint_project
 
         res = ""
         for file in os.listdir(path):
@@ -60,9 +61,28 @@ class Project:
             return "(nothing in the project directory)"
         if add_linting:
             res += '\n--\n'
-            res += lint_project(path)
+            res += self.lint(path)
             res += '\n-----\n'
         return res
+
+    def lint(self, path: str = ''):
+        from clippy.tools.code_tools import lint_project
+
+        path = path or self.path
+        if 'lint' in self.ci_commands:
+            cmd = self.ci_commands['lint']
+            process = subprocess.run(cmd, capture_output=True, text=True)
+            return process.stdout.strip().split("\n")
+        return lint_project(path)
+
+    def lint_file(self, path: str):
+        from clippy.tools.code_tools import lint_file
+
+        if 'lintfile' in self.ci_commands:
+            cmd = self.ci_commands['lintfile'] + ' ' + path
+            process = subprocess.run(cmd, capture_output=True, text=True)
+            return process.stdout.strip().split("\n")
+        return lint_file(path)
 
     def get_project_summary(self) -> str:
         self.summary_cache = self.get_folder_summary(self.path, top_level=True)

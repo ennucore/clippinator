@@ -35,7 +35,7 @@ class Taskmaster:
         tools = get_tools(project)
         tools.append(DeclareArchitecture(project).get_tool())
         agent_tool_names = ['DeclareArchitecture', 'ReadFile', 'WriteFile', 'Bash', 'Python', 'BaseBackground', 'Human',
-                            'Remember', 'GetPage', 'TemplateInfo', 'TemplateSetup']
+                            'Remember', 'GetPage', 'TemplateInfo', 'TemplateSetup', 'SetCI']
 
         tools.append(
             Subagent(

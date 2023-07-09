@@ -104,3 +104,33 @@ class TemplateSetup(SimpleTool):
         template_name = args[0].strip()
         path = args[1].strip()
         return self.structured_func(template_name, path)
+
+
+class SetCI(SimpleTool):
+    name = "SetCI"
+    description = "Configure the commands to run, lint, test the project or lint a file " \
+                  "(`{command} {file}` will be used). " \
+                  'Input format: `lint: "command", lintfile: "command", test: "command", run: "command"`'
+    structured_desc = "Configure the commands to run, lint, test the project or lint a file. "
+
+    def __init__(self, project: Project):
+        self.project = project
+        super().__init__()
+
+    def structured_func(self, lint: str, lintfile: str, test: str, run: str, **kwargs):
+        self.project.ci = {
+            'lint': lint,
+            'lintfile': lintfile,
+            'test': test,
+            'run': run,
+            **kwargs,
+        }
+        self.project.memories.append(f"The command to run the project: `{run}`")
+        self.project.memories.append(f"The command to test the project: `{test}`")
+        return f"CI set up."
+
+    def func(self, args: str):
+        args = args.strip().strip('`').split('", ')
+        args = {arg.split(':')[0].strip(): arg.split(':')[1].strip().removeprefix('"').removesuffix('"')
+                for arg in args}
+        return self.structured_func(**args)

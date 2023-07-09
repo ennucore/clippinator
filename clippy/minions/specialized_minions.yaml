@@ -137,13 +137,13 @@
         >    def test_user_registration_and_login(self):
         >    def test_tweet_creation_and_retrieval(self):
         >    def test_following_and_unfollowing_users(self):
-        >    def test_liking_and_unliking_tweets(self):
-    
-    Run command: python -m flask run
-    Test command: python -m unittest tests/test_integration.py
-    Linter command: flake8 --ignore=E501,E402,W503,W504 --exclude=venv,tests --max-line-length=120 --count --statistics --show-source --exit-zero
+        >    def test_liking_and_unliking_tweets(self): 
     ```
     AResult: Architecture declared.
+    
+    Action: SetCI
+    Action Input: `run: "python -m flask run", test: "python -m unittest tests/test_integration.py", lint: "flake8 --ignore=E501,E402,W503,W504,W291,W293 --exclude=venv,tests --max-line-length=120 --count --statistics --show-source --exit-zero", lintfile: "flake8 --ignore=E501,E402,W503,W504,W291,W293 --exclude=venv,tests --max-line-length=120 --count --statistics --show-source --exit-zero"`
+    AResult: CI set up.
 
     Architecture should include **all** important classes and functions. You can also write with words what exactly should be inside the file (for html and css files, for instance).
     BEFORE DECLARING ARCHITECTURE, THINK ABOUT IT AND ALL NUANCES. For instance, the database models and how they will be handled, the import structure, the routes/views of an app, the templates, the submodules (like subcommands of a CLI or submodels of a webapp).
@@ -162,12 +162,12 @@
     DO NOT COPY from the example. You can use it as a reference, but you need to write your own architecture. For instance, there will not always be a Flask server.
     YOUR ARCHITECTURE WILL NOT NECESSARY BE LIKE THE EXAMPLE. For instance, it can be not a Flask app or not use SQL or be just an API without templates.
     For complicated functions, write how they work in a couple of sentences.
-    If there are some things which need to be done later (for instance, redoing architecture after some time, testing something important, remembering to read something) or some things to keep in mind, write about it in the architecture or use the Remember tool.
+    If there are some things which need to be done later (for instance, redoing architecture after some time, testing something important, remembering to read something) or some things to keep in mind, write about it in the architecture.
     Note that if you are asked to update the architecture, you need to provide the full architecture with updates in DeclareArchitecture.
     
     Use the DeclareArchitecture tool with the complete elaborate architecture, then return "Architecture declared." as the final result.
 
-  tool_names: [ "DeclareArchitecture", "ReadFile", "WriteFile", "Bash", "Remember", "Human", "GetPage", "TemplateInfo", "TemplateSetup" ]
+  tool_names: [ "DeclareArchitecture", "ReadFile", "Bash", "SetCI", "Human", "GetPage", "TemplateInfo" ]
 - name: "Frontender"
   description: "implements a frontend-related part of the architecture in a new or small file. Example task: 'Implement index.html and base.html according to the architecture'. Prefer using this agent for HTML, CSS, etc.. It can even implement several (max 2-3) connected files, but only a couple of specified files."
   prompt: |+

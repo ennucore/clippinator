@@ -29,7 +29,7 @@ class Project:
         return os.path.basename(self.path)
 
     def get_folder_summary(self, path: str, ident: str = "", add_linting: bool = True, top_level: bool = False,
-                           length_3: int = 4000) -> str:
+                           length_3: int = 3000) -> str:
         """
         Get the summary of a folder in the project, recursively, file-by-file, using self.get_file_summary()
         path:
@@ -42,7 +42,7 @@ class Project:
             dir2:
                 file3.py
         """
-        from clippy.tools.utils import skip_file, trim_extra
+        from clippy.tools.utils import skip_file, skip_file_summary, trim_extra
 
         res = ""
         if not os.path.isdir(path):
@@ -56,8 +56,9 @@ class Project:
                 res += self.get_folder_summary(file_path, ident + "  ", False, length_3=length_3)
             else:
                 res += f"{ident}{file}\n"
-                res += get_file_summary(file_path, ident + "  ",
-                                        length_1=length_3 // 10, length_2=round(length_3 / 6.6))
+                if not skip_file_summary(file_path):
+                    res += get_file_summary(file_path, ident + "  ",
+                                            length_1=length_3 // 11, length_2=round(length_3 / 7.5))
         if len(res) > length_3:
             print(f"Warning: long project summary at {path}, truncating to {length_3} chars")
             res = trim_extra(res, length_3)
@@ -73,20 +74,31 @@ class Project:
         from clippy.tools.code_tools import lint_project
         from clippy.tools.utils import trim_extra
 
+        path = os.path.join(self.path, path)
         path = path or self.path
         if self.ci_commands.get('lint'):
             cmd = self.ci_commands['lint']
-            process = subprocess.run(cmd, capture_output=True, text=True)
-            return trim_extra(process.stdout.strip(), 4000)
+            try:
+                process = subprocess.run(['/bin/bash', '-c', cmd], capture_output=True,
+                                         text=True, cwd=self.path)
+            except Exception as e:
+                return f"Linter error: {e}"
+            return trim_extra(process.stdout.strip(), 800)
         return lint_project(path)
 
     def lint_file(self, path: str):
         from clippy.tools.code_tools import lint_file
         from clippy.tools.utils import trim_extra
 
-        if self.ci_commands.get('lintfile'):
+        path = os.path.join(self.path, path)
+        if self.ci_commands.get('lintfile', '').strip():
             cmd = self.ci_commands['lintfile'] + ' ' + path
-            process = subprocess.run(cmd, capture_output=True, text=True)
+            try:
+                process = subprocess.run(
+                    ['/bin/bash', '-c', cmd], capture_output=True,
+                    text=True, cwd=self.path)
+            except Exception as e:
+                return f"Linter error: {e}"
             return trim_extra(process.stdout.strip(), 1000)
         return lint_file(path)
 

@@ -30,7 +30,7 @@ def strip_quotes(inp: str) -> str:
 
 def strip_filename(inp: str) -> str:
     inp = inp.split("=")[-1]
-    return inp.strip().strip("'").strip().split(": ")[-1].split(", ")[0].strip()
+    return inp.strip().strip("'").strip().split(": ")[-1].split(", ")[0].strip().removeprefix('/')
 
 
 patch_example = """Action: ReadFile

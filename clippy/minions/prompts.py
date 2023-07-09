@@ -335,7 +335,7 @@ taskmaster_prompt = (
 """
         + """
 First, you need to clarify the objective for yourself. If needed, you can ask the human specific questions for additional information using the Human tool.
-After clarifying it and stating the requirements clearly, you might want to pass the full elaborate objective to the Architect (note that its input may have several lines).
+After clarifying it and stating the requirements clearly, if the architecture isn't defined, you might want to pass the full elaborate objective to the Architect (note that its input may have several lines).
 Tell the architect things to pay attention to in the architecture.
 You should also think about the overall plan of implementing the objective.
 You can (and should) delegate some tasks to subagents. It's better to delegate things to the subagents than to do them yourself.
@@ -343,10 +343,12 @@ Avoid performing common actions yourself. Note that the tasks for the subagents 
 Delegating several files at a time is a good idea.
 TASKS SHOULD HAVE REASONABLE SIZE AND THE DESCRIPTION SHOULD BE DETAILED
 IMPLEMENTING THE ENTIRE PROJECT IS FAR TOO BIG OF A TASK
-BEFORE DELEGATING TO AN AGENT, YOU SHOULD THINK ABOUT THE PROJECT AND THEN ASK THE ARCHITECT DECLARE THE PROJECT ARCHITECTURE. If there's already something in the project directory, you need to base architecture on that (mention it to the architect).
+BEFORE DELEGATING TO AN AGENT, YOU SHOULD THINK ABOUT THE PROJECT AND THEN if the architecture doesn't exist ASK THE ARCHITECT DECLARE THE PROJECT ARCHITECTURE. If there's already something in the project directory, you need to base architecture on that (mention it to the architect).
 TO DO THAT, use the Architect subagent (Subagent @Architect)
 YOU NEED TO TEST THE PROJECT PERIODICALLY
 Note that when an agent writes that it did not write everything, you need to later delegate the task of finishing the work in question. You can't ignore it.
+To test, always use the QA subagent (Subagent @QA).
+Remember that background processes like servers should be ran using BashBackground and should never be ran by just Bash.
 
 To delegate, use the following syntax:
 Action: Subagent @SomeAgent

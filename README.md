@@ -21,6 +21,9 @@ The purpose of **Clippy** is to develop code for or with the user.
 It can plan, write, debug, and test some projects autonomously.
 For harder tasks, the best way to use it is to look at its work and provide feedback to it.
 
+![](images/writing.png)
+![](images/testing.png)
+
 The tool consists of several agents that work together to help the user develop code. The agents are based on GPT-4.
 Note that this is based on GPT-4 which runs for a long time, so it's quite expensive in terms of OpenAI API.
 
@@ -94,5 +97,3 @@ Linter output is also given after using _WriteFile_.
 The architect can configure the linter command using the _SetCI_ tool.
 All agents can also use the _Remember_ tool to add some information to the memory. Memory is given to all agents.
 
-![](images/writing.png)
-![](images/testing.png)

@@ -95,6 +95,14 @@ class TemplateSetup(SimpleTool):
                 os.system(f"rm -rf '{path_old}'")
             subprocess.run(['mv', self.project.path, path_old]).check_returncode()
             setup_template(template_name, self.project.path, project_name)
+            template = templates[template_name]
+            if template.get('ci'):
+                ci = template['ci']
+                if ci.get('run'):
+                    self.project.memories.append(f"The command to run the project: `{ci.get('run')}`")
+                self.project.ci_commands = ci
+            if template.get('memories'):
+                self.project.memories.extend(template['memories'])
             return f"Set up {template_name} template, overwrote old content."
         path = os.path.join(self.project.path, path or '.')
         project_name = path.split('/')[-1]

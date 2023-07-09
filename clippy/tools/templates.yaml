@@ -1,3 +1,56 @@
+- name: "Fastapi+Next.js"
+  description: "An application with a backend and a frontend, Fastapi and Next.js (+Tailwind)"
+  setup: |+
+    npx create-next-app --example "https://github.com/digitros/nextjs-fastapi" {project_name}
+    cd {project_name}
+    yarn install
+    cd api
+    pip install -r requirements.txt --break-system-packages
+  ci:
+    run: "yarn dev"
+    lint: "yarn lint && flake8 --ignore=E501,E402,W503,W504,W291,W293 --exclude=venv,tests --max-line-length=120 --count --statistics --show-source --exit-zero"
+  memories:
+    - The frontend runs on localhost:3000, the Fastapi backend on localhost:8000.
+    - The frontend is served from the /app folder, the backend from the /api folder.
+  info: |+
+    The Python/FastAPI server is mapped into to Next.js app under /api/.
+    This is implemented using next.config.js rewrites to map any request to /api/:path* to the FastAPI API, which is hosted in the /api folder.
+    On localhost, the rewrite will be made to the 127.0.0.1:8000 port, which is where the FastAPI server is running.
+    The frontend runs on localhost:3000.
+    Here is the project structure:
+      app:
+        favicon.ico
+        globals.css
+          19|body {
+        layout.tsx
+        page.tsx
+      next-env.d.ts
+      tsconfig.json
+      requirements.txt
+      package.json
+        13|  "dependencies": {  // node, react, typescript, tailwindcss
+      package-lock.json
+      postcss.config.js
+        2|  plugins: {
+        3|    tailwindcss: {},
+        4|    autoprefixer: {},
+      next.config.js
+      yarn.lock
+      public:
+        vercel.svg
+        next.svg
+      api:
+        index.py
+          3|app = FastAPI()
+          6|def hello_world():
+      README.md
+      tailwind.config.js
+        8|  theme: {
+        9|    extend: {
+        10|      backgroundImage: {
+        11|        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        12|        'gradient-conic':
+
 - name: "Django"
   setup: |+
     django-admin startproject \

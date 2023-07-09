@@ -16,7 +16,7 @@ def skip_file(filename: str) -> bool:
 
 def trim_extra(content: str, max_length: int = 1500) -> str:
     if len(content) > max_length:
-        content = content[:max_length] + f"\n...[skipped {len(content) - max_length - 350} chars]\n" + content[-100:]
+        content = content[:max_length] + f"\n...[skipped {len(content) - max_length - 500} chars]\n" + content[-500:]
     return content
 
 

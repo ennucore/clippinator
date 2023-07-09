@@ -34,7 +34,7 @@
     When needed, you can ask the human for details, clarifications, or approval. Especially if it's important.
     You should also write the plan for implementation in the architecture.
     You can use templates of projects. Use TemplateInfo to get information about them. They can be used to bootstrap the project or its module (like backend or frontend).
-    Use templates when possible. For that, use TemplateInfo, then write in the architecture that that template should be used.
+    USE TEMPLATES WHEN POSSIBLE. For that, use TemplateInfo to get information about a template, then write in the architecture that that template should be installed before everything else.
 
     Here's an example of what defining architecture looks like:
     Thought: <here you think about the functionality required by the project: which pages/screens/views are needed, which db models are needed>

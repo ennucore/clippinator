@@ -16,7 +16,6 @@ def fixed_tools(project: Project) -> list[SimpleTool]:
     if project.path in tool_cache:
         return tool_cache[project.path]
     result = [
-        WriteFile(project),
         ReadFile(project.path),
         PatchFile(project.path),
         SummarizeFile(project.path),
@@ -24,11 +23,9 @@ def fixed_tools(project: Project) -> list[SimpleTool]:
         Pylint(project.path),
         SeleniumTool(),
         HTTPGetTool(),
-        Remember(project),
         GetPage(),
         TemplateInfo(),
         TemplateSetup(project),
-        SetCI(project),
     ]
     tool_cache[project.path] = result
     return result
@@ -69,6 +66,9 @@ def get_tools(project: Project, try_structured: bool = False) -> list[BaseTool]:
                 #     "- to wait for the result of some process you ran.",
                 # ),
 
+                WriteFile(project).get_tool(try_structured),
+                Remember(project).get_tool(try_structured),
+                SetCI(project).get_tool(try_structured),
                 # SearchInFiles(project.path).get_tool(),
                 BashBackgroundSessions(project.path).get_tool(try_structured),
             ] + [tool_.get_tool(try_structured) for tool_ in fixed_tools(project)]

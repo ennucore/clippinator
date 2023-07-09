@@ -43,9 +43,9 @@ class Remember(SimpleTool):
 
 class TemplateInfo(SimpleTool):
     name = "TemplateInfo"
-    description = "get information about templates. Templates available: " + ', '.join(templates.keys()) + (
-        ". Example input: Preact frontend, Fastapi"
-    )
+    description = "get information about templates. Templates available:\n" + \
+                  '\n'.join('  - ' + k for k in templates.keys()) + \
+                  "\n\nExample action input: Preact frontend, Fastapi"
 
     @staticmethod
     def structured_func(template_names: list[str]):
@@ -91,9 +91,11 @@ class TemplateSetup(SimpleTool):
             parent_folder = os.path.realpath(os.path.join(self.project.path, '..'))
             project_name = os.path.basename(self.project.path)
             path_old = os.path.join(parent_folder, project_name + '_')
-            os.rename(self.project.path, path_old)
-            setup_template(template_name, parent_folder, project_name)
-            return f"Set up {template_name} template, overwritten old content."
+            if os.path.exists(path_old):
+                os.system(f"rm -rf '{path_old}'")
+            subprocess.run(['mv', self.project.path, path_old]).check_returncode()
+            setup_template(template_name, self.project.path, project_name)
+            return f"Set up {template_name} template, overwrote old content."
         path = os.path.join(self.project.path, path or '.')
         project_name = path.split('/')[-1]
         setup_template(template_name, path, project_name)
@@ -117,16 +119,18 @@ class SetCI(SimpleTool):
         self.project = project
         super().__init__()
 
-    def structured_func(self, lint: str, lintfile: str, test: str, run: str, **kwargs):
-        self.project.ci = {
+    def structured_func(self, lint: str = '', lintfile: str = '', test: str = '', run: str = '', **kwargs):
+        self.project.ci_commands = {
             'lint': lint,
             'lintfile': lintfile,
             'test': test,
             'run': run,
             **kwargs,
         }
-        self.project.memories.append(f"The command to run the project: `{run}`")
-        self.project.memories.append(f"The command to test the project: `{test}`")
+        if run:
+            self.project.memories.append(f"The command to run the project: `{run}`")
+        if test:
+            self.project.memories.append(f"The command to test the project: `{test}`")
         return f"CI set up."
 
     def func(self, args: str):

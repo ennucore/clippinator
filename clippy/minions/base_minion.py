@@ -251,7 +251,7 @@ class CustomPromptTemplate(StringPromptTemplate):
             remove_project_summaries(self.template.format(**kwargs).replace('{tools}', kwargs['tools'])))
         if self.hook:
             self.hook(self)
-        if self.project:
+        if self.project and os.path.exists(self.project.path):
             with open(os.path.join(self.project.path, ".prompts.log"), "a") as f:
                 f.write(result + "\n\n\n")
         return result

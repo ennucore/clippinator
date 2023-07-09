@@ -58,119 +58,119 @@
           manage.py
             7|def main():
           README.md
-- name: "Preact frontend"
-  setup: |+
-    git clone git@github.com:Borodutch/frontend-starter.git {project_name}
-    cd {project_name}
-    yarn install
-    # yarn start to run
-  description: "A Preact frontend application with TS, yarn, jotai, vite, tailwind"
-  info: |+
-    A Preact frontend application with yarn, jotai, vite, tailwind
-    Features:
-      State management with jotai
-      preact under the hood with preact/compat makes it compatible with virtually any react library but still makes it faster
-      Full TypeScript support — no dangling types
-      vite packager and devtools make building and development lightning fast
-      tailwind-css built-in with 'daisyui'
-      prettier and eslint configured, enabled and formatting your code on save
-      List of recommended extensions for VSCode
-      It is important to keep the bundle small, so a stats.html file is generated on yarn build to visually show you the bundle size
-    Project structure:
-      tsconfig.json
-      package.json
-        5|  "scripts": {
-          "start": "vite",
-          "build": "cross-env NODE_ENV=production tsc && vite build",
-          "pretty": "prettier --check src",
-          "lint": "yarn pretty && eslint --max-warnings 0 --ext ts,tsx,json src",
-          "preview": "yarn build && yarn vite preview"
-      index.html
-        6|    <title>Frontend starter preact</title>
-        11|    <div id="root" />
-      vite.config.ts
-      src:
-        index.css
-            5|body {
-                     react-app-env.d.ts
-        helpers:
-          getUserCount.ts
-          2|  const data = await (await fetch('https://stats.borodutch.com/count')).json()
-          formatNumber.ts
-        index.tsx
-        atoms:
-          userCount.ts
-        models:
-          ChildrenProp.ts
-            3|export default interface ChildrenProp {
-            4|  children: ComponentChildren
-          ... The rest of the models should be added here
-        components:
-          UserCount.tsx
-          ... The rest of the components should be added here
-        App.tsx
-      postcss.config.js
-      yarn.lock
-      public:
-        robots.txt
-      README.md
-      tailwind.config.js
-        4|  plugins: [require('@tailwindcss/typography'), require('daisyui')],
-
-    Use `yarn start` to run, `yarn lint` to lint, `yarn pretty` to prettify code
-
-- name: "Fastapi"
-  description: "A Fastapi python API with tests and everything"
-  setup: |+
-    git clone git@github.com:rochacbruno/fastapi-project-template.git {project_name}
-    cd {project_name}
-    find . -type f -exec sed -i 's/project_name/{project_name}/g' {br} \;
-    mv project_name {project_name}
-    find . -type f -exec sed -i 's/a_flask_test/{project_name}/g' {br} \;
-    find . -type f -exec sed -i 's/a-flask-test/{project_name}/g' {br} \;
-    make switch-to-poetry
-    poetry install
-  info: |+
-    A template with postgres and fastapi.
-    Project structure:
-      ├── Containerfile            # The file to build a container using buildah or docker
-      ├── CONTRIBUTING.md          # Onboarding instructions for new contributors
-      ├── docs                     # Documentation site (add more .md files here)
-      │ └── index.md             # The index page for the docs site
-      ├── .gitignore               # A list of files to ignore when pushing to Github
-      ├── HISTORY.md               # Auto generated list of changes to the project
-      ├── LICENSE                  # The license for the project
-      ├── Makefile                 # A collection of utilities to manage the project
-      ├── MANIFEST.in              # A list of files to include in a package
-      ├── mkdocs.yml               # Configuration for documentation site
-      ├── project_name             # The main python package for the project
-      │ ├── base.py              # The base module for the project
-      │ ├── __init__.py          # This tells Python that this is a package
-      │ ├── __main__.py          # The entry point for the project
-      │ └── VERSION              # The version for the project is kept in a static file
-      ├── README.md                # The main readme for the project
-      ├── setup.py                 # The setup.py file for installing and packaging the project
-      ├── requirements.txt         # An empty file to hold the requirements for the project
-      ├── requirements-test.txt    # List of requirements for testing and devlopment
-      ├── setup.py                 # The setup.py file for installing and packaging the project
-      └── tests                    # Unit tests for the project (add mote tests files here)
-          ├── conftest.py          # Configuration, hooks and fixtures for pytest
-          ├── __init__.py          # This tells Python that this is a test package
-          └── test_base.py         # The base test case for the project
-    Scripts:
-    ❯ make
-      Usage: make <target>
-
-      Targets:
-      help:             ## Show the help.
-      install:          ## Install the project in dev mode.
-      fmt:              ## Format code using black & isort.
-      lint:             ## Run pep8, black, mypy linters.
-      test: lint        ## Run tests and generate coverage report.
-      watch:            ## Run tests on every change.
-      clean:            ## Clean unused files.
-      virtualenv:       ## Create a virtual environment.
-      release:          ## Create a new tag for release.
-      docs:             ## Build the documentation.
-      switch-to-poetry: ## Switch to poetry package manager.
-      init:             ## Initialize the project based on an application template.
+#- name: "Preact frontend"
+#  setup: |+
+#    git clone git@github.com:borodutch/frontend-starter.git {project_name}
+#    cd {project_name}
+#    yarn install
+#    # yarn start to run
+#  description: "A Preact frontend application with TS, yarn, jotai, vite, tailwind"
+#  info: |+
+#    A Preact frontend application with yarn, jotai, vite, tailwind
+#    Features:
+#      State management with jotai
+#      preact under the hood with preact/compat makes it compatible with virtually any react library but still makes it faster
+#      Full TypeScript support — no dangling types
+#      vite packager and devtools make building and development lightning fast
+#      tailwind-css built-in with 'daisyui'
+#      prettier and eslint configured, enabled and formatting your code on save
+#      List of recommended extensions for VSCode
+#      It is important to keep the bundle small, so a stats.html file is generated on yarn build to visually show you the bundle size
+#    Project structure:
+#      tsconfig.json
+#      package.json
+#        5|  "scripts": {
+#          "start": "vite",
+#          "build": "cross-env NODE_ENV=production tsc && vite build",
+#          "pretty": "prettier --check src",
+#          "lint": "yarn pretty && eslint --max-warnings 0 --ext ts,tsx,json src",
+#          "preview": "yarn build && yarn vite preview"
+#      index.html
+#        6|    <title>Frontend starter preact</title>
+#        11|    <div id="root" />
+#      vite.config.ts
+#      src:
+#        index.css
+#            5|body {
+#                     react-app-env.d.ts
+#        helpers:
+#          getUserCount.ts
+#          2|  const data = await (await fetch('https://stats.borodutch.com/count')).json()
+#          formatNumber.ts
+#        index.tsx
+#        atoms:
+#          userCount.ts
+#        models:
+#          ChildrenProp.ts
+#            3|export default interface ChildrenProp {
+#            4|  children: ComponentChildren
+#          ... The rest of the models should be added here
+#        components:
+#          UserCount.tsx
+#          ... The rest of the components should be added here
+#        App.tsx
+#      postcss.config.js
+#      yarn.lock
+#      public:
+#        robots.txt
+#      README.md
+#      tailwind.config.js
+#        4|  plugins: [require('@tailwindcss/typography'), require('daisyui')],
+#
+#    Use `yarn start` to run, `yarn lint` to lint, `yarn pretty` to prettify code
+#
+#- name: "Fastapi"
+#  description: "A Fastapi python API with tests and everything"
+#  setup: |+
+#    git clone git@github.com:rochacbruno/fastapi-project-template.git {project_name}
+#    cd {project_name}
+#    find . -type f -exec sed -i 's/project_name/{project_name}/g' {br} \;
+#    mv project_name {project_name}
+#    find . -type f -exec sed -i 's/a_flask_test/{project_name}/g' {br} \;
+#    find . -type f -exec sed -i 's/a-flask-test/{project_name}/g' {br} \;
+#    make switch-to-poetry
+#    poetry install
+#  info: |+
+#    A template with postgres and fastapi.
+#    Project structure:
+#      ├── Containerfile            # The file to build a container using buildah or docker
+#      ├── CONTRIBUTING.md          # Onboarding instructions for new contributors
+#      ├── docs                     # Documentation site (add more .md files here)
+#      │ └── index.md             # The index page for the docs site
+#      ├── .gitignore               # A list of files to ignore when pushing to Github
+#      ├── HISTORY.md               # Auto generated list of changes to the project
+#      ├── LICENSE                  # The license for the project
+#      ├── Makefile                 # A collection of utilities to manage the project
+#      ├── MANIFEST.in              # A list of files to include in a package
+#      ├── mkdocs.yml               # Configuration for documentation site
+#      ├── project_name             # The main python package for the project
+#      │ ├── base.py              # The base module for the project
+#      │ ├── __init__.py          # This tells Python that this is a package
+#      │ ├── __main__.py          # The entry point for the project
+#      │ └── VERSION              # The version for the project is kept in a static file
+#      ├── README.md                # The main readme for the project
+#      ├── setup.py                 # The setup.py file for installing and packaging the project
+#      ├── requirements.txt         # An empty file to hold the requirements for the project
+#      ├── requirements-test.txt    # List of requirements for testing and devlopment
+#      ├── setup.py                 # The setup.py file for installing and packaging the project
+#      └── tests                    # Unit tests for the project (add mote tests files here)
+#          ├── conftest.py          # Configuration, hooks and fixtures for pytest
+#          ├── __init__.py          # This tells Python that this is a test package
+#          └── test_base.py         # The base test case for the project
+#    Scripts:
+#    ❯ make
+#      Usage: make <target>
+#
+#      Targets:
+#      help:             ## Show the help.
+#      install:          ## Install the project in dev mode.
+#      fmt:              ## Format code using black & isort.
+#      lint:             ## Run pep8, black, mypy linters.
+#      test: lint        ## Run tests and generate coverage report.
+#      watch:            ## Run tests on every change.
+#      clean:            ## Clean unused files.
+#      virtualenv:       ## Create a virtual environment.
+#      release:          ## Create a new tag for release.
+#      docs:             ## Build the documentation.
+#      switch-to-poetry: ## Switch to poetry package manager.
+#      init:             ## Initialize the project based on an application template.

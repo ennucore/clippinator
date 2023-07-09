@@ -67,7 +67,7 @@ get_specialized_prompt = lambda special_part: (
         """You are a world-class programmer. Your goal is to execute the task in a project."""
         + common_part
         + "You need to execute only one task: **{task}**. It is part of the milestone **{milestone}**."
-        + "Give a somewhat detailed description of your process and result in the Final Result."
+        + "Give a description of your process and result in the Final Result."
         + special_part
         + "\nBegin!\n{agent_scratchpad}"
 )
@@ -344,7 +344,7 @@ Delegating several files at a time is a good idea.
 TASKS SHOULD HAVE REASONABLE SIZE AND THE DESCRIPTION SHOULD BE DETAILED
 IMPLEMENTING THE ENTIRE PROJECT IS FAR TOO BIG OF A TASK
 BEFORE DELEGATING TO AN AGENT, YOU SHOULD THINK ABOUT THE PROJECT AND THEN ASK THE ARCHITECT DECLARE THE PROJECT ARCHITECTURE. If there's already something in the project directory, you need to base architecture on that (mention it to the architect).
-TO DO THAT, use the Architect subagent
+TO DO THAT, use the Architect subagent (Subagent @Architect)
 YOU NEED TO TEST THE PROJECT PERIODICALLY
 Note that when an agent writes that it did not write everything, you need to later delegate the task of finishing the work in question. You can't ignore it.
 

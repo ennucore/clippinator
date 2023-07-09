@@ -24,7 +24,7 @@ def get_tag_kinds() -> dict[str, list[str]]:
 tag_kinds_by_language = get_tag_kinds()
 
 
-def get_file_summary(file_path: str, ident: str = "") -> str:
+def get_file_summary(file_path: str, ident: str = "", length_1: int = 400, length_2: int = 600) -> str:
     """
     | 72| class A:
     | 80| def create(self, a: str) -> A:
@@ -59,13 +59,13 @@ def get_file_summary(file_path: str, ident: str = "") -> str:
     kinds = tag_kinds_by_language[tags[0]['language']]
     selected_tags = []
     for kind in kinds:
-        if lengths_by_tag[kind] < 400 or len(selected_tags) == 0:
+        if lengths_by_tag[kind] < length_1 or len(selected_tags) == 0:
             selected_tags += [tag for tag in tags if tag['kind'] == kind]
     selected_tags = sorted(selected_tags, key=lambda tag: tag['line'])
     lines = [(tag['line'], f"{tag['formatted']}\n") for tag in selected_tags]
     lines = sorted(set(lines), key=lambda line: line[0])
     lines = [line[1] for line in lines]
     out += ''.join(lines)
-    if len(out) > 600:
-        out = out[:600] + f"\n{ident}...\n"
+    if len(out) > length_2:
+        out = out[:length_2 - 100] + f"\n{ident}...\n" + out[-100:]
     return out

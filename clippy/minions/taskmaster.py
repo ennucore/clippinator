@@ -98,6 +98,8 @@ class Taskmaster:
             return self.run(**kwargs)
 
     def save_to_file(self, path: str = ""):
+        if not os.path.exists(self.project.path):
+            return
         path = path or os.path.join(self.project.path, f".clippy.pkl")
         with open(path, "wb") as f:
             prompt = {

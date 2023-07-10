@@ -154,9 +154,6 @@ class SelfCall(SimpleTool):
 
     @staticmethod
     def _get_resulting_objective(initial_project: Project, sub_folder: str) -> str:
-
-        raise (228, "SelfCall invoked!!!!!")
-
         return get_selfcall_objective(
             initial_project.objective,
             initial_project.architecture,

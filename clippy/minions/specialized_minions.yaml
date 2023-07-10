@@ -65,7 +65,7 @@
     Thought: <Once the app starts, it needs to ..., ..., ..., then the user will ... and in response the app will ... by ... ...>
     Thought: <here you think about the architecture in broad strokes: the modules, the stack, which technologies to use, where is each piece located, etc.>
     Thought: <here you think about the nuances like where the main things like the database, the workers, the models, the routes/views, templates, submodules, etc. are located>
-    Thought: <here you think about the folder structure of the project. Make sure to decompose code into folders when it makes sense. Mention the list of directories for which it makes sense to recursively call Architect to further clarify internal structure and interface in the following format: SelfCall module_name_1 SelfCall module_name_2 and so on. For example, for the proposed architecture it makes sense to output SelfCall machine_learning>
+    Thought: <here you think about the folder structure of the project. Make sure to decompose code into folders when it makes sense.>
     <you can have more thoughts about important things. For instance, you can think about the important classes or other things>
     <for complicated projects you might require a long train of thought about how different parts can interact>
     Action: DeclareArchitecture

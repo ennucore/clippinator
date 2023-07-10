@@ -28,18 +28,23 @@ class Taskmaster:
             project: Project,
             model: str = "gpt-4",
             prompt: CustomPromptTemplate | None = None,
+            inner_taskmaster: bool = False
     ):
         self.project = project
         self.specialized_executioners = get_specialized_executioners(project)
         self.default_executioner = Executioner(project)
+        self.inner_taskmaster = inner_taskmaster
         llm = get_model(model)
         tools = get_tools(project)
         tools.append(SelfCall(project).get_tool(try_structured=False))
 
         agent_tool_names = [
-            'DeclareArchitecture', "SelfCall", 'ReadFile', 'WriteFile', 'Bash', 'BashBackground', 'Human',
+            'DeclareArchitecture', 'ReadFile', 'WriteFile', 'Bash', 'BashBackground', 'Human',
             'Remember', 'TemplateInfo', 'TemplateSetup', 'SetCI'
         ]
+
+        if not inner_taskmaster:
+            agent_tool_names.append('SelfCall')
 
         tools.append(
             Subagent(
@@ -130,9 +135,13 @@ class Taskmaster:
 
 class SelfCall(SimpleTool):
     name = "SelfCall"
-    description = "Solves objective assigned for a subfolder of a project. " \
-                  "It can be useful after the initialization of the project by architect " \
-                  "to work independently on the component straight away rather than on the entire project."
+    description = "Initializes the component of the project. " \
+                  "It's highly advised to use this tool for each subfolder from the " \
+                  "\"planned project architecture\" by Architect when this subfolder does not exist in the " \
+                  "current state of project (all folders and files) (or the project structure is empty). " \
+                  "It's A MUST to use this tool right after the Subagent @Architect for every subfolder " \
+                  "from the \"planned project architecture\"." \
+                  "Input parameter - name of the subfolder, a relative path to subfolder from the current location."
 
     def __init__(self, project: Project):
         self.initial_project = project
@@ -140,11 +149,9 @@ class SelfCall(SimpleTool):
 
     def structured_func(self, sub_folder: str):
         sub_project_path = self.initial_project.path + ("/" if not self.initial_project.path.endswith("/") else "") + sub_folder
-        if not os.path.exists(sub_project_path):
-            return "No such folder."
         cur_objective = self._get_resulting_objective(self.initial_project, sub_folder)
         cur_sub_project = Project(sub_project_path, cur_objective, architecture="")
-        taskmaster = Taskmaster(cur_sub_project)
+        taskmaster = Taskmaster(cur_sub_project, inner_taskmaster=True)
         taskmaster.run(**cur_sub_project.prompt_fields())
         return f"{sub_folder} folder processed."
 

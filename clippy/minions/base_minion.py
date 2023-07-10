@@ -255,7 +255,7 @@ class CustomPromptTemplate(StringPromptTemplate):
             self.hook(self)
         if self.project and os.path.exists(self.project.path):
             with open(os.path.join(self.project.path, ".prompts.log"), "a") as f:
-                f.write(result + "\n\n\n")
+                f.write(result + "\n\n============================\n\n\n")
         return result
 
 

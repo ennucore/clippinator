@@ -79,8 +79,11 @@ get_selfcall_objective = lambda initial_objective, initial_architecture, sub_fol
     "Your goal is to complete this and only this part of the project.\n" +
     "If you require additional architectural clarification for the sub-project in the given folder, " +
     "you may consult Architect agent. And use the given planned project architecture as the main architecture "
-    "proposal for this sub-project in the future instead of the previously planned full-project architecture. "
-    "Important: Do not use SelfCall tool anymore, even after Architect execution. Do not use SelfCall tool."
+    "proposal for this sub-project in the future instead of the previously planned full-project architecture.\n"
+    "Important: Do not use SelfCall tool anymore, even after Architect execution. Do not use SelfCall tool.\n"
+    f"Important: if you plan to use the full-project architecture, remember that you're in the {sub_folder} subfolder, "
+    f"so you need to act accordingly: threat all paths in the architecture as relative, operate as you're in "
+    f"a self-contained module.\n"
 )
 
 taskmaster_prompt = (

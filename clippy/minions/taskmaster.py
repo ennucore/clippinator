@@ -1,4 +1,6 @@
-import os.path
+from __future__ import annotations
+
+import os
 import pickle
 
 from langchain import LLMChain
@@ -6,7 +8,7 @@ from langchain.agents import AgentExecutor, LLMSingleActionAgent
 from langchain.schema import AgentAction
 
 from clippy.project import Project
-from clippy.tools import get_tools
+from clippy.tools import get_tools, SimpleTool
 from clippy.tools.subagents import Subagent
 from clippy.tools.tool import WarningTool
 from .base_minion import (
@@ -17,8 +19,7 @@ from .base_minion import (
     BasicLLM,
 )
 from .executioner import Executioner, get_specialized_executioners
-from .prompts import taskmaster_prompt, summarize_prompt, format_description
-from ..tools.architectural import DeclareArchitecture
+from .prompts import taskmaster_prompt, summarize_prompt, format_description, get_selfcall_objective
 
 
 class Taskmaster:
@@ -27,19 +28,27 @@ class Taskmaster:
             project: Project,
             model: str = "gpt-4",
             prompt: CustomPromptTemplate | None = None,
+            inner_taskmaster: bool = False
     ):
         self.project = project
         self.specialized_executioners = get_specialized_executioners(project)
         self.default_executioner = Executioner(project)
+        self.inner_taskmaster = inner_taskmaster
         llm = get_model(model)
         tools = get_tools(project)
-        tools.append(DeclareArchitecture(project).get_tool())
-        agent_tool_names = ['DeclareArchitecture', 'ReadFile', 'WriteFile', 'Bash', 'BashBackground', 'Human',
-                            'Remember', 'TemplateInfo', 'TemplateSetup', 'SetCI']
+        tools.append(SelfCall(project).get_tool(try_structured=False))
+
+        agent_tool_names = [
+            'DeclareArchitecture', 'ReadFile', 'WriteFile', 'Bash', 'BashBackground', 'Human',
+            'Remember', 'TemplateInfo', 'TemplateSetup', 'SetCI'
+        ]
+
+        if not inner_taskmaster:
+            agent_tool_names.append('SelfCall')
 
         tools.append(
             Subagent(
-                project, get_specialized_executioners(project), Executioner(project)
+                project, self.specialized_executioners, self.default_executioner
             ).get_tool()
         )
         tools.append(WarningTool().get_tool())
@@ -122,3 +131,38 @@ class Taskmaster:
         self.prompt.intermediate_steps = prompt["intermediate_steps"]
         self.prompt.last_summary = prompt["last_summary"]
         return self
+
+
+class SelfCall(SimpleTool):
+    name = "SelfCall"
+    description = "Initializes the component of the project. " \
+                  "It's highly advised to use this tool for each subfolder from the " \
+                  "\"planned project architecture\" by Architect when this subfolder does not exist in the " \
+                  "current state of project (all folders and files) (or the project structure is empty). " \
+                  "It's A MUST to use this tool right after the Subagent @Architect for every subfolder " \
+                  "from the \"planned project architecture\"." \
+                  "Input parameter - name of the subfolder, a relative path to subfolder from the current location."
+
+    def __init__(self, project: Project):
+        self.initial_project = project
+        super().__init__()
+
+    def structured_func(self, sub_folder: str):
+        sub_project_path = self.initial_project.path + ("/" if not self.initial_project.path.endswith("/") else "") + sub_folder
+        cur_objective = self._get_resulting_objective(self.initial_project, sub_folder)
+        cur_sub_project = Project(sub_project_path, cur_objective, architecture="")
+        taskmaster = Taskmaster(cur_sub_project, inner_taskmaster=True)
+        taskmaster.run(**cur_sub_project.prompt_fields())
+        return f"{sub_folder} folder processed."
+
+    def func(self, args: str):
+        sub_folder = args.strip()
+        return self.structured_func(sub_folder)
+
+    @staticmethod
+    def _get_resulting_objective(initial_project: Project, sub_folder: str) -> str:
+        return get_selfcall_objective(
+            initial_project.objective,
+            initial_project.architecture,
+            sub_folder
+        )

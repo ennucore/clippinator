@@ -80,7 +80,7 @@ class TemplateSetup(SimpleTool):
                   "something in the target directory, it will be overwritten. Example: Preact frontend; frontend"
     structured_desc = "set up a project or a subproject by a template. The first argument is the template name, " \
                       "the other is the path (. by default). If there's already something in the target directory, " \
-                      'it will be overwritten. Example: {"template": "Preact frontend", "path": "frontend"'
+                      'it will be overwritten. Example: {"template": "Preact frontend", "path": "frontend"}'
 
     def __init__(self, project: Project):
         self.project = project

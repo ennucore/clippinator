@@ -20,6 +20,7 @@ from langchain.schema import AgentAction, AgentFinish
 
 from clippy.tools.tool import WarningTool
 from .prompts import format_description
+from ..tools.utils import trim_extra
 
 long_warning = (
     "WARNING: You have been working for a very long time. Please, finish ASAP. "
@@ -181,16 +182,17 @@ class CustomPromptTemplate(StringPromptTemplate):
     def _prompt_type(self) -> str:
         return "taskmaster"
 
-    @staticmethod
-    def thought_log(thoughts: list[(AgentAction, str)]) -> str:
+    def thought_log(self, thoughts: list[(AgentAction, str)]) -> str:
         result = ""
-        for action, AResult in thoughts:
+        for action, aresult in thoughts:
+            if self.my_summarize_agent:
+                aresult = trim_extra(aresult, 2000)
             if action.tool == "WarnAgent":
-                result += action.log + f"\nSystem note: {AResult}\n"
+                result += action.log + f"\nSystem note: {aresult}\n"
             elif action.tool == "AgentFeedback":
-                result += action.log + AResult + "\n"
+                result += action.log + aresult + "\n"
             else:
-                result += action.log + f"\nAResult: {AResult}\n"
+                result += action.log + f"\nAResult: {aresult}\n"
         return result
 
     def format(self, **kwargs) -> str:

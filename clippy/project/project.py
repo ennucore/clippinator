@@ -14,6 +14,7 @@ class Project:
     state: str = ""
     architecture: str = ""
     summary_cache: str = ""
+    template: str = "General"
     ci_commands: dict[str, str] = field(default_factory=dict)  # keys: 'run', 'lint', 'lint_file', 'test'
     memories: list[str] = field(default_factory=list)
 
@@ -58,7 +59,7 @@ class Project:
                 res += f"{ident}{file}\n"
                 if not skip_file_summary(file_path):
                     res += get_file_summary(file_path, ident + "  ",
-                                            length_1=length_3 // 11, length_2=round(length_3 / 7.5))
+                                            length_1=length_3 // 11, length_2=round(length_3 / 7))
         if len(res) > length_3:
             print(f"Warning: long project summary at {path}, truncating to {length_3} chars")
             res = trim_extra(res, length_3)
@@ -83,7 +84,7 @@ class Project:
                                          text=True, cwd=self.path)
             except Exception as e:
                 return f"Linter error: {e}"
-            return trim_extra(process.stdout.strip(), 800)
+            return trim_extra(process.stdout.strip(), 1100)
         return lint_project(path)
 
     def lint_file(self, path: str):
@@ -118,6 +119,10 @@ class Project:
         self.get_project_summary()
 
     def prompt_fields(self) -> dict:
+        from clippy.tools.architectural import templates
+
+        default_architecture = templates['General']['architecture']
+
         return {
             "objective": self.objective,
             "state": self.state,
@@ -125,4 +130,5 @@ class Project:
             "project_name": self.name,
             "project_summary": self.get_project_summary(),
             "memories": '  - ' + "\n  - ".join(self.memories),
+            "architecture_example": templates.get(self.template, {}).get('architecture', default_architecture),
         }

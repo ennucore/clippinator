@@ -87,6 +87,7 @@ class TemplateSetup(SimpleTool):
         super().__init__()
 
     def structured_func(self, template_name: str, path: str):
+        assert template_name in templates, f"Template {template_name} not found."
         if path.strip() in '.':
             parent_folder = os.path.realpath(os.path.join(self.project.path, '..'))
             project_name = os.path.basename(self.project.path)
@@ -96,6 +97,7 @@ class TemplateSetup(SimpleTool):
             subprocess.run(['mv', self.project.path, path_old]).check_returncode()
             setup_template(template_name, self.project.path, project_name)
             template = templates[template_name]
+            self.project.template = template_name
             if template.get('ci'):
                 ci = template['ci']
                 if ci.get('run'):

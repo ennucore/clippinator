@@ -1,3 +1,103 @@
+- name: "General"
+  description: "An empty project"
+  architecture: |+
+    app.py
+      >from flask import Flask, render_template, request, redirect, url_for
+      >app = Flask(__name__)
+      >if __name__ == "__main__":
+      >    from views import views_blueprint
+      >    app.register_blueprint(views_blueprint)
+      >    app.run(debug=True)
+
+    views.py
+      >from flask import Blueprint, render_template, request, redirect, url_for
+      >from flask_login import login_required, current_user
+      >from models import User, Tweet, Follower
+      >views_blueprint = Blueprint("views", __name__)
+      >@views_blueprint.route("/")
+      >def index() -> str:    # renders index.html template
+      >@views_blueprint.route("/register", methods=["GET", "POST"])
+      >def register() -> str:   # register.html on get, create a new user and redir to / on post
+      >@views_blueprint.route("/login", methods=["GET", "POST"])
+      >def login() -> str:   # login.html on get, logging in + redir on post
+      >@views_blueprint.route("/tweet", methods=["POST"])
+      >def new_tweet() -> str:    # Create a new twit in the database, redirect to its page
+      >@views_blueprint.route("/tweet/<int:tweet_id")
+      >def tweet() -> str:    # view a tweet using tweet.html
+      >@views_blueprint.route("/follow/<int:user_id>")
+      >def follow(user_id: str) -> str:    # follow a user
+      >@views_blueprint.route("/like/<int:tweet>")
+      >def like(tweet_id: str) -> str:    # toggle like on a tweet and return the new state
+
+    models.py
+      >from flask_sqlalchemy import SQLAlchemy
+      >from app import app
+      >db = SQLAlchemy(app)
+      >class User(db.Model):
+      >    id = db.Column(db.Integer, primary_key=True)
+      >    username = db.Column(db.String(80), unique=True, nullable=False)
+      >    password = db.Column(db.String(120), nullable=False)
+      >class Tweet(db.Model):
+      >    id = db.Column(db.Integer, primary_key=True)
+      >    content = db.Column(db.String(280), nullable=False)
+      >    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+      >    timestamp = db.Column(db.DateTime, nullable=False)
+      >class Follower(db.Model):
+      >    id = db.Column(db.Integer, primary_key=True)
+      >    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+      >    follower_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+      >with app.app_context():   # this line is needed always when creating a database in flask+sqlalchemy
+      >    db.create_all()
+
+    templates/
+      # Design notes: the background color is white, the overall design is modern and minimalistic, rounded corners, animations, the top header bar is dark blue, the primary color is blue
+      base.html    # Base template with common elements like loading Tailwind for modern design
+        > Loads Tailwind CSS, static/main.css, and static/main.js (using url_for), fontawesome icons
+        > Has the top header bar with navigation (login, profile [depending on the current user], etc.), some basic (modern) design of the base of the pages
+        > Has the content block which is centered
+      index.html   # Home page with a list of tweets from followed users  (takes in `tweets`, `authors` (authors for each tweet), `current_user` (of type User))
+        > extends base.html, overwrites the content block
+        > uses the tweets variable, the user variable
+        > shows the field for a new twit and the list of twits from followed users (you can click on the twit or their authors)
+      register.html   # User registration form, has a POST form to /register
+        > extends base.html
+        > contains a POST form to register
+        > a rounded box with a border, inside a form for name, username, password and a blue rounded submit button
+        > the form has a POST method and action="/register", has fields "name", "username", "password"
+      login.html   # User login form with a POST form to /login with login and password
+        > extends base.html
+        > contains a POST form to login (redirects to /)
+        > a rounded box with a border, inside a form for username, password and a blue rounded submit button
+        > the form has a POST method and action="/login", has fields "username", "password"
+      tweet.html   # Page for viewing a twit (takes in `content`, `author` (of type User), `timestamp`, `likes`, `liked` (bool), `id`)
+        > Has the twit (inside a rounded box with grey border) with the author on top, the content, like button below (fontawesome icon)
+        > you can click on the author and go to /user/...
+        > you can click on the like button and it will toggle the like by calling the /like/... route in js
+      user.html   # User profile page with a list of their tweets and follow/unfollow buttons which use JS to call the routes, extends base.html. Takes `user`, `current_user`, `is_following` (bool)
+        > uses [un]follow(user_id) js function to call the api
+        > you can go to different tweets
+
+    static/
+      css/
+        main.css   # Custom CSS classes, if needed
+      js/
+        main.js    # JavaScript file for any dynamic frontend functionality like follow/unfollow
+          > function follow(user_id: Integer)   # calls /follow/<user_id> using fetch
+          > function unfollow(user_id: Integer) # calls /unfollow/<user_id> using fetch
+          > function like(tweet_id: Integer) # toggle like, calls /like/<tweet_id> using fetch
+    tests/
+      test_integration.py
+        >import unittest
+        >from app import app
+        >from models import db, User
+        >class TestIntegration(unittest.TestCase):
+        >    def setUp(self):
+        >        self.app = app.test_client()
+        >        self.db = db
+        >    def test_user_registration_and_login(self):
+        >    def test_tweet_creation_and_retrieval(self):
+        >    def test_following_and_unfollowing_users(self):
+        >    def test_liking_and_unliking_tweets(self):
 - name: "Fastapi+Next.js"
   description: "An application with a backend and a frontend, Fastapi and Next.js (+Tailwind)"
   setup: |+
@@ -8,7 +108,7 @@
     pip install -r requirements.txt --break-system-packages
   ci:
     run: "yarn dev"
-    lint: "yarn lint && flake8 --ignore=E501,E402,W503,W504,W291,W293 --exclude=venv,tests --max-line-length=120 --count --statistics --show-source --exit-zero"
+    lint: "yarn lint && flake8 --select=E,F --exclude=venv,tests --max-line-length=120 --count --statistics --show-source --exit-zero"
   memories:
     - The frontend runs on localhost:3000, the Fastapi backend on localhost:8000.
     - The frontend is served from the /app folder, the backend from the /api folder.
@@ -50,6 +150,237 @@
         10|      backgroundImage: {
         11|        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         12|        'gradient-conic':
+  architecture: |+
+    api/
+      index.py
+        >from fastapi import FastAPI
+        >from routers import api_router, auth_router
+        >app = FastAPI()
+        >app.include_router(api_router, prefix="/api/v1")
+        >app.include_router(auth_router, prefix="/api/v1/auth")
+
+      routers/
+        __init__.py
+        api_router.py
+          >from fastapi import APIRouter, Depends
+          >from models import User, Post, Comment, Subreddit, Vote
+          >from auth_router import manager
+          >router = APIRouter()
+          >@router.post("/post")
+          >def create_post(post: schemas.PostCreate, current_user: User = Depends(manager), db: Session = Depends(get_db)):
+          >@router.get("/post/{post_id}")
+          >def get_post(post_id: str, db: Session = Depends(get_db)):
+          >@router.post("/comment/{post_id}")
+          >def comment_on_post(comment: schemas.CommentCreate, current_user: User = Depends(manager), db: Session = Depends(get_db)):
+          >@router.post("/subreddit")
+          >def create_subreddit(subreddit: schemas.SubredditCreate, current_user: User = Depends(manager), db: Session = Depends(get_db)):
+          >@router.get("/subreddit/{subreddit_id}")
+          >def get_subreddit(subreddit_id: str, db: Session = Depends(get_db)):
+          >@router.post("/subscribe/{subreddit_id}")
+          >def subscribe(subreddit_id: str, current_user: User = Depends(manager), db: Session = Depends(get_db)):
+          >@router.delete("/unsubscribe/{subreddit_id}")
+          >def unsubscribe(subreddit_id: str, current_user: User = Depends(manager), db: Session = Depends(get_db)):
+          >@router.post("/upvote/{post_id}")
+          >def upvote(post_id: str, current_user: User = Depends(manager), db: Session = Depends(get_db)):
+          >@router.post("/downvote/{post_id}")
+          >def downvote(post_id: str, current_user: User = Depends(manager), db: Session = Depends(get_db)):
+
+        auth_router.py
+          >from fastapi_login import LoginManager
+          >from fastapi.security import OAuth2PasswordRequestForm
+          >from jose import JWTError, jwt
+          >from . import schemas, crud
+          >SECRET_KEY = "YOUR_SECRET_KEY"
+          >ALGORITHM = "HS256"
+          >manager = LoginManager(SECRET_KEY, '/auth/token')
+          >@manager.user_loader
+          >def load_user(email: str):  # The function to retrieve the user should be here
+          >@router.post("/auth/token")
+          >def login(data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)): # The login function is here
+          >@router.post("/auth/register")
+          >def register(user: schemas.UserCreate, db: Session = Depends(get_db)): # User registration is here
+          >@router.get("/me")
+          >def get_profile(current_user: User = Depends(manager)):
+
+      models/
+        __init__.py
+        models.py
+          >from sqlalchemy import Column, Integer, String, Boolean
+          >from sqlalchemy.orm import relationship
+          >from database import Base
+          >from werkzeug.security import generate_password_hash
+          >class User(Base):
+          >    id = Column(Integer, primary_key=True, index=True)
+          >    username = Column(String, unique=True, index=True)
+          >    password = Column(String)
+          >    def set_password(self, password):
+          >        self.password = generate_password_hash(password)
+          >class Post(Base):
+          >    id = Column(Integer, primary_key=True, index=True)
+          >    content = Column(String, nullable=False)
+          >    title = Column(String, nullable=False)
+          >    user_id = Column(Integer, ForeignKey("users.id"))
+          >    subreddit_id = Column(Integer, ForeignKey("subreddits.id"))
+          >    user = relationship("User", back_populates="posts")
+          >    subreddit = relationship("Subreddit", back_populates="posts")
+          >class Comment(Base):
+          >    id = Column(Integer, primary_key=True, index=True)
+          >    content = Column(String, nullable=False)
+          >    user_id = Column(Integer, ForeignKey("users.id"))
+          >    post_id = Column(Integer, ForeignKey("posts.id"))
+          >    user = relationship("User", back_populates="comments")
+          >    post = relationship("Post", back_populates="comments")
+          >class Subreddit(Base):
+          >    id = Column(Integer, primary_key=True, index=True)
+          >    name = Column(String, unique=True, index=True)
+          >    description = Column(String)
+          >    user_id = Column(Integer, ForeignKey("users.id"))
+          >    user = relationship("User", back_populates="subreddits")
+          >    posts = relationship("Post", back_populates="subreddit")
+          >class Vote(Base):
+          >    user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
+          >    post_id = Column(Integer, ForeignKey("posts.id"), primary_key=True)
+          >    user = relationship("User", back_populates="votes")
+          >    post = relationship("Post", back_populates="votes")
+          >    is_upvote = Column(Boolean)
+
+      schemas/
+        __init__.py
+        schemas.py
+          >from pydantic import BaseModel
+          >class UserBase(BaseModel):
+          >    username: str
+          >class UserCreate(UserBase):
+          >    password: str
+          >class PostCreate(BaseModel):
+          >    title: str
+          >    content: str
+          >class CommentCreate(BaseModel):
+          >    content: str
+          >class SubredditCreate(BaseModel):
+          >    name: str
+          >    description: str
+
+      crud.py
+        >from sqlalchemy.orm import Session
+        >from . import models, schemas
+        >def get_user(db: Session, user_id: int):
+        >def get_user_by_username(db: Session, username: str):
+        >def create_user(db: Session, user: schemas.UserCreate):
+
+    app/    # Overall, the color theme is blue (primary in tailwind) + white. a lot of elements are rounded boxes with 1rem border radius.
+      index.tsx    # Main page with feed of subscribed subreddits
+        >import { useSelector } from 'react-redux'
+        >import Layout from '../components/Layout'
+        >import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
+        >import PostPage from './post/[id]'
+        >import SubredditPage from './subreddit/[id]'
+        >import LoginPage from './login'
+        >import RegisterPage from './register'
+        >export default function Home() { 
+        >  <Layout>
+        >    <Router>
+        >      <Switch>
+        >        <Route path="/post/:id" component={PostPage} />
+        >        <Route path="/subreddit/:id" component={SubredditPage} />
+        >        <Route path="/login" component={LoginPage} />
+        >        <Route path="/register" component={RegisterPage} />
+        >      </Switch>
+        >    </Router>
+        >  </Layout>
+        >}
+      post/[id].tsx    # Page for viewing, commenting on, upvoting and downvoting a post
+          >import Layout from 'components/Layout'
+          >export default function PostPage() { 
+          >  /* Use useRouter to fetch and display post based on post id */
+          >  /* Display post with Post component */
+          >  /* Display comments with Comment component in a nested list */
+          >}
+
+      subreddit/[id].tsx   # Page for viewing subreddit's posts, subscribe to subreddit
+        >import Layout from './components/Layout'
+        >export default function SubredditPage() { 
+        >  /* Use useRouter to fetch and display subreddit's posts, handle subscription */
+        >  /* Display subreddit's posts with Post component in a scrollable list */
+        >  /* Display subscription button with SubscriptionButton component */
+        >}
+
+      login.tsx  # Page for logging in
+        >import Layout from './components/Layout'
+        >import LoginForm from './components/LoginForm'
+        >export default function LoginPage() { 
+        >  /* Use Layout component */
+        >  /* Include LoginForm component for users to login */
+        >}
+
+      register.tsx  # Page for registering
+        >import Layout from './components/Layout'
+        >import RegisterForm from './components/RegisterForm'
+        >export default function RegisterPage() { 
+        >  /* Use Layout component */
+        >  /* Include RegisterForm component for users to register */
+        >}
+
+      components/
+        Layout.tsx  # Common layout component for consistency
+          >export default function Layout({ children }) { 
+          >  /* Include Header component for navigation */
+          >  /* Wrap children with main tag for main content */
+          >}
+
+        Header.tsx  # Common header component for navigation
+          >import Link from 'next/link'
+          >export default function Header() { 
+          >  /* Include links to home, login, register pages. Logo on the left, user's profile on the right */
+          >}
+
+        LoginForm.tsx  # Login form component
+          >export default function LoginForm() { 
+          >  /* POST form to /login with username and password */
+          >  /* If successful, redirect to home page */
+          >}
+
+        RegisterForm.tsx  # Registration form component
+          >export default function RegisterForm() { 
+          >  /* POST form to /register with username and password */
+          >  /* If successful, redirect to home page */
+          >}
+
+        Post.tsx  # Post component for displaying a single post
+          >export default function Post({ post }) { 
+          >  /* Display post content */
+          >  /* Include UpvoteButton and DownvoteButton components to vote on the post */
+          >}
+
+        Comment.tsx  # Comment component for displaying a single comment
+          >export default function Comment({ comment }) { 
+          >  /* Display comment content and author */
+          >}
+
+        UpvoteButton.tsx  # Upvote button component
+          >export default function UpvoteButton({ postId }) { 
+          >  /* POST to /upvote/{postId} when clicked */
+          >  /* If successful, update vote count */
+          >}
+
+        DownvoteButton.tsx  # Downvote button component
+          >export default function DownvoteButton({ postId }) { 
+          >  /* POST to /downvote/{postId} when clicked */
+          >  /* If successful, update vote count */
+          >}
+
+        SubscriptionButton.tsx  # Subscription button component
+          >export default function SubscriptionButton({ subredditId }) { 
+          >  /* POST to /subscribe/{subredditId} when clicked */
+          >  /* If successful, update subscription status */
+          >}
+
+      styles/
+        index.css   # Tailwind CSS styles for the application
+          >@import 'tailwindcss/base';
+          >@import 'tailwindcss/components';
+          >@import 'tailwindcss/utilities';
+
 
 - name: "Django"
   setup: |+

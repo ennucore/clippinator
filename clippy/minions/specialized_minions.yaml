@@ -8,7 +8,7 @@
     Pay attention to the folder structure when passing the path to WriteFile (look at the architecture)
     Try to implement everything you can. If there are parts of the implementation you skipped, tell about it in the Final Result.
     DO NOT use `pass`, todos, ..., /*add code*/, or similar things unless it's ABSOLUTELY necessary. DOING THAT RESULTS IN LOTS OF CARBON EMISSIONS WHICH IS HARMFUL AND TOXIC.
-    Try to write the most complete version you can.
+    Try to write the most complete version you can. If possible, write all the files at once.
     You can sometimes use the code which is specified in the architecture but doesn't actually exist yet.
     Also, note that architecture just outlines some of the functions you need to write, not all of them.
     STRIVE TO WRITE COMPLETE CODE WITHOUT SKIPPING ANYTHING.
@@ -45,108 +45,12 @@
     <for complicated projects you might require a long train of thought about how different parts can interact>
     Action: DeclareArchitecture
     Action Input: ```
-    app.py
-      >from flask import Flask, render_template, request, redirect, url_for
-      >app = Flask(__name__)
-      >if __name__ == "__main__":
-      >    from views import views_blueprint
-      >    app.register_blueprint(views_blueprint)
-      >    app.run(debug=True)
-
-    views.py
-      >from flask import Blueprint, render_template, request, redirect, url_for
-      >from flask_login import login_required, current_user
-      >from models import User, Tweet, Follower
-      >views_blueprint = Blueprint("views", __name__)
-      >@views_blueprint.route("/")
-      >def index() -> str:    # renders index.html template
-      >@views_blueprint.route("/register", methods=["GET", "POST"])
-      >def register() -> str:   # register.html on get, create a new user and redir to / on post
-      >@views_blueprint.route("/login", methods=["GET", "POST"])
-      >def login() -> str:   # login.html on get, logging in + redir on post
-      >@views_blueprint.route("/tweet", methods=["POST"])
-      >def new_tweet() -> str:    # Create a new twit in the database, redirect to its page
-      >@views_blueprint.route("/tweet/<int:tweet_id")
-      >def tweet() -> str:    # view a tweet using tweet.html
-      >@views_blueprint.route("/follow/<int:user_id>")
-      >def follow(user_id: str) -> str:    # follow a user
-      >@views_blueprint.route("/like/<int:tweet>")
-      >def like(tweet_id: str) -> str:    # toggle like on a tweet and return the new state
-
-    models.py
-      >from flask_sqlalchemy import SQLAlchemy
-      >from app import app
-      >db = SQLAlchemy(app)
-      >class User(db.Model):
-      >    id = db.Column(db.Integer, primary_key=True)
-      >    username = db.Column(db.String(80), unique=True, nullable=False)
-      >    password = db.Column(db.String(120), nullable=False)
-      >class Tweet(db.Model):
-      >    id = db.Column(db.Integer, primary_key=True)
-      >    content = db.Column(db.String(280), nullable=False)
-      >    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-      >    timestamp = db.Column(db.DateTime, nullable=False)
-      >class Follower(db.Model):
-      >    id = db.Column(db.Integer, primary_key=True)
-      >    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-      >    follower_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-      >with app.app_context():   # this line is needed always when creating a database in flask+sqlalchemy
-      >    db.create_all()
-
-    templates/
-      # Design notes: the background color is white, the overall design is modern and minimalistic, rounded corners, animations, the top header bar is dark blue, the primary color is blue
-      base.html    # Base template with common elements like loading Tailwind for modern design
-        > Loads Tailwind CSS, static/main.css, and static/main.js (using url_for), fontawesome icons
-        > Has the top header bar with navigation (login, profile [depending on the current user], etc.), some basic (modern) design of the base of the pages
-        > Has the content block which is centered
-      index.html   # Home page with a list of tweets from followed users  (takes in `tweets`, `authors` (authors for each tweet), `current_user` (of type User))
-        > extends base.html, overwrites the content block
-        > uses the tweets variable, the user variable
-        > shows the field for a new twit and the list of twits from followed users (you can click on the twit or their authors)
-      register.html   # User registration form, has a POST form to /register
-        > extends base.html
-        > contains a POST form to register
-        > a rounded box with a border, inside a form for name, username, password and a blue rounded submit button
-        > the form has a POST method and action="/register", has fields "name", "username", "password"
-      login.html   # User login form with a POST form to /login with login and password
-        > extends base.html
-        > contains a POST form to login (redirects to /)
-        > a rounded box with a border, inside a form for username, password and a blue rounded submit button
-        > the form has a POST method and action="/login", has fields "username", "password"
-      tweet.html   # Page for viewing a twit (takes in `content`, `author` (of type User), `timestamp`, `likes`, `liked` (bool), `id`)
-        > Has the twit (inside a rounded box with grey border) with the author on top, the content, like button below (fontawesome icon)
-        > you can click on the author and go to /user/...
-        > you can click on the like button and it will toggle the like by calling the /like/... route in js
-      user.html   # User profile page with a list of their tweets and follow/unfollow buttons which use JS to call the routes, extends base.html. Takes `user`, `current_user`, `is_following` (bool)
-        > uses [un]follow(user_id) js function to call the api
-        > you can go to different tweets
-
-    static/
-      css/
-        main.css   # Custom CSS classes, if needed
-      js/
-        main.js    # JavaScript file for any dynamic frontend functionality like follow/unfollow
-          > function follow(user_id: Integer)   # calls /follow/<user_id> using fetch
-          > function unfollow(user_id: Integer) # calls /unfollow/<user_id> using fetch
-          > function like(tweet_id: Integer) # toggle like, calls /like/<tweet_id> using fetch
-    tests/
-      test_integration.py
-        >import unittest
-        >from app import app
-        >from models import db, User
-        >class TestIntegration(unittest.TestCase):
-        >    def setUp(self):
-        >        self.app = app.test_client()
-        >        self.db = db
-        >    def test_user_registration_and_login(self):
-        >    def test_tweet_creation_and_retrieval(self):
-        >    def test_following_and_unfollowing_users(self):
-        >    def test_liking_and_unliking_tweets(self): 
+    {architecture_example}
     ```
     AResult: Architecture declared.
     
     Action: SetCI
-    Action Input: `run: "python -m flask run", test: "python -m unittest tests/test_integration.py", lint: "flake8 --ignore=E501,E402,W503,W504,W291,W293 --exclude=venv,tests --max-line-length=120 --count --statistics --show-source --exit-zero", lintfile: "flake8 --ignore=E501,E402,W503,W504,W291,W293 --exclude=venv,tests --max-line-length=120 --count --statistics --show-source --exit-zero"`
+    Action Input: `run: "python -m flask run", test: "python -m unittest tests/test_integration.py", lint: "flake8 --ignore=E501,E402,E302,W503,W504,W291,W292,W293 --exclude=venv,tests --max-line-length=120 --count --statistics --show-source --exit-zero", lintfile: "flake8 --ignore=E501,E402,E302,W503,W504,W291,W292,W293 --exclude=venv,tests --max-line-length=120 --count --statistics --show-source --exit-zero"`
     AResult: CI set up.
 
     Note that you don't need to set all fields in SetCI (you can omit `test`, for instance), but if you write something it must be a valid command.
@@ -287,3 +191,4 @@
   prompt: |+
     You can use Bash to do operations with the system. 
     Keep in mind that your Bash commands can't ask for stdin or run for a long time.
+    Use BashBackground to run a process in the background, like starting a server.

@@ -335,6 +335,7 @@ taskmaster_prompt = (
 """
         + """
 First, you need to clarify the objective for yourself. If needed, you can ask the human specific questions for additional information using the Human tool.
+Before calling the architect, if the project is empty, set up a template if it is relevant. This will really help you in the future.
 After clarifying it and stating the requirements clearly, if the architecture isn't defined, you might want to pass the full elaborate objective to the Architect (note that its input may have several lines).
 Tell the architect things to pay attention to in the architecture.
 You should also think about the overall plan of implementing the objective.

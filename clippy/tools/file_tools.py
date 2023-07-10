@@ -197,7 +197,7 @@ class ReadFile(SimpleTool):
         return result.strip()
 
     def func(self, args: str) -> str:
-        if "[" not in args:
+        if not args.endswith(']'):
             filename = strip_filename(args)
             return self.structured_func([filename])
         filename, line_range = args.split("[", 1)

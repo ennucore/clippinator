@@ -2,7 +2,7 @@ from langchain.agents import Tool
 from langchain.tools import BaseTool
 
 from clippy.project import Project
-from .architectural import Remember, TemplateInfo, TemplateSetup, SetCI
+from .architectural import Remember, TemplateInfo, TemplateSetup, SetCI, DeclareArchitecture
 from .browsing import SeleniumTool, GetPage
 from .code_tools import SearchInFiles, Pylint
 from .file_tools import WriteFile, ReadFile, PatchFile, SummarizeFile
@@ -71,5 +71,6 @@ def get_tools(project: Project, try_structured: bool = False) -> list[BaseTool]:
                 SetCI(project).get_tool(try_structured),
                 # SearchInFiles(project.path).get_tool(),
                 BashBackgroundSessions(project.path).get_tool(try_structured),
+                DeclareArchitecture(project).get_tool(try_structured),
             ] + [tool_.get_tool(try_structured) for tool_ in fixed_tools(project)]
     return tools

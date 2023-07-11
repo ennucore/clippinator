@@ -24,7 +24,7 @@ def get_tag_kinds() -> dict[str, list[str]]:
 tag_kinds_by_language = get_tag_kinds()
 
 
-def get_file_summary(file_path: str, ident: str = "", length_1: int = 400, length_2: int = 600) -> str:
+def get_file_summary(file_path: str, indent: str = "", length_1: int = 400, length_2: int = 600) -> str:
     """
     | 72| class A:
     | 80| def create(self, a: str) -> A:
@@ -51,7 +51,7 @@ def get_file_summary(file_path: str, ident: str = "", length_1: int = 400, lengt
     # We need to add kinds in the order of importance such that the total length does not exceed 600 chars
     lengths_by_tag = defaultdict(int)
     for tag in tags:
-        tag['formatted'] = f"{ident}{tag['line']}|{file_lines[tag['line'] - 1].rstrip()}"
+        tag['formatted'] = f"{indent}{tag['line']}|{file_lines[tag['line'] - 1].rstrip()}"
         lengths_by_tag[tag['kind']] += len(tag['formatted']) + 1
     if len(tags) == 0:
         return ""
@@ -67,5 +67,5 @@ def get_file_summary(file_path: str, ident: str = "", length_1: int = 400, lengt
     lines = [line[1] for line in lines]
     out += ''.join(lines)
     if len(out) > length_2:
-        out = out[:length_2 - 100] + f"\n{ident}...\n" + out[-100:]
+        out = out[:length_2 - 100] + f"\n{indent}...\n" + out[-100:]
     return out

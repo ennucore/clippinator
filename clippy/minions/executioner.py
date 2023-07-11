@@ -4,8 +4,6 @@ from clippy import tools
 from clippy.project import Project
 from .base_minion import BaseMinion, BaseMinionOpenAI
 from .prompts import execution_prompt, get_specialized_prompt
-from ..tools.architectural import DeclareArchitecture
-
 
 class Executioner:
     """
@@ -38,7 +36,7 @@ def specialized_executioner(name: str, description: str, prompt: str,
     class SpecializedExecutionerN(SpecializedExecutioner):
         def __init__(self, project: Project):
             super().__init__(project)
-            all_tools = tools.get_tools(project, use_openai_functions) + [DeclareArchitecture(project).get_tool()]
+            all_tools = tools.get_tools(project, use_openai_functions)
             spe_tools = [tool for tool in all_tools if tool.name in tool_names or tool.name == 'Python']
             if use_openai_functions:
                 self.execution_agent = BaseMinionOpenAI(get_specialized_prompt(prompt), spe_tools)

@@ -72,10 +72,108 @@ get_specialized_prompt = lambda special_part: (
         + "\nBegin!\n{agent_scratchpad}"
 )
 
+get_selfcall_objective = lambda initial_objective, initial_architecture, sub_folder: (
+    f"You was responsible for the project with the objective: **{initial_objective}.**\n" +
+    f"Here was the planned full-project architecture:\n{initial_architecture}.\n" +
+    f"Now you work on the same project but you're only responsible for the isolated part inside the folder {sub_folder}. "
+    "Your goal is to complete this and only this part of the project.\n" +
+    "If you require additional architectural clarification for the sub-project in the given folder, " +
+    "you may consult Architect agent. And use the given planned project architecture as the main architecture "
+    "proposal for this sub-project in the future instead of the previously planned full-project architecture.\n"
+    "Important: Do not use SelfCall tool anymore, even after Architect execution. Do not use SelfCall tool.\n"
+    f"Important: if you plan to use the full-project architecture, remember that you're in the {sub_folder} subfolder, "
+    f"so you need to act accordingly: threat all paths in the architecture as relative, operate as you're in "
+    f"a self-contained module.\n"
+)
+
+taskmaster_prompt = (
+        common_part
+        + """Achieve the objective: **{objective}**. DO NOT give a Final Result until you achieve the objective.
+"""
+        + """
+First, you need to clarify the objective for yourself. If needed, you can ask the human specific questions for additional information using the Human tool.
+After clarifying it and stating the requirements clearly, if the architecture isn't defined, you might want to pass the full elaborate objective to the Architect (note that its input may have several lines).
+Tell the architect things to pay attention to in the architecture.
+You should also think about the overall plan of implementing the objective.
+You can (and should) delegate some tasks to subagents. It's better to delegate things to the subagents than to do them yourself.
+Avoid performing common actions yourself. Note that the tasks for the subagents have to be manageable (not very big, but not very small either).
+Delegating several files at a time is a good idea.
+TASKS SHOULD HAVE REASONABLE SIZE AND THE DESCRIPTION SHOULD BE DETAILED
+IMPLEMENTING THE ENTIRE PROJECT IS FAR TOO BIG OF A TASK
+BEFORE DELEGATING TO AN AGENT, YOU SHOULD THINK ABOUT THE PROJECT AND THEN if the architecture doesn't exist ASK THE ARCHITECT DECLARE THE PROJECT ARCHITECTURE. If there's already something in the project directory, you need to base architecture on that (mention it to the architect).
+TO DO THAT, use the Architect subagent (Subagent @Architect)
+YOU NEED TO TEST THE PROJECT PERIODICALLY
+Note that when an agent writes that it did not write everything, you need to later delegate the task of finishing the work in question. You can't ignore it.
+To test, always use the QA subagent (Subagent @QA).
+Remember that background processes like servers should be ran using BashBackground and should never be ran by just Bash.
+Make sure to pay attention to the thoughts of other agents. For example, if Architect suggest making a project modular and using SelfCall on a folder, you should do that.
+After architecture was defined by Architect and written down by Subagent @Writer , if the project is modular, you can use SelfCall tool to delegate the tasks to the subagents.
+
+To delegate, use the following syntax:
+Action: Subagent @SomeAgent
+Action Input: task
+AResult: the result from the agent will be here
+
+Here are the agents you have:
+{specialized_minions}
+
+AVOID USING THE TOOLS OR DOING THINGS YOURSELF, DELEGATE THE TASKS TO THE AGENTS
+
+Work until you have completely achieved the objective (and tested), do not give a Final Result until then. If you do, we will beat you with a stick.
+
+Begin!
+{agent_scratchpad}"""
+)
+
+summarize_prompt = """
+You are a Summary agent. Your goal is to summarize the thought process of the agents. Thought process consists of the taken actions and corresponding results. 
+Here is the last summary you produced: 
+{summary}
+Here is a new portion of the thought process:
+{thought_process}
+You need to concatenate the thought process to the summary and produce a new summary.
+Here goes the new summary:
+"""
+
+# ------
+
+common_planning = (
+        """
+            You are The Planner. Your only goal is to create a plan for the AI agents to follow. You will provide step-by-step instructions for the agents to follow. 
+            You will not execute the plan yourself. You don't need to create or modify any files. Only provide instructions for the agents to follow. 
+            Come up with the simplest possible way to accomplish the objective. Note that agents do not have admin access.
+            Your plan should consist of milestones and tasks. 
+            A milestone is a set of tasks that can be accomplished in parallel. After the milestone is finished, the project should be in a working state.
+            Milestones consist of tasks. A task is a single action that will be performed by an agent. Tasks should be either to create a file or to modify a file.
+            Besides generating a plan, you need to generate project context and architecture.
+            Architecture is a file-by-file outline (which functions and classes go where, what's the project stack, etc.).
+            Context is a global description of the current state of the project.
+
+            When the objective is accomplished, write "FINISHED" in the "Final Result:".
+            Otherwise, your final result be in the following format:
+
+            Final Result: 
+            ARCHITECTURE: the architecture of the project. 
+            CONTEXT: the global context of the project in one line
+            PLAN: the plan in the following format:
+
+            1. Your first milestone
+                - Your first task in the first milestone (**has** to contain all necessary information)
+                - Your second task in the first milestone
+                - ...
+            2. Example second milestone
+                ...
+            ...
+
+            The milestones have to be in a numbered list and should have a name. 
+            """
+        + common_part
+)
+
 architecture_prompt = """
 You are The Architect. You are a part of a team of AI developers which is working on the project {project_name} with the following objective: "{objective}".
  Generate an architecture for this coding project: {objective}
- 
+
 Here is the current state of the project folder:
 {project_summary}
 
@@ -329,43 +427,6 @@ Feedback: your feedback on the architecture
 Go!
 """
 
-taskmaster_prompt = (
-        common_part
-        + """Achieve the objective: **{objective}**. DO NOT give a Final Result until you achieve the objective.
-"""
-        + """
-First, you need to clarify the objective for yourself. If needed, you can ask the human specific questions for additional information using the Human tool.
-Before calling the architect, if the project is empty, set up a template if it is relevant. This will really help you in the future.
-After clarifying it and stating the requirements clearly, if the architecture isn't defined, you might want to pass the full elaborate objective to the Architect (note that its input may have several lines).
-Tell the architect things to pay attention to in the architecture.
-You should also think about the overall plan of implementing the objective.
-You can (and should) delegate some tasks to subagents. It's better to delegate things to the subagents than to do them yourself.
-Avoid performing common actions yourself. Note that the tasks for the subagents have to be manageable (not very big, but not very small either).
-Delegating several files at a time is a good idea.
-TASKS SHOULD HAVE REASONABLE SIZE AND THE DESCRIPTION SHOULD BE DETAILED
-IMPLEMENTING THE ENTIRE PROJECT IS FAR TOO BIG OF A TASK
-BEFORE DELEGATING TO AN AGENT, YOU SHOULD THINK ABOUT THE PROJECT AND THEN if the architecture doesn't exist ASK THE ARCHITECT DECLARE THE PROJECT ARCHITECTURE. If there's already something in the project directory, you need to base architecture on that (mention it to the architect).
-TO DO THAT, use the Architect subagent (Subagent @Architect)
-YOU NEED TO TEST THE PROJECT PERIODICALLY
-Note that when an agent writes that it did not write everything, you need to later delegate the task of finishing the work in question. You can't ignore it.
-To test, always use the QA subagent (Subagent @QA).
-Remember that background processes like servers should be ran using BashBackground and should never be ran by just Bash.
-
-To delegate, use the following syntax:
-Action: Subagent @SomeAgent
-Action Input: task
-AResult: the result from the agent will be here
-
-Here are the agents you have:
-{specialized_minions}
-
-AVOID USING THE TOOLS OR DOING THINGS YOURSELF, DELEGATE THE TASKS TO THE AGENTS
-
-Work until you have completely achieved the objective (and tested), do not give a Final Result until then. If you do, we will beat you with a stick.
-
-Begin!
-{agent_scratchpad}"""
-)
 
 feedback_prompt = """
 You've already tried to execute the task and miserably failed. Here is the result you produced:
@@ -377,49 +438,6 @@ Here is the feedback you received:
 Do better job now!
 PAY ATTENTION TO THE FEEDBACK
 """
-
-summarize_prompt = """
-You are a Summary agent. Your goal is to summarize the thought process of the agents. Thought process consists of the taken actions and corresponding results. 
-Here is the last summary you produced: 
-{summary}
-Here is a new portion of the thought process:
-{thought_process}
-You need to concatenate the thought process to the summary and produce a new summary.
-Here goes the new summary:
-"""
-
-common_planning = (
-        """
-            You are The Planner. Your only goal is to create a plan for the AI agents to follow. You will provide step-by-step instructions for the agents to follow. 
-            You will not execute the plan yourself. You don't need to create or modify any files. Only provide instructions for the agents to follow. 
-            Come up with the simplest possible way to accomplish the objective. Note that agents do not have admin access.
-            Your plan should consist of milestones and tasks. 
-            A milestone is a set of tasks that can be accomplished in parallel. After the milestone is finished, the project should be in a working state.
-            Milestones consist of tasks. A task is a single action that will be performed by an agent. Tasks should be either to create a file or to modify a file.
-            Besides generating a plan, you need to generate project context and architecture.
-            Architecture is a file-by-file outline (which functions and classes go where, what's the project stack, etc.).
-            Context is a global description of the current state of the project.
-            
-            When the objective is accomplished, write "FINISHED" in the "Final Result:".
-            Otherwise, your final result be in the following format:
-            
-            Final Result: 
-            ARCHITECTURE: the architecture of the project. 
-            CONTEXT: the global context of the project in one line
-            PLAN: the plan in the following format:
-            
-            1. Your first milestone
-                - Your first task in the first milestone (**has** to contain all necessary information)
-                - Your second task in the first milestone
-                - ...
-            2. Example second milestone
-                ...
-            ...
-            
-            The milestones have to be in a numbered list and should have a name. 
-            """
-        + common_part
-)
 
 initial_planning = (
         common_planning

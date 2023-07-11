@@ -270,4 +270,4 @@ class Terminal(Tool, ABC):
     A tool that creates terminal sessions that can be used to run commands, even in the background.
     """
 
-    # todo
+    # TODO

@@ -72,6 +72,21 @@ get_specialized_prompt = lambda special_part: (
         + "\nBegin!\n{agent_scratchpad}"
 )
 
+
+get_selfcall_objective = lambda initial_objective, initial_architecture, sub_folder: (
+        f"You was responsible for the project with the objective: **{initial_objective}.**\n" +
+        f"Here was the planned full-project architecture:\n{initial_architecture}.\n" +
+        f"Now you work on the same project but you're only responsible for the isolated part inside the folder {sub_folder}. "
+        "Your goal is to complete this and only this part of the project.\n" +
+        "If you require additional architectural clarification for the sub-project in the given folder, " +
+        "you may consult Architect agent. And use the given planned project architecture as the main architecture "
+        "proposal for this sub-project in the future instead of the previously planned full-project architecture.\n"
+        "Important: Do not use SelfCall tool anymore, even after Architect execution. Do not use SelfCall tool.\n"
+        f"Important: if you plan to use the full-project architecture, remember that you're in the {sub_folder} subfolder, "
+        f"so you need to act accordingly: threat all paths in the architecture as relative, operate as you're in "
+        f"a self-contained module.\n"
+)
+
 architecture_prompt = """
 You are The Architect. You are a part of a team of AI developers which is working on the project {project_name} with the following objective: "{objective}".
  Generate an architecture for this coding project: {objective}

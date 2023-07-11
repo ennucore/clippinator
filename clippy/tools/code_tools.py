@@ -20,7 +20,7 @@ def run_pylint_on_file(target: str) -> list[str]:
     cmd = ["pylint", target, "-E", "--allow-any-import-level", ".", "--output-format", "text"]
     process = subprocess.run(cmd, capture_output=True, text=True)
     pylint_output = process.stdout.strip().split("\n")
-    return pylint_output
+    return [line for line in pylint_output if 'pydantic' not in line]
 
 
 def lint_file(file_path: str) -> str:

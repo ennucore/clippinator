@@ -114,8 +114,8 @@
     - The frontend runs on localhost:3000, the Fastapi backend on localhost:8000.
     - The frontend is served from the /app folder, the backend from the /api folder.
     - The backend can be started using `yarn fastapi-dev`, the backend can be started using `yarn next-dev`
-    - You should periodically run them while developing to check for errors.
-    - In the frontend, components which require `useState` should be marked with `'use state'` as the first line
+    - You should periodically run them while developing to check for errors. In the case of frontend, you should make a request to it and check the logs
+    - In the frontend, components which require `useState` or `useRouter` or `useEffect` should always be marked with `'use client'` as the first line
   info: |+
     The Python/FastAPI server is mapped into to Next.js app under /api/.
     This is implemented using next.config.js rewrites to map any request to /api/:path* to the FastAPI API, which is hosted in the /api folder.
@@ -211,15 +211,20 @@
         __init__.py
         models.py
           >from sqlalchemy import Column, Integer, String, Boolean
-          >from sqlalchemy.orm import relationship
-          >from ..database import Base
+          >from sqlalchemy.orm import relationship, declarative_base
           >from werkzeug.security import generate_password_hash
+          >Base = declarative_base()
+          >class UserBase(BaseModel):
+               # a structure with username and password
+          >class UserInDB(UserBase):
+                   # id, class Config with orm_mode
           >class User(Base):
           >    id = Column(Integer, primary_key=True, index=True)
           >    username = Column(String, unique=True, index=True)
           >    password = Column(String)
           >    def set_password(self, password):
           >        self.password = generate_password_hash(password)
+          ># PostBase, PostInDB
           >class Post(Base):
           >    id = Column(Integer, primary_key=True, index=True)
           >    content = Column(String, nullable=False)
@@ -228,6 +233,8 @@
           >    subreddit_id = Column(Integer, ForeignKey("subreddits.id"))
           >    user = relationship("User", back_populates="posts")
           >    subreddit = relationship("Subreddit", back_populates="posts")
+          >    comments = relationship("Comment", back_populates="post")
+          ># CommentBase, CommentInDB
           >class Comment(Base):
           >    id = Column(Integer, primary_key=True, index=True)
           >    content = Column(String, nullable=False)
@@ -235,6 +242,7 @@
           >    post_id = Column(Integer, ForeignKey("posts.id"))
           >    user = relationship("User", back_populates="comments")
           >    post = relationship("Post", back_populates="comments")
+          ># SubredditBase, SubredditInDB
           >class Subreddit(Base):
           >    id = Column(Integer, primary_key=True, index=True)
           >    name = Column(String, unique=True, index=True)
@@ -242,6 +250,7 @@
           >    user_id = Column(Integer, ForeignKey("users.id"))
           >    user = relationship("User", back_populates="subreddits")
           >    posts = relationship("Post", back_populates="subreddit")
+          ># VoteBase, VoteInDB
           >class Vote(Base):
           >    user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
           >    post_id = Column(Integer, ForeignKey("posts.id"), primary_key=True)

@@ -80,6 +80,7 @@
 - name: "Frontender"
   description: "implements a frontend-related part of the architecture in a new or small file. Example task: 'Implement index.html and base.html according to the architecture'. Prefer using this agent for HTML, CSS, etc.. It can even implement several (max 2-3) connected files, but only a couple of specified files."
   prompt: |+
+    If you are asked to edit something, read the file first. Also, read all other relevant files.
     Look at the architecture, then implement it using WriteFile. If the file already exists, read it first, then rewrite it.
     Note that you don't need to create folders or files - they will be created automatically by WriteFile.
     Also, you can see all files in the "current state of the project" section. If a file isn't there, it doesn't exist.
@@ -128,6 +129,7 @@
   prompt: |+
     Look at the architecture and the current code in the file, then add the new functionality to the file.
     READ THE FILE BEFORE REWRITING IT
+    Note that the file content you write has to be complete, you have to call writefile and write the entire file.
     If the code relies on some other files, you can read them too in order to understand everything
     Pay attention to linter warnings
 #  prompt_: |+
@@ -176,7 +178,7 @@
 
 - name: "Devops"
   description: "Does operations with the system: moves files, installs packages, etc."
-  tool_names: [ "Bash", "BashBackground", "ReadFile", "WriteFile", "Remember" ]
+  tool_names: [ "Bash", "BashBackground", "Python", "ReadFile", "WriteFile", "Remember" ]
   prompt: |+
     You can use Bash to do operations with the system. 
     Keep in mind that your Bash commands can't ask for stdin or run for a long time.

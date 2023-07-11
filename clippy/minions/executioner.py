@@ -39,7 +39,7 @@ def specialized_executioner(name: str, description: str, prompt: str,
         def __init__(self, project: Project):
             super().__init__(project)
             all_tools = tools.get_tools(project, use_openai_functions) + [DeclareArchitecture(project).get_tool()]
-            spe_tools = [tool for tool in all_tools if tool.name in tool_names or tool.name == 'Python']
+            spe_tools = [tool for tool in all_tools if tool.name in tool_names]
             if use_openai_functions:
                 self.execution_agent = BaseMinionOpenAI(get_specialized_prompt(prompt), spe_tools)
             else:

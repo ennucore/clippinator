@@ -181,7 +181,7 @@ class BashBackgroundSessions(SimpleTool):
             process.stdin.write(args + '\n')
             process.stdin.close()
             bash_processes.append({"pr": process, "args": args})
-            time.sleep(5)
+            time.sleep(8)
             # Read current output
             ready_to_read, _, _ = select.select([process.stdout], [], [], 0)
             output = trim_extra('\n'.join([part.read() for part in ready_to_read]))

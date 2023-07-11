@@ -17,7 +17,7 @@ class SearchAndReplace(SimpleTool):
 
 
 def run_pylint_on_file(target: str) -> list[str]:
-    cmd = ["pylint", target, "-E", "--output-format", "text"]
+    cmd = ["pylint", target, "-E", "--allow-any-import-level", ".", "--output-format", "text"]
     process = subprocess.run(cmd, capture_output=True, text=True)
     pylint_output = process.stdout.strip().split("\n")
     return pylint_output

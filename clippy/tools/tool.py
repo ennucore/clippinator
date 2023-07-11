@@ -1,10 +1,22 @@
 import typing
+from functools import wraps
 from typing import Any
 
 import requests
 from langchain.agents import Tool
 from langchain.tools import StructuredTool
 from typer import prompt
+
+
+def wrap_tool_function(func: typing.Callable[..., str]) -> typing.Callable[..., str]:
+    @wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> str:
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            return f"Error: {e}"
+
+    return wrapper
 
 
 class SimpleTool:
@@ -17,10 +29,11 @@ class SimpleTool:
 
     def get_tool(self, try_structured: bool = True) -> Tool | StructuredTool:
         if self.structured_func and try_structured:
-            return StructuredTool.from_function(self.structured_func, name=self.name,
+            return StructuredTool.from_function(wrap_tool_function(self.structured_func),
+                                                name=self.name,
                                                 description=self.structured_desc or self.description,
                                                 args_schema=self.args_schema)
-        return Tool(name=self.name, func=self.func, description=self.description)
+        return Tool(name=self.name, func=wrap_tool_function(self.func), description=self.description)
 
 
 class WarningTool(SimpleTool):

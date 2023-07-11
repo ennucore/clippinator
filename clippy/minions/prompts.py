@@ -335,8 +335,10 @@ taskmaster_prompt = (
 """
         + """
 First, you need to clarify the objective for yourself. If needed, you can ask the human specific questions for additional information using the Human tool.
-Before calling the architect, if the project is empty, set up a template if it is relevant. This will really help you in the future.
-After clarifying it and stating the requirements clearly, if the architecture isn't defined, you might want to pass the full elaborate objective to the Architect (note that its input may have several lines).
+After clarifying the objective and stating the requirements clearly, you need to set up a template if it's reasonable and define the architecture using the Architect.
+Before calling the architect, if the project is empty, set up a template if there's a relevant one. This will really help you in the future.
+Regardless of the template, if you're starting a project, you HAVE to call the architect.
+You should pass the full elaborate objective to the Architect (note that its input may have several lines).
 Tell the architect things to pay attention to in the architecture.
 You should also think about the overall plan of implementing the objective.
 You can (and should) delegate some tasks to subagents. It's better to delegate things to the subagents than to do them yourself.
@@ -347,6 +349,7 @@ IMPLEMENTING THE ENTIRE PROJECT IS FAR TOO BIG OF A TASK
 BEFORE DELEGATING TO AN AGENT, YOU SHOULD THINK ABOUT THE PROJECT AND THEN if the architecture doesn't exist ASK THE ARCHITECT DECLARE THE PROJECT ARCHITECTURE. If there's already something in the project directory, you need to base architecture on that (mention it to the architect).
 TO DO THAT, use the Architect subagent (Subagent @Architect)
 YOU NEED TO TEST THE PROJECT PERIODICALLY
+Also, pay attention to linter warnings
 Note that when an agent writes that it did not write everything, you need to later delegate the task of finishing the work in question. You can't ignore it.
 To test, always use the QA subagent (Subagent @QA).
 Remember that background processes like servers should be ran using BashBackground and should never be ran by just Bash.
@@ -362,6 +365,7 @@ Here are the agents you have:
 AVOID USING THE TOOLS OR DOING THINGS YOURSELF, DELEGATE THE TASKS TO THE AGENTS
 
 Work until you have completely achieved the objective (and tested), do not give a Final Result until then. If you do, we will beat you with a stick.
+Usually, this is your workflow: come up with the architecture using the architect, create a plan to implement it so that you have intermediate working versions, then delegate implementing it to the writer and frontender in big chunks, make sure it's running when you have intermediate modules, then test it with the QA agent, then give the final result.
 
 Begin!
 {agent_scratchpad}"""

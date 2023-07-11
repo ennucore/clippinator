@@ -106,12 +106,16 @@
     yarn install
     cd api
     pip install -r requirements.txt --break-system-packages
+    sed -i 's/"fastapi-dev": "pip3 install -r requirements.txt && python3 -m uvicorn api.index:app --reload"/"fastapi-dev": "python3 -m uvicorn api.index:app --reload"/' package.json
   ci:
     run: "yarn dev"
-    lint: "yarn lint && flake8 --select=E,F --exclude=venv,tests --max-line-length=120 --count --statistics --show-source --exit-zero"
+    lint: "yarn lint && flake8 --select=E,F --ignore=E302 --exclude=venv,tests --max-line-length=120 --count --statistics --show-source --exit-zero"
   memories:
     - The frontend runs on localhost:3000, the Fastapi backend on localhost:8000.
     - The frontend is served from the /app folder, the backend from the /api folder.
+    - The backend can be started using `yarn fastapi-dev`, the backend can be started using `yarn next-dev`
+    - You should periodically run them while developing to check for errors.
+    - In the frontend, components which require `useState` should be marked with `'use state'` as the first line
   info: |+
     The Python/FastAPI server is mapped into to Next.js app under /api/.
     This is implemented using next.config.js rewrites to map any request to /api/:path* to the FastAPI API, which is hosted in the /api folder.
@@ -154,7 +158,8 @@
     api/
       index.py
         >from fastapi import FastAPI
-        >from routers import api_router, auth_router
+        >from .routers.api_router import api_router
+        >#auth_router
         >app = FastAPI()
         >app.include_router(api_router, prefix="/api/v1")
         >app.include_router(auth_router, prefix="/api/v1/auth")
@@ -163,8 +168,8 @@
         __init__.py
         api_router.py
           >from fastapi import APIRouter, Depends
-          >from models import User, Post, Comment, Subreddit, Vote
-          >from auth_router import manager
+          >from ..models import User, Post, Comment, Subreddit, Vote
+          >from .auth_router import manager
           >router = APIRouter()
           >@router.post("/post")
           >def create_post(post: schemas.PostCreate, current_user: User = Depends(manager), db: Session = Depends(get_db)):
@@ -189,7 +194,7 @@
           >from fastapi_login import LoginManager
           >from fastapi.security import OAuth2PasswordRequestForm
           >from jose import JWTError, jwt
-          >from . import schemas, crud
+          >from .. import schemas, crud
           >SECRET_KEY = "YOUR_SECRET_KEY"
           >ALGORITHM = "HS256"
           >manager = LoginManager(SECRET_KEY, '/auth/token')
@@ -207,7 +212,7 @@
         models.py
           >from sqlalchemy import Column, Integer, String, Boolean
           >from sqlalchemy.orm import relationship
-          >from database import Base
+          >from ..database import Base
           >from werkzeug.security import generate_password_hash
           >class User(Base):
           >    id = Column(Integer, primary_key=True, index=True)
@@ -244,22 +249,20 @@
           >    post = relationship("Post", back_populates="votes")
           >    is_upvote = Column(Boolean)
 
-      schemas/
-        __init__.py
-        schemas.py
-          >from pydantic import BaseModel
-          >class UserBase(BaseModel):
-          >    username: str
-          >class UserCreate(UserBase):
-          >    password: str
-          >class PostCreate(BaseModel):
-          >    title: str
-          >    content: str
-          >class CommentCreate(BaseModel):
-          >    content: str
-          >class SubredditCreate(BaseModel):
-          >    name: str
-          >    description: str
+      schemas.py
+        >from pydantic import BaseModel
+        >class UserBase(BaseModel):
+        >    username: str
+        >class UserCreate(UserBase):
+        >    password: str
+        >class PostCreate(BaseModel):
+        >    title: str
+        >    content: str
+        >class CommentCreate(BaseModel):
+        >    content: str
+        >class SubredditCreate(BaseModel):
+        >    name: str
+        >    description: str
 
       crud.py
         >from sqlalchemy.orm import Session
@@ -267,11 +270,18 @@
         >def get_user(db: Session, user_id: int):
         >def get_user_by_username(db: Session, username: str):
         >def create_user(db: Session, user: schemas.UserCreate):
+    
+      database.py
+        >SQLALCHEMY_DATABASE_URL =
+        >engine = create_engine(..)
+        >SessionLocal = sessionmaker(..)
+        >Base = declarative_base()
+        >def get_db():
 
     app/    # Overall, the color theme is blue (primary in tailwind) + white. a lot of elements are rounded boxes with 1rem border radius.
-      index.tsx    # Main page with feed of subscribed subreddits
+      page.tsx    # Main page with feed of subscribed subreddits
         >import { useSelector } from 'react-redux'
-        >import Layout from '../components/Layout'
+        >import Layout from './components/Layout'
         >import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
         >import PostPage from './post/[id]'
         >import SubredditPage from './subreddit/[id]'

@@ -225,7 +225,7 @@ class CustomPromptTemplate(StringPromptTemplate):
 
             if self.my_summarize_agent:
                 kwargs["agent_scratchpad"] = (
-                        "Here is a summary of what has happened:\n" + self.last_summary
+                        "Here is a summary of what has happened:\n" + trim_extra(self.last_summary, 2000)
                 )
                 kwargs["agent_scratchpad"] += "\nEND OF SUMMARY\n"
             else:

@@ -1,6 +1,7 @@
 import os.path
 import pickle
 
+import rich
 from langchain import LLMChain
 from langchain.agents import AgentExecutor, LLMSingleActionAgent
 from langchain.schema import AgentAction
@@ -84,17 +85,19 @@ class Taskmaster:
                     or "No result. The execution was probably unsuccessful."
             )
         except KeyboardInterrupt:
-            feedback = input("\nAI interrupted. Enter your feedback: ")
-            self.prompt.intermediate_steps += [
-                (
-                    AgentAction(
-                        tool="AgentFeedback",
-                        tool_input="",
-                        log="Here is feedback from your supervisor: ",
-                    ),
-                    feedback,
-                )
-            ]
+            rich.print('\n[bold green]Agent interrupted, enter feedback[/bold green]')
+            feedback = input("Feedback: ")
+            if feedback:
+                self.prompt.intermediate_steps += [
+                    (
+                        AgentAction(
+                            tool="AgentFeedback",
+                            tool_input="",
+                            log="Here is feedback from your supervisor: ",
+                        ),
+                        feedback,
+                    )
+                ]
             return self.run(**kwargs)
 
     def save_to_file(self, path: str = ""):

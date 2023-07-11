@@ -67,7 +67,7 @@ def setup_template(template_name: str, path: str, project_name: str):
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         cwd=cwd,
-        timeout=120,
+        timeout=180,
     )
     stdout_output = completed_process.stdout.decode()
     print('Deployed template:', stdout_output)

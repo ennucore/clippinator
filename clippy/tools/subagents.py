@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import typing
 
+import typer
+
 from clippy.project import Project
 from .terminal import get_pids, end_sessions
 from .tool import SimpleTool
-from .utils import trim_extra
+from .utils import trim_extra, get_input_from_editor
 from ..minions import extract_agent_name
 
 if typing.TYPE_CHECKING:
@@ -47,6 +49,8 @@ class Subagent(SimpleTool):
         result = trim_extra(result, 1200)
         new_memories = [mem for mem in self.project.memories if mem not in prev_memories]
         if agent == "Architect":
+            if typer.confirm('Do you want to edit the project architecture?'):
+                self.project.architecture = get_input_from_editor(self.project.architecture)
             result = 'Architecture declared: ' + self.project.architecture + '\n'
         result = f'Completed, result: {result}\n\n' \
                  f'Current project state:\n{self.project.get_project_summary()}\n'

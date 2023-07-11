@@ -1,8 +1,33 @@
 import json
+import os
+import subprocess
+import tempfile
 from typing import Any, Union
 
 import langchain
 import langchain.agents.openai_functions_agent.base as oai_func_ag
+
+
+def get_input_from_editor(initial_text=None):
+    editor = os.environ.get('EDITOR', 'vi')  # defaults to 'vi' if EDITOR is not set
+
+    with tempfile.NamedTemporaryFile(suffix=".tmp", delete=False, mode='w+t') as tf:
+        # Write the initial text to the file
+        if initial_text is not None:
+            tf.write(initial_text)
+            tf.flush()
+
+        tf.close()
+        subprocess.call([editor, tf.name])
+
+        # Read the file
+        with open(tf.name, 'r') as f:
+            input_string = f.read()
+
+        # Clean up the temp file
+        os.unlink(tf.name)
+
+    return input_string
 
 
 def skip_file(filename: str) -> bool:

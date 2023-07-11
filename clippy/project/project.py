@@ -30,7 +30,7 @@ class Project:
         return os.path.basename(self.path)
 
     def get_folder_summary(self, path: str, ident: str = "", add_linting: bool = True, top_level: bool = False,
-                           length_3: int = 3000) -> str:
+                           length_3: int = 4000) -> str:
         """
         Get the summary of a folder in the project, recursively, file-by-file, using self.get_file_summary()
         path:
@@ -59,7 +59,7 @@ class Project:
                 res += f"{ident}{file}\n"
                 if not skip_file_summary(file_path):
                     res += get_file_summary(file_path, ident + "  ",
-                                            length_1=length_3 // 11, length_2=round(length_3 / 7))
+                                            length_1=length_3 // 10, length_2=round(length_3 / 7))
         if len(res) > length_3:
             print(f"Warning: long project summary at {path}, truncating to {length_3} chars")
             res = trim_extra(res, length_3)
@@ -84,7 +84,7 @@ class Project:
                                          text=True, cwd=self.path)
             except Exception as e:
                 return f"Linter error: {e}"
-            return trim_extra(process.stdout.strip(), 1100)
+            return trim_extra(process.stdout.strip(), 800)
         return lint_project(path)
 
     def lint_file(self, path: str):

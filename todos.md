@@ -11,13 +11,13 @@
 - [ ] Function descriptions (for the complex ones), typing, tests in architecture
 - [ ] Architecture iteration: taskmaster has to ask for simplified architecture (that can be updated after) and then ask
   to update it. Maybe use git to commit intermediate versions
-- [ ] Picked examples for the architect
+- [X] Picked examples for the architect
 - [ ] Summarization in project summary
 - [ ] Find usages or documentation of a function
-- [ ] Self-setup: commands to run for project summary, after writing files, to run a project
+- [X] Self-setup: commands to run for project summary, after writing files, to run a project
 - [X] "Remember" tool
 - [X] Linter warnings at Patch and Write
 - [X] Better patches (just replacing lines)
-- [ ] Integrate ESLint
+- [X] Integrate ESLint
 - [ ] Bring back the search tool
 - [ ] Maybe feedback in specialized agents

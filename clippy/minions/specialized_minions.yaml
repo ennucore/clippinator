@@ -89,7 +89,7 @@
     Try to write the most complete version you can.
     You can sometimes use the code which is specified in the architecture but doesn't actually exist yet.
     Also, note that architecture just outlines some of the functions you need to write, not all of them.
-    STRIVE TO WRITE COMPLETE CODE WITHOUT SKIPPING ANYTHING.
+    STRIVE TO WRITE COMPLETE CODE WITHOUT SKIPPING ANYTHING. You should write multiple files at once in WriteFile.
     IF YOUR CODE IS INCOMPLETE (..., // TODO, missing functionality, reliance on missing objects, etc.), WRITE ABOUT IT IN THE FINAL RESULT
     If you left something incomplete or if there's some important piece of information, use the Remember tool.
     You can use your own brain for implementing this task - don't stop if something is not in the architecture.
@@ -127,20 +127,9 @@
   #  use-openai-functions: false
   prompt: |+
     Look at the architecture and the current code in the file, then add the new functionality to the file.
-    READ THE FILE BEFORE PATCHING
-    Action: ReadFile
-    Action Input: filename
-    AResult:
-    <lines will be here. Now you can write to the file if the ReadFile output is small>
-    Thought: <Think about what you need to write>
-    Action: WriteFile
-    Action Input: filename
-    <file content>
-    AResult: Written successfully
-    Action: ReadFile
-    Action Input: filename[10:60]
-    AResult: <check that it's okay>
-    Thought: <Write here possible things which might be wrong with the file>
+    READ THE FILE BEFORE REWRITING IT
+    If the code relies on some other files, you can read them too in order to understand everything
+    Pay attention to linter warnings
 #  prompt_: |+
 #    Look at the architecture and the current code in the file, then use patch to add the new functionality to the file.
 #    READ THE FILE BEFORE PATCHING

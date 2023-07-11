@@ -16,6 +16,10 @@ from .file_tools import strip_quotes
 from .tool import SimpleTool
 from .utils import trim_extra
 
+env = dict(os.environ.copy())
+env.pop('VIRTUAL_ENV', None)
+env['PATH'] = env.get('PATH', '').split(':', 1)[-1]
+
 
 class RunBash:
     """Executes bash commands and returns the output."""
@@ -39,12 +43,13 @@ class RunBash:
 
         try:
             completed_process = subprocess.run(
-                commands,
+                ['bash', '-c', commands],
                 shell=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 cwd=self.workdir,
                 timeout=70,
+                env=env
             )
         except subprocess.TimeoutExpired as error:
             return "Command timed out, possibly due to asking for input."
@@ -162,11 +167,12 @@ class BashBackgroundSessions(SimpleTool):
                 [f'    - pid: {process["pr"].pid}| `{process["args"][:50]}`' for process in bash_processes])
         else:
             process = subprocess.Popen(
-                ["bash"],
+                ["/bin/bash"],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
+                env=env,
                 cwd=self.workdir,
             )
             fd = process.stdout.fileno()
@@ -175,7 +181,7 @@ class BashBackgroundSessions(SimpleTool):
             process.stdin.write(args + '\n')
             process.stdin.close()
             bash_processes.append({"pr": process, "args": args})
-            time.sleep(3)
+            time.sleep(5)
             # Read current output
             ready_to_read, _, _ = select.select([process.stdout], [], [], 0)
             output = trim_extra('\n'.join([part.read() for part in ready_to_read]))

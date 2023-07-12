@@ -12,8 +12,9 @@ _A code assistant_
 4. Install [ctags](https://docs.ctags.io/en/latest/building.html).
 5. For pylint, install it and [pylint-venv](https://github.com/jgosmann/pylint-venv/).
 6. Install dependencies: `poetry install`.
-7. Run: `poetry run python main.py --help`. To run it on a project,
-   use `poetry run python main.py PROJECT_PATH`
+7. Run: `poetry run clippy --help`. To run it on a project,
+   use `poetry run clippy PROJECT_PATH`
+8. You can stop it and then it will continue from the last saved state. Use ^C to provide feedback to the main agent.
 
 ## Details
 
@@ -36,6 +37,8 @@ will do it. It poses tasks like that to itself on its own, to a varying degree o
 But combined with you, it will be able to do everything while only requiring a little bit of your intervention.
 If the project is easy, you will just provide the most high-level guidance ("Write a link shortener web service"),
 and if it's more complicated, you will be more involved, but **Clippy** will still do most of the work.
+
+![](images/map.png)
 
 ### Taskmaster
 
@@ -97,3 +100,12 @@ Linter output is also given after using _WriteFile_.
 The architect can configure the linter command using the _SetCI_ tool.
 All agents can also use the _Remember_ tool to add some information to the memory. Memory is given to all agents.
 
+### Feedback
+
+You can press ^C to provide feedback to the main agent. Note that if you press it during the execution of a subagent,
+the subagent will be aborted. The only exception here is the _Architect_: you can press ^C after it uses
+the `DeclareArchitecture` tool to ask it to change it.
+
+After the architect is ran, you can also edit the project architecture manually if you choose `y` in the prompt.
+
+If you enter `m` or `menu`, you will also be able to edit the project architecture, objective, and other things.

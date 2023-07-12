@@ -100,6 +100,24 @@ class Project:
         self.summary_cache = self.get_folder_summary(self.path, top_level=True)
         return self.summary_cache
 
+    def menu(self, prompt=None):
+        from clippy.tools.utils import select, get_input_from_editor
+        prompt_options = ["Edit action summary"] * (prompt is not None)
+        res = select(["Continue", "Architecture", "Objective", "Memories", "CI"] + prompt_options, "Project Menu")
+        if res == 1:
+            self.architecture = get_input_from_editor(self.architecture)
+        elif res == 2:
+            self.objective = get_input_from_editor(self.objective)
+        elif res == 3:
+            self.memories = get_input_from_editor("\n".join(self.memories)).splitlines()
+        elif res == 4:
+            ci_commands = get_input_from_editor("\n".join(
+                [f"{k}: `{v}`" for k, v in self.ci_commands.items()])).splitlines()
+            self.ci_commands = {line.split(':')[0].strip(): line.split(':')[1].strip().strip('`')
+                                for line in ci_commands}
+        elif res == 5:
+            prompt.last_summary = get_input_from_editor(prompt.last_summary)
+
     def prompt_fields(self) -> dict:
         from clippy.tools.architectural import templates
 

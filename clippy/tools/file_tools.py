@@ -164,9 +164,9 @@ class ReadFile(SimpleTool):
                         lines = f.readlines()
                         lines = [f"{i + 1}|{line}" for i, line in enumerate(lines)]
                         out = "```\n" + "".join(lines) + "\n```"
-                        if len(out) > 4000:
+                        if len(out) > 7000:
                             result += (
-                                    trim_extra(out, 4000)
+                                    trim_extra(out, 7000)
                                     + "\n```\nFile too long, use the summarizer or "
                                       "(preferably) request specific line ranges.\n\n"
                             )
@@ -184,10 +184,10 @@ class ReadFile(SimpleTool):
                         lines = f.readlines()
                         lines = [f"{i + 1}|{line}" for i, line in enumerate(lines)]
                         out = "```\n" + "".join(lines[start - 1:end]) + "\n```"
-                        if len(out) > 4000:
+                        if len(out) > 6000:
                             result += (
-                                    trim_extra(out, 4000)
-                                    + "\n```\nFile too long, use the summarizer or "
+                                    trim_extra(out, 6000)
+                                    + "\n...\nFile too long, use the summarizer or "
                                       "(preferably) request specific line ranges.\n\n"
                             )
                         else:

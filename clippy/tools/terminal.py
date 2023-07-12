@@ -44,7 +44,6 @@ class RunBash:
         try:
             completed_process = subprocess.run(
                 ['bash', '-c', commands],
-                shell=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 cwd=self.workdir,

@@ -21,3 +21,4 @@
 - [X] Integrate ESLint
 - [ ] Bring back the search tool
 - [ ] Maybe feedback in specialized agents
+- [ ] Todos for Taskmaster

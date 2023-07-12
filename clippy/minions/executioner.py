@@ -14,14 +14,14 @@ class Executioner:
     """
     execution_agent: BaseMinion | BaseMinionOpenAI
 
-    def __init__(self, project: Project, use_openai: bool = True):
+    def __init__(self, project: Project, use_openai: bool = True, allow_feedback: bool = False):
         if use_openai:
             self.execution_agent = BaseMinionOpenAI(execution_prompt, tools.get_tools(project, True))
         else:
-            self.execution_agent = BaseMinion(execution_prompt, tools.get_tools(project))
+            self.execution_agent = BaseMinion(execution_prompt, tools.get_tools(project), allow_feedback=allow_feedback)
 
-    def execute(self, task: str, project: Project, milestone: str = '') -> str:
-        return self.execution_agent.run(task=task, milestone=milestone, **project.prompt_fields())
+    def execute(self, task: str, project: Project, milestone: str = '', **kwargs) -> str:
+        return self.execution_agent.run(task=task, milestone=milestone, **project.prompt_fields(), **kwargs)
 
 
 class SpecializedExecutioner(Executioner):
@@ -34,7 +34,8 @@ class SpecializedExecutioner(Executioner):
 
 
 def specialized_executioner(name: str, description: str, prompt: str,
-                            tool_names: list[str], use_openai_functions: bool = True):
+                            tool_names: list[str],
+                            use_openai_functions: bool = True, allow_feedback: bool = False):
     class SpecializedExecutionerN(SpecializedExecutioner):
         def __init__(self, project: Project):
             super().__init__(project)
@@ -43,7 +44,8 @@ def specialized_executioner(name: str, description: str, prompt: str,
             if use_openai_functions:
                 self.execution_agent = BaseMinionOpenAI(get_specialized_prompt(prompt), spe_tools)
             else:
-                self.execution_agent = BaseMinion(get_specialized_prompt(prompt), spe_tools)
+                self.execution_agent = BaseMinion(get_specialized_prompt(prompt), spe_tools,
+                                                  allow_feedback=allow_feedback)
             self.name = name
             self.description = description
 

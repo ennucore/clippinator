@@ -1,11 +1,16 @@
+from __future__ import annotations
+
 import json
 import os
 import subprocess
 import tempfile
 from typing import Any, Union
 
+import inquirer
 import langchain
 import langchain.agents.openai_functions_agent.base as oai_func_ag
+import rich
+from langchain.schema import AgentAction
 
 
 def get_input_from_editor(initial_text=None):
@@ -40,12 +45,13 @@ def skip_file(filename: str) -> bool:
 
 
 def skip_file_summary(filename: str) -> bool:
-    return filename.endswith('.svg') or '-lock' in filename or filename.endswith('.lock')
+    return filename.endswith('.svg') or 'tsconfig' in filename \
+        or '-lock' in filename or filename.endswith('.lock')
 
 
 def trim_extra(content: str, max_length: int = 1500) -> str:
     if len(content) > max_length:
-        content = content[:max_length] + f"\n...[skipped {len(content) - max_length - 500} chars]\n" + content[-500:]
+        content = content[:max_length - 500] + f"\n...[skipped {len(content) - max_length} chars]\n" + content[-500:]
     return content
 
 
@@ -74,3 +80,43 @@ def parse_openai_function_message_custom(
 
 
 oai_func_ag._parse_ai_message = parse_openai_function_message_custom
+
+
+def yes_no_prompt(prompt: str, default: bool = False) -> bool:
+    answer = inquirer.prompt([inquirer.Confirm('yes_no', message=prompt, default=default)])
+    if not answer or not answer.get('yes_no'):
+        return default
+    return answer['yes_no']
+
+
+def text_prompt(prompt: str) -> str:
+    answer = inquirer.prompt([inquirer.Text('text', message=prompt)])
+    if not answer or not answer.get('text'):
+        return ''
+    return answer['text']
+
+
+def select(options: list[str], prompt: str, default: str | None = None) -> int:
+    if default is None:
+        default = options[0]
+    answer = inquirer.prompt([inquirer.List('selected', message=prompt, choices=options, default=default)])
+    return options.index(answer['selected'])
+
+
+def ask_for_feedback(menu=None) -> (AgentAction, str) | None:
+    rich.print('\n[bold green]Agent paused, enter feedback' + ' or "menu"/"m"' * (menu is not None)
+               + ' or "exit" or press enter[/bold green]')
+    feedback = text_prompt("Feedback")
+    if feedback in ('menu', 'm'):
+        if menu is not None:
+            menu()
+        return None
+    if feedback == 'exit':
+        raise KeyboardInterrupt
+    if feedback:
+        return AgentAction(
+            tool="AgentFeedback",
+            tool_input="",
+            log="Here is feedback from your supervisor: ",
+        ), feedback
+    return None

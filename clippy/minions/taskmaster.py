@@ -3,10 +3,8 @@ from __future__ import annotations
 import os
 import pickle
 
-import rich
 from langchain import LLMChain
 from langchain.agents import AgentExecutor, LLMSingleActionAgent
-from langchain.schema import AgentAction
 
 from clippy.project import Project
 from clippy.tools import get_tools, SimpleTool
@@ -21,6 +19,7 @@ from .base_minion import (
 )
 from .executioner import Executioner, get_specialized_executioners
 from .prompts import taskmaster_prompt, summarize_prompt, format_description, get_selfcall_objective
+from ..tools.utils import ask_for_feedback
 
 
 class Taskmaster:
@@ -94,19 +93,9 @@ class Taskmaster:
                     or "No result. The execution was probably unsuccessful."
             )
         except KeyboardInterrupt:
-            rich.print('\n[bold green]Agent interrupted, enter feedback[/bold green]')
-            feedback = input("Feedback: ")
+            feedback = ask_for_feedback(lambda: self.project.menu(self.prompt))
             if feedback:
-                self.prompt.intermediate_steps += [
-                    (
-                        AgentAction(
-                            tool="AgentFeedback",
-                            tool_input="",
-                            log="Here is feedback from your supervisor: ",
-                        ),
-                        feedback,
-                    )
-                ]
+                self.prompt.intermediate_steps += [feedback]
             return self.run(**kwargs)
 
     def save_to_file(self, path: str = ""):
@@ -151,7 +140,8 @@ class SelfCall(SimpleTool):
         super().__init__()
 
     def structured_func(self, sub_folder: str):
-        sub_project_path = self.initial_project.path + ("/" if not self.initial_project.path.endswith("/") else "") + sub_folder
+        sub_project_path = self.initial_project.path + (
+            "/" if not self.initial_project.path.endswith("/") else "") + sub_folder
         cur_objective = self._get_resulting_objective(self.initial_project, sub_folder)
         cur_sub_project = Project(sub_project_path, cur_objective, architecture="")
         taskmaster = Taskmaster(cur_sub_project, inner_taskmaster=True)

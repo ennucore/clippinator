@@ -107,15 +107,18 @@
     cd api
     pip install -r requirements.txt --break-system-packages
     sed -i 's/"fastapi-dev": "pip3 install -r requirements.txt && python3 -m uvicorn api.index:app --reload"/"fastapi-dev": "python3 -m uvicorn api.index:app --reload"/' package.json
+    yarn add axios
   ci:
     run: "yarn dev"
-    lint: "yarn lint && flake8 --select=E,F --ignore=E302 --exclude=venv,tests --max-line-length=120 --count --statistics --show-source --exit-zero"
+    lint: "yarn build && flake8 --select=E,F --ignore=E302 --exclude=venv,tests --max-line-length=120 --count --statistics --show-source --exit-zero"
   memories:
+    - The architect should closely follow the example
     - The frontend runs on localhost:3000, the Fastapi backend on localhost:8000.
     - The frontend is served from the /app folder, the backend from the /api folder.
     - The backend can be started using `yarn fastapi-dev`, the backend can be started using `yarn next-dev`
     - You should periodically run them while developing to check for errors. In the case of frontend, you should make a request to it and check the logs
     - In the frontend, components which require `useState` or `useRouter` or `useEffect` should always be marked with `'use client'` as the first line
+    - When getting the error "NextRouter was not mounted", you should change the import to get the router from`next/navigation`
   info: |+
     The Python/FastAPI server is mapped into to Next.js app under /api/.
     This is implemented using next.config.js rewrites to map any request to /api/:path* to the FastAPI API, which is hosted in the /api folder.
@@ -155,113 +158,50 @@
         11|        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         12|        'gradient-conic':
   architecture: |+
-    api/
+    api/    # Based on FastAPI, sqlalchemy (sqlite), Auth0 (fastapi-cloudauth)
       index.py
         >from fastapi import FastAPI
         >from .routers.api_router import api_router
-        >#auth_router
         >app = FastAPI()
         >app.include_router(api_router, prefix="/api/v1")
-        >app.include_router(auth_router, prefix="/api/v1/auth")
 
       routers/
         __init__.py
         api_router.py
           >from fastapi import APIRouter, Depends
           >from ..models import User, Post, Comment, Subreddit, Vote
-          >from .auth_router import manager
+          ># we use fastapi-cloudauth with Auth0 - very important
+          >from fastapi_cloudauth.auth0 import Auth0, Auth0CurrentUser, Auth0Claims
+          >get_current_user = Auth0CurrentUser(domain=os.environ["DOMAIN"],client_id=os.environ["CLIENTID"])
+          >auth = Auth0(domain=os.environ["DOMAIN"], customAPI=os.environ["CUSTOMAPI"])
           >router = APIRouter()
           >@router.post("/post")
-          >def create_post(post: schemas.PostCreate, current_user: User = Depends(manager), db: Session = Depends(get_db)):
+          >def create_post(post: schemas.PostCreate, current_user: Auth0Claims = Depends(get_current_user), db: Session = Depends(get_db)):
           >@router.get("/post/{post_id}")
           >def get_post(post_id: str, db: Session = Depends(get_db)):
           >@router.post("/comment/{post_id}")
-          >def comment_on_post(comment: schemas.CommentCreate, current_user: User = Depends(manager), db: Session = Depends(get_db)):
+          >def comment_on_post(comment: schemas.CommentCreate, current_user: Auth0Claims = Depends(get_current_user), db: Session = Depends(get_db)):
           >@router.post("/subreddit")
-          >def create_subreddit(subreddit: schemas.SubredditCreate, current_user: User = Depends(manager), db: Session = Depends(get_db)):
+          >def create_subreddit(subreddit: schemas.SubredditCreate, current_user: Auth0Claims = Depends(get_current_user), db: Session = Depends(get_db)):
           >@router.get("/subreddit/{subreddit_id}")
           >def get_subreddit(subreddit_id: str, db: Session = Depends(get_db)):
           >@router.post("/subscribe/{subreddit_id}")
-          >def subscribe(subreddit_id: str, current_user: User = Depends(manager), db: Session = Depends(get_db)):
+          >def subscribe(subreddit_id: str, current_user: Auth0Claims = Depends(get_current_user), db: Session = Depends(get_db)):
           >@router.delete("/unsubscribe/{subreddit_id}")
-          >def unsubscribe(subreddit_id: str, current_user: User = Depends(manager), db: Session = Depends(get_db)):
+          >def unsubscribe(subreddit_id: str, current_user: Auth0Claims = Depends(get_current_user), db: Session = Depends(get_db)):
           >@router.post("/upvote/{post_id}")
-          >def upvote(post_id: str, current_user: User = Depends(manager), db: Session = Depends(get_db)):
+          >def upvote(post_id: str, current_user: Auth0Claims = Depends(get_current_user), db: Session = Depends(get_db)):
           >@router.post("/downvote/{post_id}")
-          >def downvote(post_id: str, current_user: User = Depends(manager), db: Session = Depends(get_db)):
-
-        auth_router.py
-          >from fastapi_login import LoginManager
-          >from fastapi.security import OAuth2PasswordRequestForm
-          >from jose import JWTError, jwt
-          >from .. import schemas, crud
-          >SECRET_KEY = "YOUR_SECRET_KEY"
-          >ALGORITHM = "HS256"
-          >manager = LoginManager(SECRET_KEY, '/auth/token')
-          >@manager.user_loader
-          >def load_user(email: str):  # The function to retrieve the user should be here
-          >@router.post("/auth/token")
-          >def login(data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)): # The login function is here
-          >@router.post("/auth/register")
-          >def register(user: schemas.UserCreate, db: Session = Depends(get_db)): # User registration is here
+          >def downvote(post_id: str, current_user: Auth0Claims = Depends(get_current_user), db: Session = Depends(get_db)):
           >@router.get("/me")
-          >def get_profile(current_user: User = Depends(manager)):
-
-      models/
-        __init__.py
-        models.py
-          >from sqlalchemy import Column, Integer, String, Boolean
-          >from sqlalchemy.orm import relationship, declarative_base
-          >from werkzeug.security import generate_password_hash
-          >Base = declarative_base()
-          >class UserBase(BaseModel):
-               # a structure with username and password
-          >class UserInDB(UserBase):
-                   # id, class Config with orm_mode
-          >class User(Base):
-          >    id = Column(Integer, primary_key=True, index=True)
-          >    username = Column(String, unique=True, index=True)
-          >    password = Column(String)
-          >    def set_password(self, password):
-          >        self.password = generate_password_hash(password)
-          ># PostBase, PostInDB
-          >class Post(Base):
-          >    id = Column(Integer, primary_key=True, index=True)
-          >    content = Column(String, nullable=False)
-          >    title = Column(String, nullable=False)
-          >    user_id = Column(Integer, ForeignKey("users.id"))
-          >    subreddit_id = Column(Integer, ForeignKey("subreddits.id"))
-          >    user = relationship("User", back_populates="posts")
-          >    subreddit = relationship("Subreddit", back_populates="posts")
-          >    comments = relationship("Comment", back_populates="post")
-          ># CommentBase, CommentInDB
-          >class Comment(Base):
-          >    id = Column(Integer, primary_key=True, index=True)
-          >    content = Column(String, nullable=False)
-          >    user_id = Column(Integer, ForeignKey("users.id"))
-          >    post_id = Column(Integer, ForeignKey("posts.id"))
-          >    user = relationship("User", back_populates="comments")
-          >    post = relationship("Post", back_populates="comments")
-          ># SubredditBase, SubredditInDB
-          >class Subreddit(Base):
-          >    id = Column(Integer, primary_key=True, index=True)
-          >    name = Column(String, unique=True, index=True)
-          >    description = Column(String)
-          >    user_id = Column(Integer, ForeignKey("users.id"))
-          >    user = relationship("User", back_populates="subreddits")
-          >    posts = relationship("Post", back_populates="subreddit")
-          ># VoteBase, VoteInDB
-          >class Vote(Base):
-          >    user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
-          >    post_id = Column(Integer, ForeignKey("posts.id"), primary_key=True)
-          >    user = relationship("User", back_populates="votes")
-          >    post = relationship("Post", back_populates="votes")
-          >    is_upvote = Column(Boolean)
+          >def get_profile(current_user: Auth0Claims = Depends(get_current_user)):
+          >@router.get("/feed")
+          >def get_feed(current_user: Auth0Claims = Depends(get_current_user), db: Session = Depends(get_db)):
 
       schemas.py
         >from pydantic import BaseModel
         >class UserBase(BaseModel):
-        >    username: str
+        >    name: str
         >class UserCreate(UserBase):
         >    password: str
         >class PostCreate(BaseModel):
@@ -273,12 +213,45 @@
         >    name: str
         >    description: str
 
-      crud.py
-        >from sqlalchemy.orm import Session
-        >from . import models, schemas
-        >def get_user(db: Session, user_id: int):
-        >def get_user_by_username(db: Session, username: str):
-        >def create_user(db: Session, user: schemas.UserCreate):
+      models/
+        __init__.py
+        models.py
+          >from sqlalchemy import Column, Integer, String, Boolean
+          >from sqlalchemy.orm import relationship, declarative_base
+          >from werkzeug.security import generate_password_hash
+          >Base = declarative_base()
+          >class User(Base):    # We use Firebase Auth, so we don't need to store passwords
+          >    id = Column(Integer, primary_key=True, index=True)
+          >    name = Column(String)
+          >class Post(Base):
+          >    id = Column(Integer, primary_key=True, index=True)
+          >    content = Column(String, nullable=False)
+          >    title = Column(String, nullable=False)
+          >    user_id = Column(Integer, ForeignKey("users.id"))
+          >    subreddit_id = Column(Integer, ForeignKey("subreddits.id"))
+          >    user = relationship("User", back_populates="posts")
+          >    subreddit = relationship("Subreddit", back_populates="posts")
+          >    comments = relationship("Comment", back_populates="post")
+          >class Comment(Base):
+          >    id = Column(Integer, primary_key=True, index=True)
+          >    content = Column(String, nullable=False)
+          >    user_id = Column(Integer, ForeignKey("users.id"))
+          >    post_id = Column(Integer, ForeignKey("posts.id"))
+          >    user = relationship("User", back_populates="comments")
+          >    post = relationship("Post", back_populates="comments")
+          >class Subreddit(Base):
+          >    id = Column(Integer, primary_key=True, index=True)
+          >    name = Column(String, unique=True, index=True)
+          >    description = Column(String)
+          >    user_id = Column(Integer, ForeignKey("users.id"))
+          >    user = relationship("User", back_populates="subreddits")
+          >    posts = relationship("Post", back_populates="subreddit")
+          >class Vote(Base):
+          >    user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
+          >    post_id = Column(Integer, ForeignKey("posts.id"), primary_key=True)
+          >    user = relationship("User", back_populates="votes")
+          >    post = relationship("Post", back_populates="votes")
+          >    is_upvote = Column(Boolean)
     
       database.py
         >SQLALCHEMY_DATABASE_URL =
@@ -287,86 +260,83 @@
         >Base = declarative_base()
         >def get_db():
 
-    app/    # Overall, the color theme is blue (primary in tailwind) + white. a lot of elements are rounded boxes with 1rem border radius.
-      page.tsx    # Main page with feed of subscribed subreddits
-        >import { useSelector } from 'react-redux'
-        >import Layout from './components/Layout'
-        >import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
-        >import PostPage from './post/[id]'
-        >import SubredditPage from './subreddit/[id]'
-        >import LoginPage from './login'
-        >import RegisterPage from './register'
-        >export default function Home() { 
-        >  <Layout>
-        >    <Router>
-        >      <Switch>
-        >        <Route path="/post/:id" component={PostPage} />
-        >        <Route path="/subreddit/:id" component={SubredditPage} />
-        >        <Route path="/login" component={LoginPage} />
-        >        <Route path="/register" component={RegisterPage} />
-        >      </Switch>
-        >    </Router>
-        >  </Layout>
-        >}
+    pages/    # Overall, the color theme is red (primary in tailwind) + black + white. a lot of elements are rounded boxes with 1rem border radius.
+      _document.tsx
+        >import { Html, Head, Main, NextScript } from 'next/document'
+        >export default function Document() {
+      _app.tsx
+        >import 'tailwindcss/tailwind.css'
+        >import { Auth0Provider } from '@auth0/auth0-react'
+        >import { useRouter } from 'next/navigation'
+    
+        >import Header from '../app/components/Header'
+        >export default function RedditApp({ Component, pageProps }: AppProps) {
+        >      <Auth0Provider clientId=... domain=... authorizationParams={{redirectUri: window.location.origin}}
+        >        <Header />
+        >        <Component {...pageProps} />
+      index.tsx    # Main page with feed of subscribed subreddits
+        >import Post from '../app/components/Post'
+        >import axios from 'axios'
+        >export default function IndexPage() {
+        >  /* Get the feed posts using axios and the corresponding API method, display using the Post component */
       post/[id].tsx    # Page for viewing, commenting on, upvoting and downvoting a post
-          >import Layout from 'components/Layout'
-          >export default function PostPage() { 
-          >  /* Use useRouter to fetch and display post based on post id */
-          >  /* Display post with Post component */
-          >  /* Display comments with Comment component in a nested list */
-          >}
+        >import Post from '../app/components/Post'
+        >export default function PostPage() { 
+        >  /* Use axios to fetch from the API based on post id */
+        >  /* Display post with Post component */
+        >  /* Display comments with Comment component in a nested list */
+        >}
 
       subreddit/[id].tsx   # Page for viewing subreddit's posts, subscribe to subreddit
-        >import Layout from './components/Layout'
+        >import Post from '../app/components/Post'
+        >import SubscriptionButton from '../app/components/SubscriptionButton'
+        >import CreatePost from '../app/components/CreatePost'
         >export default function SubredditPage() { 
-        >  /* Use useRouter to fetch and display subreddit's posts, handle subscription */
+        >  /* Use axios to fetch from the API based on subreddit id */
         >  /* Display subreddit's posts with Post component in a scrollable list */
         >  /* Display subscription button with SubscriptionButton component */
         >}
 
-      login.tsx  # Page for logging in
-        >import Layout from './components/Layout'
-        >import LoginForm from './components/LoginForm'
-        >export default function LoginPage() { 
-        >  /* Use Layout component */
-        >  /* Include LoginForm component for users to login */
+    app    # Frontend based on Next.js and Tailwind
+      _app.tsx
+        >import { Auth0Provider } from '@auth0/auth0-react'
+        >export default function App({ Component, pageProps }) {
+        >  return (
+        >    <Auth0Provider
+        >      domain={process.env.AUTH0_DOMAIN}
+        >      clientId={process.env.AUTH0_CLIENT_ID}
+        >      redirectUri={window.location.origin}
+        >    >
+        >      <Header/>
+        >        <Component {...pageProps} />
+        >    </Auth0Provider
+        >  )
         >}
-
-      register.tsx  # Page for registering
-        >import Layout from './components/Layout'
-        >import RegisterForm from './components/RegisterForm'
-        >export default function RegisterPage() { 
-        >  /* Use Layout component */
-        >  /* Include RegisterForm component for users to register */
-        >}
-
+      _document.tsx
+      api.tsx    # Axios instance for API calls
+           >import axios from 'axios'
+           >export default api = axios.create({ baseURL: 'http://localhost:8000' })
+           >export const setAuthToken = (token) => { api.defaults.headers.common['Authorization'] = `Bearer ${token}` }
+           >export const clearAuthToken = () => { delete api.defaults.headers.common['Authorization'] }
+           >// types
+           >export interface PostType { id: number, title: string, content: string, subreddit: Subreddit, user: User }
+           >export interface CommentType { id: number, content: string, user: User }
+           >export interface SubredditType { id: number, name: string, description: string, user: User }
+           >export interface UserType { id: number, name: string }
+           >export interface VoteType { user_id: number, post_id: number, is_upvote: boolean }
       components/
-        Layout.tsx  # Common layout component for consistency
-          >export default function Layout({ children }) { 
-          >  /* Include Header component for navigation */
-          >  /* Wrap children with main tag for main content */
-          >}
-
         Header.tsx  # Common header component for navigation
+          >const { isAuthenticated, user, logout, loginWithPopup } = useAuth0()
           >import Link from 'next/link'
           >export default function Header() { 
-          >  /* Include links to home, login, register pages. Logo on the left, user's profile on the right */
+          >  /* Logo on the left, user's profile (user.name) with logout or register+login on the right */
           >}
 
-        LoginForm.tsx  # Login form component
-          >export default function LoginForm() { 
-          >  /* POST form to /login with username and password */
-          >  /* If successful, redirect to home page */
-          >}
-
-        RegisterForm.tsx  # Registration form component
-          >export default function RegisterForm() { 
-          >  /* POST form to /register with username and password */
-          >  /* If successful, redirect to home page */
-          >}
-
-        Post.tsx  # Post component for displaying a single post
+        Post.tsx  # Post component for displaying a single post, with upvote/downvote buttons
+          >import UpvoteButton from './UpvoteButton'
+          >import DownvoteButton from './DownvoteButton'
           >export default function Post({ post }) { 
+          >  /* Display post title, subreddit, and author */
           >  /* Display post content */
           >  /* Include UpvoteButton and DownvoteButton components to vote on the post */
           >}
@@ -392,6 +362,12 @@
           >export default function SubscriptionButton({ subredditId }) { 
           >  /* POST to /subscribe/{subredditId} when clicked */
           >  /* If successful, update subscription status */
+          >}
+    
+        CreatePost.tsx  # Create post component
+          >export default function CreatePost({ subredditId }) {
+          >  /* POST to /post when submitted */
+          >  /* If successful, redirect to post page */
           >}
 
       styles/

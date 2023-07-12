@@ -20,7 +20,7 @@ from langchain.schema import AgentAction, AgentFinish
 
 from clippy.tools.tool import WarningTool
 from .prompts import format_description
-from ..tools.utils import trim_extra
+from ..tools.utils import trim_extra, ask_for_feedback
 
 long_warning = (
     "WARNING: You have been working for a very long time. Please, finish ASAP. "
@@ -168,7 +168,7 @@ class CustomPromptTemplate(StringPromptTemplate):
     tools: List[Tool]
     agent_toolnames: List[str]
     max_context_length: int = 4
-    keep_n_last_thoughts: int = 1
+    keep_n_last_thoughts: int = 2
     current_context_length: int = 0
     model_steps_processed: int = 0
     all_steps_processed: int = 0
@@ -184,9 +184,9 @@ class CustomPromptTemplate(StringPromptTemplate):
 
     def thought_log(self, thoughts: list[(AgentAction, str)]) -> str:
         result = ""
-        for action, aresult in thoughts:
+        for i, (action, aresult) in enumerate(thoughts):
             if self.my_summarize_agent:
-                aresult = trim_extra(aresult, 2000)
+                aresult = trim_extra(aresult, 1300 if i != len(thoughts) - 1 else 1750)
             if action.tool == "WarnAgent":
                 result += action.log + f"\nSystem note: {aresult}\n"
             elif action.tool == "AgentFeedback":
@@ -251,6 +251,7 @@ class CustomPromptTemplate(StringPromptTemplate):
         # print("Prompt:\n\n" + self.template.format(**kwargs) + "\n\n\n")
         result = remove_surrogates(
             remove_project_summaries(self.template.format(**kwargs).replace('{tools}', kwargs['tools'])))
+        result = trim_extra(result, 25000)
         if self.hook:
             self.hook(self)
         if self.project and os.path.exists(self.project.path):
@@ -286,13 +287,14 @@ class BaseMinion:
             available_tools,
             model: str = "gpt-4",
             max_iterations: int = 50,
+            allow_feedback: bool = False,
     ) -> None:
         llm = get_model(model)
 
         agent_toolnames = [tool.name for tool in available_tools]
         available_tools.append(WarningTool().get_tool())
 
-        prompt = CustomPromptTemplate(
+        self.prompt = CustomPromptTemplate(
             template=base_prompt,
             tools=available_tools,
             input_variables=extract_variable_names(
@@ -301,7 +303,7 @@ class BaseMinion:
             agent_toolnames=agent_toolnames,
         )
 
-        llm_chain = LLMChain(llm=llm, prompt=prompt)
+        llm_chain = LLMChain(llm=llm, prompt=self.prompt)
 
         output_parser = CustomOutputParser()
 
@@ -318,14 +320,21 @@ class BaseMinion:
             verbose=True,
             max_iterations=max_iterations,
         )
+        self.allow_feedback = allow_feedback
 
     def run(self, **kwargs):
         kwargs["feedback"] = kwargs.get("feedback", "")
         kwargs["format_description"] = format_description
-        return (
-                self.agent_executor.run(**kwargs)
-                or "No result. The execution was probably unsuccessful."
-        )
+        try:
+            return (
+                    self.agent_executor.run(**kwargs)
+                    or "No result. The execution was probably unsuccessful."
+            )
+        except KeyboardInterrupt:
+            feedback = ask_for_feedback()
+            if feedback:
+                self.prompt.intermediate_steps += [feedback]
+            return self.run(**kwargs)
 
 
 @dataclass

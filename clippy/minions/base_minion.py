@@ -167,7 +167,7 @@ class CustomPromptTemplate(StringPromptTemplate):
     # The list of tools available
     tools: List[Tool]
     agent_toolnames: List[str]
-    max_context_length: int = 4
+    max_context_length: int = 5
     keep_n_last_thoughts: int = 2
     current_context_length: int = 0
     model_steps_processed: int = 0
@@ -225,7 +225,7 @@ class CustomPromptTemplate(StringPromptTemplate):
 
             if self.my_summarize_agent:
                 kwargs["agent_scratchpad"] = (
-                        "Here is a summary of what has happened:\n" + trim_extra(self.last_summary, 2000)
+                        "Here is a summary of what has happened:\n" + trim_extra(self.last_summary, 2700, 1900)
                 )
                 kwargs["agent_scratchpad"] += "\nEND OF SUMMARY\n"
             else:

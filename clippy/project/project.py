@@ -77,7 +77,7 @@ class Project:
                                          text=True, cwd=self.path)
             except Exception as e:
                 return f"Linter error: {e}"
-            return trim_extra(process.stdout.strip(), 800)
+            return trim_extra(process.stdout.strip() + process.stderr.strip(), 1050, end_length=700)
         return lint_project(path)
 
     def lint_file(self, path: str):

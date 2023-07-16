@@ -1,5 +1,8 @@
+import os
+
 from langchain.agents import Tool
 from langchain.tools import BaseTool
+from langchain.utilities import SerpAPIWrapper
 
 from clippy.project import Project
 from .architectural import Remember, TemplateInfo, TemplateSetup, SetCI, DeclareArchitecture
@@ -33,12 +36,7 @@ def fixed_tools(project: Project) -> list[SimpleTool]:
 
 def get_tools(project: Project, try_structured: bool = False) -> list[BaseTool]:
     tools = [
-                # Tool(
-                #     name="Google Search",
-                #     func=search.run,
-                #     description="useful for when you need to answer simple questions and get a simple answer. "
-                #     "You cannot read websites or click on any links or read any articles.",
-                # ),
+
                 Tool(
                     name="Bash",
                     func=RunBash(workdir=project.path).run,
@@ -73,4 +71,11 @@ def get_tools(project: Project, try_structured: bool = False) -> list[BaseTool]:
                 BashBackgroundSessions(project.path).get_tool(try_structured),
                 DeclareArchitecture(project).get_tool(try_structured),
             ] + [tool_.get_tool(try_structured) for tool_ in fixed_tools(project)]
+    if os.environ.get('SERPAPI_API_KEY'):
+        tools.append(Tool(
+            name="Search",
+            func=SerpAPIWrapper().run,
+            description="useful for when you need to answer simple questions and get a simple answer. "
+                        "You cannot read websites or click on any links or read any articles.",
+        ))
     return tools

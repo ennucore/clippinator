@@ -40,7 +40,7 @@ class Taskmaster:
 
         agent_tool_names = [
             'DeclareArchitecture', 'ReadFile', 'WriteFile', 'Bash', 'BashBackground', 'Human',
-            'Remember', 'TemplateInfo', 'TemplateSetup', 'SetCI'
+            'Remember', 'TemplateInfo', 'TemplateSetup', 'SetCI', 'Search'
         ]
 
         if not inner_taskmaster:

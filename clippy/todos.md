@@ -19,6 +19,6 @@
 - [X] Linter warnings at Patch and Write
 - [X] Better patches (just replacing lines)
 - [X] Integrate ESLint
-- [ ] Bring back the search tool
-- [ ] Maybe feedback in specialized agents
+- [X] Bring back the search tool
+- [ ] Maybe auto feedback in specialized agents
 - [ ] Todos for Taskmaster

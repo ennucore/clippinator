@@ -169,41 +169,40 @@
         __init__.py
         api_router.py
           >from fastapi import APIRouter, Depends
-          >from ..models import User, Post, Comment, Subreddit, Vote
-          ># we use fastapi-cloudauth with Auth0 - very important
-          >from fastapi_cloudauth.auth0 import Auth0, Auth0CurrentUser, Auth0Claims
-          >get_current_user = Auth0CurrentUser(domain=os.environ["DOMAIN"],client_id=os.environ["CLIENTID"])
-          >auth = Auth0(domain=os.environ["DOMAIN"], customAPI=os.environ["CUSTOMAPI"])
+          >from ..models import Post, Comment, Subreddit, Vote
+          ># we use PropelAuth - very important
+          >from propelauth_fastapi import init_auth
+          >from propelauth_py.user import User
+          >auth = init_auth(os.getenv("PROPELAUTH_AUTH_URL"), os.getenv("PROPELAUTH_API_KEY"))
+          >get_current_user = auth.require_user
           >router = APIRouter()
           >@router.post("/post")
-          >def create_post(post: schemas.PostCreate, current_user: Auth0Claims = Depends(get_current_user), db: Session = Depends(get_db)):
+          >def create_post(post: schemas.PostCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
           >@router.get("/post/{post_id}")
           >def get_post(post_id: str, db: Session = Depends(get_db)):
           >@router.post("/comment/{post_id}")
-          >def comment_on_post(comment: schemas.CommentCreate, current_user: Auth0Claims = Depends(get_current_user), db: Session = Depends(get_db)):
+          >def comment_on_post(comment: schemas.CommentCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
           >@router.post("/subreddit")
-          >def create_subreddit(subreddit: schemas.SubredditCreate, current_user: Auth0Claims = Depends(get_current_user), db: Session = Depends(get_db)):
+          >def create_subreddit(subreddit: schemas.SubredditCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
           >@router.get("/subreddit/{subreddit_id}")
           >def get_subreddit(subreddit_id: str, db: Session = Depends(get_db)):
           >@router.post("/subscribe/{subreddit_id}")
-          >def subscribe(subreddit_id: str, current_user: Auth0Claims = Depends(get_current_user), db: Session = Depends(get_db)):
+          >def subscribe(subreddit_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
           >@router.delete("/unsubscribe/{subreddit_id}")
-          >def unsubscribe(subreddit_id: str, current_user: Auth0Claims = Depends(get_current_user), db: Session = Depends(get_db)):
+          >def unsubscribe(subreddit_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
           >@router.post("/upvote/{post_id}")
-          >def upvote(post_id: str, current_user: Auth0Claims = Depends(get_current_user), db: Session = Depends(get_db)):
+          >def upvote(post_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
           >@router.post("/downvote/{post_id}")
-          >def downvote(post_id: str, current_user: Auth0Claims = Depends(get_current_user), db: Session = Depends(get_db)):
+          >def downvote(post_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
           >@router.get("/me")
-          >def get_profile(current_user: Auth0Claims = Depends(get_current_user)):
+          >def get_profile(current_user: User = Depends(get_current_user)):
           >@router.get("/feed")
-          >def get_feed(current_user: Auth0Claims = Depends(get_current_user), db: Session = Depends(get_db)):
+          >def get_feed(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
 
       schemas.py
         >from pydantic import BaseModel
         >class UserBase(BaseModel):
-        >    name: str
-        >class UserCreate(UserBase):
-        >    password: str
+        >    username: str
         >class PostCreate(BaseModel):
         >    title: str
         >    content: str
@@ -261,17 +260,16 @@
         >def get_db():
 
     pages/    # Overall, the color theme is red (primary in tailwind) + black + white. a lot of elements are rounded boxes with 1rem border radius.
-      _document.tsx
+      # When need to make api requests, wrap the component in withAuthInfo() from @propelauth/react and use the `accessToken` prop to make requests.
+      document.tsx
         >import { Html, Head, Main, NextScript } from 'next/document'
         >export default function Document() {
       _app.tsx
         >import 'tailwindcss/tailwind.css'
-        >import { Auth0Provider } from '@auth0/auth0-react'
         >import { useRouter } from 'next/navigation'
     
         >import Header from '../app/components/Header'
         >export default function RedditApp({ Component, pageProps }: AppProps) {
-        >      <Auth0Provider clientId=... domain=... authorizationParams={{redirectUri: window.location.origin}}
         >        <Header />
         >        <Component {...pageProps} />
       index.tsx    # Main page with feed of subscribed subreddits
@@ -296,38 +294,34 @@
         >  /* Display subreddit's posts with Post component in a scrollable list */
         >  /* Display subscription button with SubscriptionButton component */
         >}
+    .env # PROPELAUTH_AUTH_URL, PROPELAUTH_API_KEY
 
     app    # Frontend based on Next.js and Tailwind
-      _app.tsx
-        >import { Auth0Provider } from '@auth0/auth0-react'
-        >export default function App({ Component, pageProps }) {
-        >  return (
-        >    <Auth0Provider
-        >      domain={process.env.AUTH0_DOMAIN}
-        >      clientId={process.env.AUTH0_CLIENT_ID}
-        >      redirectUri={window.location.origin}
-        >    >
-        >      <Header/>
-        >        <Component {...pageProps} />
-        >    </Auth0Provider
-        >  )
-        >}
-      _document.tsx
       api.tsx    # Axios instance for API calls
            >import axios from 'axios'
            >export default api = axios.create({ baseURL: 'http://localhost:8000' })
-           >export const setAuthToken = (token) => { api.defaults.headers.common['Authorization'] = `Bearer ${token}` }
-           >export const clearAuthToken = () => { delete api.defaults.headers.common['Authorization'] }
+           >// When a token is passed, add it to the Authorization header as a Bearer token
            >// types
            >export interface PostType { id: number, title: string, content: string, subreddit: Subreddit, user: User }
            >export interface CommentType { id: number, content: string, user: User }
            >export interface SubredditType { id: number, name: string, description: string, user: User }
            >export interface UserType { id: number, name: string }
            >export interface VoteType { user_id: number, post_id: number, is_upvote: boolean }
+           >// api methods
+           >export async function getPosts(token: string) { return (await api.get<PostType[]>('/posts')).data }
+           >export async function getPost(id: number, token: string) { return (await api.get<PostType>(`/posts/${id}`)).data }
+           >export async function createPost(title: string, content: string, subreddit_id: number, token: string) { return (await api.post<PostType>('/posts', { title, content, subreddit_id })).data }
+           >export async function getComments(post_id: number, token: string) { return (await api.get<CommentType[]>(`/posts/${post_id}/comments`)).data }
+           >export async function createComment(content: string, post_id: number, token: string) { return (await api.post<CommentType>('/comments', { content, post_id })).data }
+           >export async function getSubreddits(token: string) { return (await api.get<SubredditType[]>('/subreddits')).data }
+           >export async function getSubreddit(id: number, token: string) { return (await api.get<SubredditType>(`/subreddits/${id}`)).data }
+           >export async function createSubreddit(name: string, description: string, token: string) { return (await api.post<SubredditType>('/subreddits', { name, description })).data }
+    
       components/
         Header.tsx  # Common header component for navigation
-          >const { isAuthenticated, user, logout, loginWithPopup } = useAuth0()
           >import Link from 'next/link'
+          >const logoutFn = useLogoutFunction()
+          >const {redirectToSignupPage, redirectToLoginPage, redirectToAccountPage} = useRedirectFunctions()
           >export default function Header() { 
           >  /* Logo on the left, user's profile (user.name) with logout or register+login on the right */
           >}

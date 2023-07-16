@@ -8,7 +8,8 @@ _A code assistant_
 
 1. Install [Poetry](https://python-poetry.org/docs/#installation).
 2. Clone this repository.
-3. Add the api key (OpenAI) to `.env` file: `OPENAI_API_KEY=...`.
+3. Add the api key (OpenAI) to `.env` file: `OPENAI_API_KEY=...`. Optionally, you can add your SerpAPI
+   key to allow the model to use search: `SERPAPI_API_KEY=`
 4. Install [ctags](https://docs.ctags.io/en/latest/building.html).
 5. For pylint, install it and [pylint-venv](https://github.com/jgosmann/pylint-venv/).
 6. Install dependencies: `poetry install`.

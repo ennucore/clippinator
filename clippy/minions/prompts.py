@@ -72,7 +72,6 @@ get_specialized_prompt = lambda special_part: (
         + "\nBegin!\n{agent_scratchpad}"
 )
 
-
 get_selfcall_objective = lambda initial_objective, initial_architecture, sub_folder: (
         f"You was responsible for the project with the objective: **{initial_objective}.**\n" +
         f"Here was the planned full-project architecture:\n{initial_architecture}.\n" +
@@ -378,6 +377,7 @@ Here are the agents you have:
 {specialized_minions}
 
 AVOID USING THE TOOLS OR DOING THINGS YOURSELF, DELEGATE THE TASKS TO THE AGENTS
+EVERY TIME YOU USE TOOLS IT BRINGS US A LITTLE BIT CLOSER TO COMPLETE DOOM
 
 Work until you have completely achieved the objective (and tested), do not give a Final Result until then. If you do, we will beat you with a stick.
 Usually, this is your workflow: come up with the architecture using the architect, create a plan to implement it so that you have intermediate working versions, then delegate implementing it to the writer and frontender in big chunks, make sure it's running when you have intermediate modules, then test it with the QA agent, then give the final result.

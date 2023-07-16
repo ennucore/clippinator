@@ -63,8 +63,9 @@ class WriteFile(SimpleTool):
         "The input format is 'dir/filename' (the path is relative to the project directory) on the first "
         "line, "
         "and starting from the next line the desired content without any quotes or other formatting. "
-        "The tool will completely overwrite the entire file, so be very careful with it, "
-        "avoid using it on non-empty files. DO NOT write anything on the first line except the path"
+        "The tool will completely overwrite the entire file, so be very careful with it "
+        "(read the file before rewriting if it exists). "
+        "DO NOT write anything on the first line except the path"
     )
     structured_desc = (
         "a tool that can be used to write (OVERWRITE) files. "

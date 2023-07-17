@@ -1,8 +1,10 @@
-![](clippy.jpg)
+<img src="clippy.jpg" width="300"></img>
 
 # Clippy
 
 _A code assistant_
+
+[Twitter thread](https://twitter.com/ennucore/status/1680971027931693063)
 
 ### Getting started
 

@@ -1,5 +1,7 @@
 ---
 - name: "Writer"
+  use-openai-functions: false
+  model: "claude-2"
   description: "implements a part of the architecture in a new or small file. Example task: 'Implement example.py according to the architecture'. Prefer using this agent when appropriate. It can even implement several (max 2-3) connected files, but only a couple of specified files."
   prompt: |+
     Look at the architecture, then implement it using WriteFile. If the file already exists, read it first, then rewrite it.
@@ -84,6 +86,8 @@
   tool_names: [ "DeclareArchitecture", "ReadFile", "Bash", "SetCI", "Human", "GetPage", "TemplateInfo" ]
 - name: "Frontender"
   description: "implements a frontend-related part of the architecture in a new or small file. Example task: 'Implement index.html and base.html according to the architecture'. Prefer using this agent for HTML, CSS, etc.. It can even implement several (max 2-3) connected files, but only a couple of specified files."
+  use-openai-functions: false
+  model: "claude-2"
   prompt: |+
     If you are asked to edit something, read the file first. Also, read all other relevant files.
     Look at the architecture, then implement it using WriteFile. If the file already exists, read it first, then rewrite it.
@@ -138,6 +142,8 @@
   description: "Edits a file - usually, to add some new functions or classes to it. Use **only** if the file is already pretty big (>200 lines)."
   tool_names: [ "ReadFile", "WriteFile", "Bash", "Remember", "GetPage" ]
   #  use-openai-functions: false
+  use-openai-functions: false
+  model: "claude-2"
   prompt: |+
     Look at the architecture and the current code in the file, then add the new functionality to the file.
     READ THE FILE BEFORE REWRITING IT

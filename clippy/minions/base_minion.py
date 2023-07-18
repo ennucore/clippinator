@@ -14,7 +14,7 @@ from langchain.agents import (
     AgentOutputParser,
 )
 from langchain.agents.openai_functions_agent.base import OpenAIFunctionsAgent
-from langchain.chat_models import ChatOpenAI
+from langchain.chat_models import ChatOpenAI, ChatAnthropic
 from langchain.prompts import StringPromptTemplate
 from langchain.schema import AgentAction, AgentFinish
 
@@ -77,7 +77,8 @@ class CustomOutputParser(AgentOutputParser):
             else:
                 return AgentAction(
                     tool="WarnAgent",
-                    tool_input="Continue with your next thought or action. Do not repeat yourself. \n",
+                    tool_input="Continue with your next thought or action. Do not repeat yourself. "
+                               "When you're done, write 'Final Result:'. \n",
                     log=llm_output,
                 )
 
@@ -134,9 +135,11 @@ def extract_variable_names(prompt: str, interaction_enabled: bool = False):
     return variable_names
 
 
-def get_model(model: str = "gpt-3.5-turbo"):
+def get_model(model: str = "gpt-4"):
+    if model.startswith('claude'):
+        return ChatAnthropic(model=model, max_tokens_to_sample=5500)
     return ChatOpenAI(
-        temperature=0 if model != "gpt-3.5-turbo" else 0.7,
+        temperature=0.05 if model != "gpt-3.5-turbo" else 0.7,
         model_name=model,
         request_timeout=320,
     )
@@ -271,14 +274,6 @@ def extract_variable_names(prompt: str, interaction_enabled: bool = False):
     return variable_names
 
 
-def get_model(model: str = "gpt-4"):
-    return ChatOpenAI(
-        temperature=0.05,
-        model_name=model,
-        request_timeout=320,
-    )
-
-
 @dataclass
 class BaseMinion:
     def __init__(
@@ -325,6 +320,11 @@ class BaseMinion:
     def run(self, **kwargs):
         kwargs["feedback"] = kwargs.get("feedback", "")
         kwargs["format_description"] = format_description
+        if not self.allow_feedback:
+            return (
+                    self.agent_executor.run(**kwargs)
+                    or "No result. The execution was probably unsuccessful."
+            )
         try:
             return (
                     self.agent_executor.run(**kwargs)

@@ -34,7 +34,7 @@ class SpecializedExecutioner(Executioner):
 
 
 def specialized_executioner(name: str, description: str, prompt: str,
-                            tool_names: list[str],
+                            tool_names: list[str], model: str = 'gpt-4',
                             use_openai_functions: bool = True, allow_feedback: bool = False):
     class SpecializedExecutionerN(SpecializedExecutioner):
         def __init__(self, project: Project):
@@ -45,7 +45,7 @@ def specialized_executioner(name: str, description: str, prompt: str,
                 self.execution_agent = BaseMinionOpenAI(get_specialized_prompt(prompt), spe_tools)
             else:
                 self.execution_agent = BaseMinion(get_specialized_prompt(prompt), spe_tools,
-                                                  allow_feedback=allow_feedback)
+                                                  allow_feedback=allow_feedback, model=model)
             self.name = name
             self.description = description
 

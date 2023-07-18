@@ -30,7 +30,7 @@ Final Result: the final result of the task. Write what you did, be reasonably de
 "AResult:" never comes just after "Thought:".
 "Action Input:" can come only after "Action:" - and always does.
 You need to have a "Final Result:", even if the result is trivial. Never stop right after finishing your thought. You should proceed with your next thought or action. 
-Everything you do should be one of: Action, Action Input, AResult, Final Result. 
+Everything you do should be one of: Action, Action Input, AResult, Final Result. You have to include the exact words "Action:", "Action Input:", "AResult:", "Final Result:".
 Sometimes you will see a "System note". It isn't produced by you, it is a note from the system. You should pay attention to it and continue your work. 
 """
 

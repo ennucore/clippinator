@@ -31,15 +31,16 @@ class Taskmaster:
             inner_taskmaster: bool = False
     ):
         self.project = project
+        self.length_norm = 5000 if model.startswith('claude') else 1000
         self.specialized_executioners = get_specialized_executioners(project)
         self.default_executioner = Executioner(project)
         self.inner_taskmaster = inner_taskmaster
         llm = get_model(model)
-        tools = get_tools(project)
+        tools = get_tools(project, length_norm=self.length_norm)
         tools.append(SelfCall(project).get_tool(try_structured=False))
 
         agent_tool_names = [
-            'DeclareArchitecture', 'ReadFile', 'WriteFile', 'Bash', 'BashBackground', 'Human',
+            'DeclareArchitecture', 'ReadFile', 'Bash', 'BashBackground', 'Human',
             'Remember', 'TemplateInfo', 'TemplateSetup', 'SetCI', 'Search'
         ]
 
@@ -48,7 +49,7 @@ class Taskmaster:
 
         tools.append(
             Subagent(
-                project, self.specialized_executioners, self.default_executioner
+                project, self.specialized_executioners, self.default_executioner, length_norm=self.length_norm
             ).get_tool()
         )
         tools.append(WarningTool().get_tool())
@@ -87,6 +88,7 @@ class Taskmaster:
             minion.expl() for minion in self.specialized_executioners.values()
         )
         kwargs["format_description"] = format_description
+        kwargs['length_norm'] = self.length_norm
         try:
             return (
                     self.agent_executor.run(**kwargs)

@@ -115,7 +115,7 @@ class BashBackgroundSessions(SimpleTool):
     name = "BashBackground"
     description = "A tool that can be used to run bash commands in the background."
 
-    def __init__(self, wd: str):
+    def __init__(self, wd: str, length_norm: int = 1000):
         self.workdir = wd
         self.description = (
             "A tool that can be used to start bash processes in the background. "
@@ -128,6 +128,7 @@ class BashBackgroundSessions(SimpleTool):
         self.description += 'Current processes:\n'
         for process in bash_processes:
             self.description += f'    - pid: {process["pr"].pid}| `{process["args"][:50]}`\n'
+        self.length_norm = length_norm
 
     def func(self, args: str) -> str:
         global bash_processes
@@ -183,7 +184,7 @@ class BashBackgroundSessions(SimpleTool):
             time.sleep(8)
             # Read current output
             ready_to_read, _, _ = select.select([process.stdout], [], [], 0)
-            output = trim_extra('\n'.join([part.read() for part in ready_to_read]))
+            output = trim_extra('\n'.join([part.read() for part in ready_to_read]), self.length_norm * 2)
             return f"Started process with pid {process.pid}.\n```\n{output}\n```\n"
 
 

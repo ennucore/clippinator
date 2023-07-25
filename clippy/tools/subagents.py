@@ -24,10 +24,12 @@ class Subagent(SimpleTool):
             project: Project,
             agents: dict[str, SpecializedExecutioner],
             default: Executioner,
+            length_norm: int = 1000,
     ):
         self.agents = agents
         self.default = default
         self.project = project
+        self.length_norm = length_norm
         super().__init__()
 
     def func(self, args: str) -> str:
@@ -44,7 +46,7 @@ class Subagent(SimpleTool):
             result = runner.execute(task, self.project)
         except Exception as e:
             result = f"Error running agent, retry with another task or agent: {e}"
-        result = trim_extra(result, 1200)
+        result = trim_extra(result, self.length_norm * 1.2)
         new_memories = [mem for mem in self.project.memories if mem not in prev_memories]
         if agent == "Architect":
             if yes_no_prompt('Do you want to edit the project architecture?'):

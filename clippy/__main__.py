@@ -26,19 +26,19 @@ def taskmaster(project_path: str, objective: str = ""):
         if not objective and os.path.exists(os.path.join(project_path, ".clippy.pkl")):
             print(os.path.join(project_path, ".clippy.pkl"))
             tm = Taskmaster.load_from_file(os.path.join(project_path, ".clippy.pkl"))
-            tm.run(**tm.project.prompt_fields())
+            tm.run(**tm.project.prompt_fields(tm.length_norm))
             return
         elif os.path.exists(os.path.join(project_path, ".clippy.pkl")):
             tm = Taskmaster.load_from_file(os.path.join(project_path, ".clippy.pkl"))
             project = tm.project
             project.objective = objective
             tm = Taskmaster(project)
-            tm.run(**project.prompt_fields())
+            tm.run(**project.prompt_fields(tm.length_norm))
             return
         os.makedirs(project_path, exist_ok=True)
         project = Project(project_path, objective)
         tm = Taskmaster(project)
-        tm.run(**project.prompt_fields())
+        tm.run(**project.prompt_fields(tm.length_norm))
     except KeyboardInterrupt:
         print("Interrupted. Agent is stopped.")
 

@@ -39,7 +39,9 @@ def specialized_executioner(name: str, description: str, prompt: str,
     class SpecializedExecutionerN(SpecializedExecutioner):
         def __init__(self, project: Project):
             super().__init__(project)
-            all_tools = tools.get_tools(project, use_openai_functions) + [DeclareArchitecture(project).get_tool()]
+            length_norm = 5000 if model.startswith('claude') else 1000
+            all_tools = tools.get_tools(project, use_openai_functions, length_norm) \
+                        + [DeclareArchitecture(project).get_tool()]
             spe_tools = [tool for tool in all_tools if tool.name in tool_names]
             if use_openai_functions:
                 self.execution_agent = BaseMinionOpenAI(get_specialized_prompt(prompt), spe_tools)

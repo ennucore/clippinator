@@ -19,7 +19,6 @@ def fixed_tools(project: Project) -> list[SimpleTool]:
     if project.path in tool_cache:
         return tool_cache[project.path]
     result = [
-        ReadFile(project.path),
         PatchFile(project.path),
         SummarizeFile(project.path),
         HumanInputTool(),
@@ -34,7 +33,7 @@ def fixed_tools(project: Project) -> list[SimpleTool]:
     return result
 
 
-def get_tools(project: Project, try_structured: bool = False) -> list[BaseTool]:
+def get_tools(project: Project, try_structured: bool = False, length_norm: int = 1000) -> list[BaseTool]:
     tools = [
 
                 Tool(
@@ -65,10 +64,11 @@ def get_tools(project: Project, try_structured: bool = False) -> list[BaseTool]:
                 # ),
 
                 WriteFile(project).get_tool(try_structured),
+                ReadFile(project.path, length_norm=length_norm).get_tool(try_structured),
                 Remember(project).get_tool(try_structured),
                 SetCI(project).get_tool(try_structured),
                 # SearchInFiles(project.path).get_tool(),
-                BashBackgroundSessions(project.path).get_tool(try_structured),
+                BashBackgroundSessions(project.path, length_norm=length_norm).get_tool(try_structured),
                 DeclareArchitecture(project).get_tool(try_structured),
             ] + [tool_.get_tool(try_structured) for tool_ in fixed_tools(project)]
     if os.environ.get('SERPAPI_API_KEY'):

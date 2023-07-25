@@ -55,6 +55,12 @@ class CustomOutputParser(AgentOutputParser):
                 return_values={"output": llm_output.split("Final Result:")[-1].strip()},
                 log=llm_output,
             )
+        elif "\nAction" not in llm_output and "final result" in llm_output.lower():
+            return AgentAction(
+                tool="WarnAgent",
+                tool_input="Write 'Final Result:' after you've completed all your actions.",
+                log=llm_output,
+            )
         # Parse out the action and action input
         regex = r"Action\s*\d*\s*:(.*?)\nAction\s*\d*\s*Input\s*\d*\s*:[\s]*(.*)"
         match = re.search(regex, llm_output, re.DOTALL)
@@ -199,6 +205,7 @@ class CustomPromptTemplate(StringPromptTemplate):
         return result
 
     def format(self, **kwargs) -> str:
+        length_norm = kwargs.get("length_norm", 1000)
         # Get the intermediate steps (AgentAction, AResult tuples)
         # Format them in a particular way
         if 'intermediate_steps' in kwargs:
@@ -228,7 +235,8 @@ class CustomPromptTemplate(StringPromptTemplate):
 
             if self.my_summarize_agent:
                 kwargs["agent_scratchpad"] = (
-                        "Here is a summary of what has happened:\n" + trim_extra(self.last_summary, 2700, 1900)
+                        "Here is a summary of what has happened:\n" + trim_extra(self.last_summary, 2.7 * length_norm,
+                                                                                 2 * length_norm)
                 )
                 kwargs["agent_scratchpad"] += "\nEND OF SUMMARY\n"
             else:
@@ -249,12 +257,12 @@ class CustomPromptTemplate(StringPromptTemplate):
         )
         kwargs["tool_names"] = self.agent_toolnames
         if self.project:
-            for key, value in self.project.prompt_fields().items():
+            for key, value in self.project.prompt_fields(length_norm).items():
                 kwargs[key] = value
         # print("Prompt:\n\n" + self.template.format(**kwargs) + "\n\n\n")
         result = remove_surrogates(
             remove_project_summaries(self.template.format(**kwargs).replace('{tools}', kwargs['tools'])))
-        result = trim_extra(result, 25000)
+        result = trim_extra(result, 25 * length_norm)
         if self.hook:
             self.hook(self)
         if self.project and os.path.exists(self.project.path):
@@ -288,6 +296,7 @@ class BaseMinion:
 
         agent_toolnames = [tool.name for tool in available_tools]
         available_tools.append(WarningTool().get_tool())
+        self.length_norm = 5000 if model.startswith("claude") else 1000
 
         self.prompt = CustomPromptTemplate(
             template=base_prompt,
@@ -320,6 +329,7 @@ class BaseMinion:
     def run(self, **kwargs):
         kwargs["feedback"] = kwargs.get("feedback", "")
         kwargs["format_description"] = format_description
+        kwargs["length_norm"] = self.length_norm
         if not self.allow_feedback:
             return (
                     self.agent_executor.run(**kwargs)

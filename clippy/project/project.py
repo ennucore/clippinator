@@ -23,7 +23,7 @@ class Project:
         return os.path.basename(self.path)
 
     def get_folder_summary(self, path: str, indent: str = "", add_linting: bool = True, top_level: bool = False,
-                           length_3: int = 4000) -> str:
+                           length_3: int = 8000) -> str:
         """
         Get the summary of a folder in the project, recursively, file-by-file, using self.get_file_summary()
         path:
@@ -96,8 +96,8 @@ class Project:
             return trim_extra(process.stdout.strip(), 1000)
         return lint_file(path)
 
-    def get_project_summary(self) -> str:
-        self.summary_cache = self.get_folder_summary(self.path, top_level=True)
+    def get_project_summary(self, length_norm: int = 5000) -> str:
+        self.summary_cache = self.get_folder_summary(self.path, top_level=True, length_3=length_norm * 4)
         return self.summary_cache
 
     def menu(self, prompt=None):
@@ -118,7 +118,7 @@ class Project:
         elif res == 5:
             prompt.last_summary = get_input_from_editor(prompt.last_summary)
 
-    def prompt_fields(self) -> dict:
+    def prompt_fields(self, length_norm: int = 1000) -> dict:
         from clippy.tools.architectural import templates
 
         default_architecture = templates['General']['architecture']
@@ -128,7 +128,7 @@ class Project:
             "state": self.state,
             "architecture": self.architecture,
             "project_name": self.name,
-            "project_summary": self.get_project_summary(),
+            "project_summary": self.get_project_summary(length_norm=length_norm),
             "memories": '  - ' + "\n  - ".join(self.memories),
             "architecture_example": templates.get(self.template, {}).get('architecture', default_architecture),
         }

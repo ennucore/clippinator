@@ -95,7 +95,7 @@ class WriteFile(SimpleTool):
 
                 linter_output = self.project.lint_file(file_path)
                 if linter_output:
-                    result += f"Successfully written to {filename}. Linter output:\n{linter_output}\n\n"
+                    result += f"Successfully written to {filename}. Linter output (can be wrong sometimes):\n{linter_output}\n\n"
 
                 result += f"Successfully written to {filename}.\n\n"
             except Exception as e:
@@ -147,8 +147,9 @@ class ReadFile(SimpleTool):
         "Example input: ['file1.py', {'filename': 'file2.py', 'start': 10, 'end': 20}]"
     )
 
-    def __init__(self, wd: str = "."):
+    def __init__(self, wd: str = ".", length_norm: int = 1000):
         self.workdir = wd
+        self.length_norm = length_norm
 
     def structured_func(self, to_read: list[str | dict[str, str | int] | Any]):
         if '{' in str(to_read):
@@ -165,9 +166,9 @@ class ReadFile(SimpleTool):
                         lines = f.readlines()
                         lines = [f"{i + 1}|{line}" for i, line in enumerate(lines)]
                         out = "```\n" + "".join(lines) + "\n```"
-                        if len(out) > 7000:
+                        if len(out) > self.length_norm * 7:
                             result += (
-                                    trim_extra(out, 7000)
+                                    trim_extra(out, self.length_norm * 7)
                                     + "\n```\nFile too long, use the summarizer or "
                                       "(preferably) request specific line ranges.\n\n"
                             )
@@ -185,9 +186,9 @@ class ReadFile(SimpleTool):
                         lines = f.readlines()
                         lines = [f"{i + 1}|{line}" for i, line in enumerate(lines)]
                         out = "```\n" + "".join(lines[start - 1:end]) + "\n```"
-                        if len(out) > 6000:
+                        if len(out) > self.length_norm * 7:
                             result += (
-                                    trim_extra(out, 6000)
+                                    trim_extra(out, self.length_norm * 7)
                                     + "\n...\nFile too long, use the summarizer or "
                                       "(preferably) request specific line ranges.\n\n"
                             )

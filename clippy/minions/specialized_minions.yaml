@@ -140,7 +140,7 @@
     If you can't obtain some information, you can ask the human for it.
 - name: "Editor"
   description: "Edits a file - usually, to add some new functions or classes to it. Use **only** if the file is already pretty big (>200 lines)."
-  tool_names: [ "ReadFile", "WriteFile", "Bash", "Remember", "GetPage" ]
+  tool_names: [ "ReadFile", "WriteFile", "Bash", "Remember", "Search", "GetPage" ]
   #  use-openai-functions: false
   use-openai-functions: false
   model: "claude-2"
@@ -197,6 +197,8 @@
 - name: "Devops"
   description: "Does operations with the system: moves files, installs packages, etc."
   tool_names: [ "Bash", "BashBackground", "Python", "ReadFile", "WriteFile", "Remember" ]
+  use-openai-functions: false
+  model: "claude-2"
   prompt: |+
     You can use Bash to do operations with the system. 
     Keep in mind that your Bash commands can't ask for stdin or run for a long time.

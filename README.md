@@ -1,8 +1,12 @@
-![](clippinator.jpg)
+<img src="clippy.jpg" width="300"></img>
 
 # Clippinator
 
 _A code assistant_
+
+_Formerly known as Clippy_
+
+[Twitter thread](https://twitter.com/ennucore/status/1680971027931693063)
 
 ### Getting started
 

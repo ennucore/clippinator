@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import typing
 
-from clippy.project import Project
+from clippinator.project import Project
 from .terminal import get_pids, end_sessions
 from .tool import SimpleTool
 from .utils import trim_extra, get_input_from_editor, yes_no_prompt
 from ..minions import extract_agent_name
 
 if typing.TYPE_CHECKING:
-    from clippy.minions.executioner import SpecializedExecutioner, Executioner
+    from clippinator.minions.executioner import SpecializedExecutioner, Executioner
 
 
 class Subagent(SimpleTool):

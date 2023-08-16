@@ -1,6 +1,6 @@
-![](clippy.jpg)
+![](clippinator.jpg)
 
-# Clippy
+# Clippinator
 
 _A code assistant_
 
@@ -13,13 +13,13 @@ _A code assistant_
 4. Install [ctags](https://docs.ctags.io/en/latest/building.html).
 5. For pylint, install it and [pylint-venv](https://github.com/jgosmann/pylint-venv/).
 6. Install dependencies: `poetry install`.
-7. Run: `poetry run clippy --help`. To run it on a project,
-   use `poetry run clippy PROJECT_PATH`
+7. Run: `poetry run clippinator --help`. To run it on a project,
+   use `poetry run clippinator PROJECT_PATH`
 8. You can stop it and then it will continue from the last saved state. Use ^C to provide feedback to the main agent.
 
 ## Details
 
-The purpose of **Clippy** is to develop code for or with the user.
+The purpose of **Clippinator** is to develop code for or with the user.
 It can plan, write, debug, and test some projects autonomously.
 For harder tasks, the best way to use it is to look at its work and provide feedback to it.
 
@@ -37,7 +37,7 @@ Obviously, if you ask it to do something at very low levels of abstractions, lik
 will do it. It poses tasks like that to itself on its own, to a varying degree of success.
 But combined with you, it will be able to do everything while only requiring a little bit of your intervention.
 If the project is easy, you will just provide the most high-level guidance ("Write a link shortener web service"),
-and if it's more complicated, you will be more involved, but **Clippy** will still do most of the work.
+and if it's more complicated, you will be more involved, but **Clippinator** will still do most of the work.
 
 ![](images/map.png)
 

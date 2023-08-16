@@ -6,10 +6,10 @@ import pickle
 from langchain import LLMChain
 from langchain.agents import AgentExecutor, LLMSingleActionAgent
 
-from clippy.project import Project
-from clippy.tools import get_tools, SimpleTool
-from clippy.tools.subagents import Subagent
-from clippy.tools.tool import WarningTool
+from clippinator.project import Project
+from clippinator.tools import get_tools, SimpleTool
+from clippinator.tools.subagents import Subagent
+from clippinator.tools.tool import WarningTool
 from .base_minion import (
     CustomOutputParser,
     CustomPromptTemplate,
@@ -101,7 +101,7 @@ class Taskmaster:
     def save_to_file(self, path: str = ""):
         if not os.path.exists(self.project.path):
             return
-        path = path or os.path.join(self.project.path, f".clippy.pkl")
+        path = path or os.path.join(self.project.path, f".clippinator.pkl")
         with open(path, "wb") as f:
             prompt = {
                 "current_context_length": self.prompt.current_context_length,
@@ -113,7 +113,7 @@ class Taskmaster:
             pickle.dump((prompt, self.project), f)
 
     @classmethod
-    def load_from_file(cls, path: str = ".clippy.pkl"):
+    def load_from_file(cls, path: str = ".clippinator.pkl"):
         with open(path, "rb") as f:
             prompt, project = pickle.load(f)
         self = cls(project)

@@ -4,7 +4,7 @@ from langchain.agents import Tool
 from langchain.tools import BaseTool
 from langchain.utilities import SerpAPIWrapper
 
-from clippy.project import Project
+from clippinator.project import Project
 from .architectural import Remember, TemplateInfo, TemplateSetup, SetCI, DeclareArchitecture
 from .browsing import SeleniumTool, GetPage
 from .code_tools import SearchInFiles, Pylint

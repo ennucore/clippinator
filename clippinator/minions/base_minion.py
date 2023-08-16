@@ -18,7 +18,7 @@ from langchain.chat_models import ChatOpenAI, ChatAnthropic
 from langchain.prompts import StringPromptTemplate
 from langchain.schema import AgentAction, AgentFinish
 
-from clippy.tools.tool import WarningTool
+from clippinator.tools.tool import WarningTool
 from .prompts import format_description
 from ..tools.utils import trim_extra, ask_for_feedback
 

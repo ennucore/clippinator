@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "clippy"
+name = "clippinator"
 version = "0.1.0"
 description = ""
 authors = ["Lev <ennucore@gmail.com>", "Timofey fedoseev.timofey@icloud.com"]
@@ -36,4 +36,4 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-clippy = "clippy.__main__:app"
+clippinator = "clippinator.__main__:app"

@@ -5,10 +5,10 @@ import subprocess
 
 import yaml
 
-from clippy.project import Project
+from clippinator.project import Project
 from .tool import SimpleTool
 
-with open('clippy/tools/templates.yaml') as f:
+with open('clippinator/tools/templates.yaml') as f:
     data = yaml.load(f, Loader=yaml.FullLoader)
     templates = {line['name']: line for line in data}
 

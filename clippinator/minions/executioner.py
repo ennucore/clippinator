@@ -1,7 +1,7 @@
 import yaml
 
-from clippy import tools
-from clippy.project import Project
+from clippinator import tools
+from clippinator.project import Project
 from .base_minion import BaseMinion, BaseMinionOpenAI
 from .prompts import execution_prompt, get_specialized_prompt
 from ..tools.architectural import DeclareArchitecture
@@ -58,7 +58,7 @@ def specialized_executioner(name: str, description: str, prompt: str,
 
 
 def get_specialized_executioners(project) -> dict[str, SpecializedExecutioner]:
-    with open('clippy/minions/specialized_minions.yaml') as f:
+    with open('clippinator/minions/specialized_minions.yaml') as f:
         data = yaml.load(f, Loader=yaml.FullLoader)
         return {line['name']: specialized_executioner(**{k.replace('-', '_'): v for k, v in line.items()})(project)
                 for line in data}

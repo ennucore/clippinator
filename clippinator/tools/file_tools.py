@@ -11,7 +11,7 @@ from langchain.text_splitter import (
     RecursiveCharacterTextSplitter,
 )
 
-from clippy.tools.tool import SimpleTool
+from clippinator.tools.tool import SimpleTool
 from .utils import trim_extra, unjson
 
 

@@ -104,6 +104,9 @@ class WriteFile(SimpleTool):
 
     def func(self, args: str) -> str:
         # Use a regular expression to extract the file path from the input
+
+        print(args)
+
         first_line, other_lines = args.split("\n", 1)
         first_line = (
             first_line.replace("path=", "")

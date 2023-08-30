@@ -136,8 +136,6 @@ def extract_variable_names(prompt: str, interaction_enabled: bool = False):
 
 
 def get_model(model: str = "gpt-4"):
-    if model.startswith('claude'):
-        return ChatAnthropic(model=model, max_tokens_to_sample=5500)
     return ChatOpenAI(
         temperature=0.05 if model != "gpt-3.5-turbo" else 0.7,
         model_name=model,

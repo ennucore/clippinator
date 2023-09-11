@@ -114,3 +114,8 @@ the `DeclareArchitecture` tool to ask it to change it.
 After the architect is ran, you can also edit the project architecture manually if you choose `y` in the prompt.
 
 If you enter `m` or `menu`, you will also be able to edit the project architecture, objective, and other things.
+
+
+_Created by Lev Chizhov and Timofey Fedoseev with contributions by Sergei Bogdanov_
+
+[Twitter thread](https://twitter.com/ennucore/status/1680971027931693063)

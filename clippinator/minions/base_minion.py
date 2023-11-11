@@ -135,7 +135,7 @@ def extract_variable_names(prompt: str, interaction_enabled: bool = False):
     return variable_names
 
 
-def get_model(model: str = "gpt-4"):
+def get_model(model: str = "gpt-4-1106-preview"):
     return ChatOpenAI(
         temperature=0.05 if model != "gpt-3.5-turbo" else 0.7,
         model_name=model,
@@ -148,7 +148,7 @@ class BasicLLM:
     prompt: PromptTemplate
     llm: LLMChain
 
-    def __init__(self, base_prompt: str, model: str = "gpt-4") -> None:
+    def __init__(self, base_prompt: str, model: str = "gpt-4-1106-preview") -> None:
         llm = get_model(model)
         self.llm = LLMChain(
             llm=llm,
@@ -278,7 +278,7 @@ class BaseMinion:
             self,
             base_prompt,
             available_tools,
-            model: str = "gpt-4",
+            model: str = "gpt-4-1106-preview",
             max_iterations: int = 50,
             allow_feedback: bool = False,
     ) -> None:
@@ -337,7 +337,7 @@ class BaseMinion:
 
 @dataclass
 class BaseMinionOpenAI:
-    def __init__(self, base_prompt, available_tools, model: str = "gpt-4") -> None:
+    def __init__(self, base_prompt, available_tools, model: str = "gpt-4-1106-preview") -> None:
         if not model.endswith('-0613'):
             model += '-0613'
         llm = get_model(model)
@@ -397,7 +397,7 @@ class FeedbackMinion:
             eval_prompt: str,
             feedback_prompt: str,
             check_function: Callable[[str], Any] = lambda x: None,
-            model: str = "gpt-4",
+            model: str = "gpt-4-1106-preview",
     ) -> None:
         llm = get_model(model)
         self.eval_llm = LLMChain(

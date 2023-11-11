@@ -24,7 +24,7 @@ def get_tag_kinds() -> dict[str, list[str]]:
 tag_kinds_by_language = get_tag_kinds()
 
 
-def get_file_summary(file_path: str, indent: str = "", length_1: int = 400, length_2: int = 600) -> str:
+def get_file_summary(file_path: str, indent: str = "", length_1: int = 1000, length_2: int = 2000) -> str:
     """
     | 72| class A:
     | 80| def create(self, a: str) -> A:
@@ -67,5 +67,5 @@ def get_file_summary(file_path: str, indent: str = "", length_1: int = 400, leng
     lines = [line[1] for line in lines]
     out += ''.join(lines)
     if len(out) > length_2:
-        out = out[:length_2 - 100] + f"\n{indent}...\n" + out[-100:]
+        out = out[:length_2 - 300] + f"\n{indent}...\n" + out[-300:]
     return out

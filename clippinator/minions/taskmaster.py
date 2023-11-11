@@ -26,7 +26,7 @@ class Taskmaster:
     def __init__(
             self,
             project: Project,
-            model: str = "gpt-4",
+            model: str = "gpt-4-1106-preview",
             prompt: CustomPromptTemplate | None = None,
             inner_taskmaster: bool = False
     ):

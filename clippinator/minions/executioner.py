@@ -34,7 +34,7 @@ class SpecializedExecutioner(Executioner):
 
 
 def specialized_executioner(name: str, description: str, prompt: str,
-                            tool_names: list[str], model: str = 'gpt-4',
+                            tool_names: list[str], model: str = 'gpt-4-1106-preview',
                             use_openai_functions: bool = True, allow_feedback: bool = False):
     class SpecializedExecutionerN(SpecializedExecutioner):
         def __init__(self, project: Project):

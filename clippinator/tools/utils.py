@@ -49,7 +49,7 @@ def skip_file_summary(filename: str) -> bool:
         or '-lock' in filename or filename.endswith('.lock')
 
 
-def trim_extra(content: str, max_length: int = 1500, end_length: int = 500) -> str:
+def trim_extra(content: str, max_length: int = 4000, end_length: int = 1300) -> str:
     if len(content) > max_length:
         content = content[:max_length - end_length] + f"\n...[skipped {len(content) - max_length} chars]\n" \
                   + content[-end_length:]

@@ -12,7 +12,7 @@ program // .command('run')
   .argument('[path]', 'The path to the working directory', '.')
   .action((objective, path) => {
     const clipinator = new Clipinator(objective, path);
-    clipinator.run();
+    clipinator.fullCycle();
   });
 
 program.parse(process.argv);

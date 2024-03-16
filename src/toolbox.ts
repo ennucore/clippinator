@@ -84,9 +84,9 @@ export let tools: Tool[] = [
     {
         function: {
             name: 'set_todos',
-            description: 'Set the todo list',
+            description: 'Set the plan, as Markdown todos',
             parameters: {
-                todos: 'Todo 1\nTodo 2\nTodo 3',
+                todos: '- [x] Todo 1\n- [ ] Todo 2\n- [ ] Todo 3',
             },
         }
     },
@@ -118,6 +118,16 @@ export let tools: Tool[] = [
     //     }
     // }
 ];
+
+export function final_result_tool(description: string, params: Record<string, any>): Tool {
+    return {
+        function: {
+            name: 'final_result',
+            description: description,
+            parameters: params,
+        }
+    };
+}
 
 export let tool_functions: Record<string, (args: Record<string, any>, env: Environment, ctx: ContextManager) => Promise<string>> = {
     run_shell_command: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
@@ -182,6 +192,9 @@ export let tool_functions: Record<string, (args: Record<string, any>, env: Envir
     set_memory: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
         const { memory } = args;
         ctx.memory = memory;
+        return `Updated the memory.`;
+    },
+    final_result: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
         return `Done`;
     }
 };

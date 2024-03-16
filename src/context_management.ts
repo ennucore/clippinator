@@ -94,7 +94,7 @@ export function getWorkspaceStructure(fileSystemTree: FileSystemTree, symbolCap:
 }
 
 export interface Message {
-    type: "thoughts" | "user";
+    type: "thoughts" | "user" | "system";
     content: string;
 }
 
@@ -115,6 +115,15 @@ export class ContextManager {
         this.lastWorkspaceSummary = "";
     }
 
+    getFirstTodo(): string | undefined {
+        /* Get the first one that isn't marked by "- [x]" and remove "- [ ]" */
+        for (const todo of this.todos) {
+            if (!todo.startsWith("- [x]")) {
+                return todo.replace("- [ ]", "");
+            }
+        }
+    }
+
     async getWorkspaceStructure(env: Environment): Promise<string> {
         const workspace = getWorkspaceStructure(await env.getFileSystem(), 30000);
         return formatObject(workspace);
@@ -132,7 +141,7 @@ It should be in a very similar format to the one you see below, but with a lot l
         return this.lastWorkspaceSummary;
     }
 
-    async getContext(env: Environment): Promise<string> {
+    async getContext(env: Environment, is_full: boolean = true): Promise<string> {
         const todos = this.todos.join('\n');
         const memory = this.memory;
         let actionHistory = '<history>\n';
@@ -156,8 +165,11 @@ It should be in a very similar format to the one you see below, but with a lot l
             }
         }
         actionHistory += '</history>';
-        const workspace = formatObject(getWorkspaceStructure(await env.getFileSystem(), 30000));
-        const context = `\nMemory:\n${memory}\nWorkspace:\n${workspace}\n\nThe user's request:\n**${this.objective}**\nYour Todos:\n${todos}\n\n\n${actionHistory}\n\nYour thoughts and actions (without a result for now, with <function_calls><invoke>):`;
+        let workspace = formatObject(getWorkspaceStructure(await env.getFileSystem(), 30000));
+        if (!is_full) {
+            workspace = await this.getWorkspaceStructureSummary(env);
+        }
+        const context = `\nMemory:\n${memory}\nWorkspace:\n${workspace}\n\nThe user's request (the overall objective):\n${this.objective}\nThe plan:\n${todos}\n\n\n${actionHistory}\n\n`;
         return context;
     }
 }

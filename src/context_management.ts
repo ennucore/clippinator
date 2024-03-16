@@ -1,5 +1,7 @@
 import { Environment, FileSystemTree } from './environment/environment';
+import { callLLMFast } from './llm';
 import { ToolCall } from './toolbox';
+import { hashString } from './utils';
 
 export function formatFileContent(lines: string[], line_threshold: number = 2000): string {
     let formattedLines;
@@ -100,15 +102,34 @@ export class ContextManager {
     todos: string[];
     memory: string;
     history: (ToolCall | Message)[];
-    focusedTask: string;
     objective: string;
+    lastFileSystemHash: string;
+    lastWorkspaceSummary: string;
 
     constructor(objective: string = "") {
         this.todos = [];
         this.memory = "";
         this.history = [];
-        this.focusedTask = "";
         this.objective = objective;
+        this.lastFileSystemHash = "";
+        this.lastWorkspaceSummary = "";
+    }
+
+    async getWorkspaceStructure(env: Environment): Promise<string> {
+        const workspace = getWorkspaceStructure(await env.getFileSystem(), 30000);
+        return formatObject(workspace);
+    }
+
+    async getWorkspaceStructureSummary(env: Environment): Promise<string> {
+        const fullStructure = await this.getWorkspaceStructure(env);
+        const hash = hashString(fullStructure);
+        if (hash === this.lastFileSystemHash && this.lastWorkspaceSummary) {
+            return this.lastWorkspaceSummary;
+        }
+        this.lastFileSystemHash = hash;
+        this.lastWorkspaceSummary = await callLLMFast(`Please, provide a summary of the following workspace structure. 
+It should be in a very similar format to the one you see below, but with a lot less details. It should contain all the files and directories and an outline of the meaning of each file, the main classes and functions etc it contains. Reply ONLY with the summary, in a similar format to the original structure. Here is the workspace structure:\n\`\`\`\n${fullStructure}\n\`\`\``);
+        return this.lastWorkspaceSummary;
     }
 
     async getContext(env: Environment): Promise<string> {

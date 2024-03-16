@@ -37,17 +37,6 @@ export let tools: Tool[] = [
             },
         },
     },
-    // The tool to append to a file
-    {
-        function: {
-            name: 'append_to_file',
-            description: 'Append to the end of a file',
-            parameters: {
-                path: 'src/hello.txt',
-                content: 'Hello, World!\nLast line',
-            },
-        },
-    },
     // The tool to replace lines in a file
     {
         function: {
@@ -139,17 +128,6 @@ export let tool_functions: Record<string, (args: Record<string, any>, env: Envir
         env.writeFile(path, content);
         return `Wrote content to file ${path}`;
     },
-    append_to_file: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
-        const { path, content } = args;
-        const existingContent = (await env.getFileSystem()).getByPath(path)?.content;
-        if (existingContent) {
-            env.writeFile(path, existingContent.join('\n') + '\n' + content);
-            return `Appended content to file ${path}`;
-        } else {
-            env.writeFile(path, content);
-            return `Wrote content to new file ${path}`;
-        }
-    },
     patch_file: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
         const { path, new_content } = args;
         const file = (await env.getFileSystem()).getByPath(path);
@@ -203,10 +181,5 @@ export let tool_functions: Record<string, (args: Record<string, any>, env: Envir
         const { memory } = args;
         ctx.memory = memory;
         return `Done`;
-    },
-    set_focused_task: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
-        const { task } = args;
-        ctx.focusedTask = task;
-        return `Set focused task`;
     }
 };

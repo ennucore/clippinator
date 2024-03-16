@@ -1,5 +1,5 @@
 import { Environment } from './environment/environment'
-import { ContextManager } from './context_management';
+import { ContextManager, formatFileContent } from './context_management';
 
 export interface Tool {
     function: {
@@ -10,7 +10,7 @@ export interface Tool {
 }
 
 export interface ToolCall {
-    tool: string;
+    tool_name: string;
     parameters: Record<string, any>;
     result?: string;
 }
@@ -30,7 +30,7 @@ export let tools: Tool[] = [
     {
         function: {
             name: 'rewrite_file',
-            description: 'Rewrite a file completely (or write to a new one)',
+            description: 'Rewrite a file completely (or write to a new one) - without line numbers',
             parameters: {
                 path: 'src/hello.txt',
                 content: 'Hello, World!',
@@ -44,7 +44,7 @@ export let tools: Tool[] = [
             description: 'Append to the end of a file',
             parameters: {
                 path: 'src/hello.txt',
-                content: 'Hello, World!',
+                content: 'Hello, World!\nLast line',
             },
         },
     },
@@ -52,12 +52,12 @@ export let tools: Tool[] = [
     {
         function: {
             name: 'patch_file',
-            description: 'Patch a file: Replace lines from old_line_start (indexing from 1) to old_line_end (inclusive, 1-indexing) in a file with new content',
+            description: 'Patch a file: Replace lines from old_line_start (indexing from 1) to old_line_end (inclusive, 1-indexing) in a file with new content - new_content is without line numbers. Note that after using patch, the line numbers change for all following lines',
             parameters: {
                 path: 'hello.txt',
                 old_line_start: 10,
                 old_line_end: 20,
-                new_content: 'Goodbye, World!',
+                new_content: 'Goodbye, World!\nThis will be the eleventh lint',
             },
         },
     },
@@ -117,22 +117,22 @@ export let tools: Tool[] = [
             },
         }
     },
-    {
-        function: {
-            name: 'set_focused_task',
-            description: 'Set the focused task',
-            parameters: {
-                task: 'Move the class ... from file ... to ...',
-            },
-        }
-    }
+    // {
+    //     function: {
+    //         name: 'set_focused_task',
+    //         description: 'Set the focused task',
+    //         parameters: {
+    //             task: 'Move the class ... from file ... to ...',
+    //         },
+    //     }
+    // }
 ];
 
 export let tool_functions: Record<string, (args: Record<string, any>, env: Environment, ctx: ContextManager) => Promise<string>> = {
     run_shell_command: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
         const { command } = args;
-        const tabIndex = env.runCommand(command);
-        return `Command ${command} ran in terminal ${tabIndex}`;
+        const res = await env.runCommand(command);
+        return `Command ${command} ran in terminal.\n${res}`;
     },
     rewrite_file: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
         const { path, content } = args;
@@ -159,9 +159,9 @@ export let tool_functions: Record<string, (args: Record<string, any>, env: Envir
         if (file && file.content) {
             let lines = file.content;
             const patchedLines = [
-                ...lines.slice(0, old_line_start),
+                ...lines.slice(0, old_line_start - 1),
                 new_content,
-                ...lines.slice(old_line_end),
+                ...lines.slice(old_line_end + 1),
             ];
             env.writeFile(path, patchedLines.join('\n'));
             return `Patched file ${path}`;
@@ -178,7 +178,7 @@ export let tool_functions: Record<string, (args: Record<string, any>, env: Envir
         const { path } = args;
         const file = (await env.getFileSystem()).getByPath(path);
         if (file && file.content) {
-            return file.content.join('\n');
+            return formatFileContent(file.content, 10000);
         } else {
             return `File ${path} not found`;
         }
@@ -190,8 +190,9 @@ export let tool_functions: Record<string, (args: Record<string, any>, env: Envir
     },
     set_todos: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
         const { todos } = args;
+        console.log(args)
         ctx.todos = todos.split('\n');
-        return `Set todos to: ${todos}`;
+        return `The todos are updated.`;
     },
     remember: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
         const { factoid } = args;
@@ -201,7 +202,7 @@ export let tool_functions: Record<string, (args: Record<string, any>, env: Envir
     set_memory: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
         const { memory } = args;
         ctx.memory = memory;
-        return `Set memory to: ${memory}`;
+        return `Done`;
     },
     set_focused_task: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
         const { task } = args;

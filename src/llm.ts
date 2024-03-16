@@ -51,6 +51,13 @@ You may call them like this:
 ...
 </parameters>
 </invoke>
+<invoke>
+<tool_name>$NEXT_TOOL_NAME</tool_name>
+<parameters>
+<$PARAMETER_NAME>$PARAMETER_VALUE</$PARAMETER_NAME>
+...
+</parameters>
+</invoke>
 </function_calls>
 
 Here are the tools available:
@@ -115,24 +122,24 @@ export async function callLLMTools(
         if (messageStreamEvent.type === 'content_block_delta') {
             response += messageStreamEvent.delta.text;
 
-            if (response.includes('<tool_name>')) {
+            if (response.includes('<tool_name>', last_handled_length)) {
                 currentToolName = extractBetweenTags('tool_name', response)[0];
                 currentToolArguments = {};
             }
 
             const parameterMatches = response.slice(last_handled_length).match(/<parameters>([\s\S]*?)<\/parameters>/g);
             if (parameterMatches) {
-            const parameterBlock = parameterMatches[0];
-            const parser = new XMLParser();
-            const json = parser.parse(parameterBlock);
-            if (json.parameters) {
-                Object.entries(json.parameters).forEach(([parameterName, parameterValue]) => {
-                if (onParameterValue) {
-                    onParameterValue(currentToolName, currentToolArguments, parameterName, parameterValue);
+                const parameterBlock = parameterMatches[0];
+                const parser = new XMLParser();
+                const json = parser.parse(parameterBlock);
+                if (json.parameters) {
+                    Object.entries(json.parameters).forEach(([parameterName, parameterValue]) => {
+                    if (onParameterValue) {
+                        onParameterValue(currentToolName, currentToolArguments, parameterName, parameterValue);
+                    }
+                    currentToolArguments[parameterName] = parameterValue;
+                    });
                 }
-                currentToolArguments[parameterName] = parameterValue;
-                });
-            }
             }
 
             if (response.includes('</invoke>', last_handled_length)) {
@@ -141,11 +148,13 @@ export async function callLLMTools(
                 let result = await onToolCall(currentToolName, currentToolArguments);
                 toolCalls.push({ name: currentToolName, arguments: currentToolArguments });
                 toolResults.push(result);
-                last_handled_length = response.indexOf('</invoke>', last_handled_length) + 5;
-                toolCallsFull.push({ tool: currentToolName, parameters: currentToolArguments, result } as ToolCall);
+                last_handled_length = response.indexOf('</invoke>', last_handled_length) + 1;
+                toolCallsFull.push({ tool_name: currentToolName, parameters: currentToolArguments, result } as ToolCall);
             }
         }
     }
+    // remove the function calls from response
+    response = response.replace(/<function_calls>[\s\S]*<\/invoke>/, '');
     return { toolCalls, toolResults, response, toolCallsFull };
 }
 

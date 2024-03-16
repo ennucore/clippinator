@@ -5,8 +5,13 @@ import { Tool, ToolCall, tool_functions, tools } from "./toolbox";
 import { callLLMTools } from "./llm";
 
 let preprompt = `You are Clippinator, an AI software engineer. You operate in the environment where you have access to tools. You can use these tools to execute the user's request.
-When you get the request, make a plan and save it into todos. Then execute the plan by focusing on one task at a time, adjusting it if something goes wrong.
-When you are done executing the plan, write "<DONE/>" as a separate line
+When you get the request, make a plan and save it into todos. 
+Try to make the plan as simple as possible, with a few steps (one step can be "refactor ... to be ..." or something on that level). Before declaring the plan, think about what you have to do. Don't make the plan too specific, the steps should be more like milestones. Each step will correspond to multiple tool calls. 
+For example, moving something from one file to another can be one task.
+After making the plan, execute the plan by focusing on one task at a time, adjusting it if something goes wrong.
+When you are done executing everything in the plan, write "<DONE/>" as a separate line.
+Try to execute the actions you need to take in one step (one invoke) if you don't need the output of the previous ones. For example, you can declare the plan and start executing on it right away.
+Before calling the tools, write your thoughts out loud and describe why you are doing that and what you expect to happen.
 `
 
 export class Clipinator {
@@ -25,10 +30,10 @@ export class Clipinator {
     }
 
     async runToolCall(toolName: string, toolArguments: Record<string, any>): Promise<string> {
-        let toolCall = { tool: toolName, parameters: toolArguments } as ToolCall;
-        const tool = tools.find((t) => t.function.name === toolCall.tool);
+        let toolCall = { tool_name: toolName, parameters: toolArguments } as ToolCall;
+        const tool = tools.find((t) => t.function.name === toolCall.tool_name);
         if (!tool) {
-            return `Tool ${toolCall.tool} not found`;
+            return `Tool ${toolCall.tool_name} not found`;
         }
         const result = await this.runTool(tool, toolCall.parameters);
         return result;
@@ -53,6 +58,7 @@ export class Clipinator {
         while (true) {
             let resp = await this.oneStep();
             if (resp.includes("<DONE/>")) {
+                console.log(await this.getPrompt())
                 break;
             }
         }

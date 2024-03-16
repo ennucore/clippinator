@@ -21,7 +21,7 @@ export function formatObject(obj: any, format: "json" | "xml" = "xml"): string {
     if (format === "json") {
         return JSON.stringify(obj, null, 2);
     } else {
-        return xmljs.js2xml(obj, { compact: true, spaces: 0 });
+        return xmljs.js2xml(obj, { compact: true, spaces: 2 });
     }
 }
 
@@ -62,6 +62,8 @@ function getFileContent(fileSystemTree: FileSystemTree, symbolCap: number): stri
     return '';
 }
 
+const skip_ext = ['lock', 'png']
+
 export function getWorkspaceStructure(fileSystemTree: FileSystemTree, symbolCap: number): WorkspaceNode {
     let currentCap = symbolCap;
 
@@ -72,13 +74,16 @@ export function getWorkspaceStructure(fileSystemTree: FileSystemTree, symbolCap:
                 const nextCap = Math.max(cap - CAP_REDUCTION_PER_LEVEL, MIN_CAP);
                 const childTree = readDirRecursive(child, nextCap);
                 children.push(childTree);
-                currentCap -= childTree.contentLength() || 0;
-                if (currentCap <= 0) break;
+                // currentCap -= childTree.contentLength() || 0;
+                // if (currentCap <= 0) break;
             }
             return new WorkspaceNode(tree.path, "", children);
         } else {
-            const fileContent = getFileContent(tree, cap);
-            return new WorkspaceNode(tree.path, fileContent, []);
+            if (!skip_ext.includes(tree.path.split('.').pop() || '')) {
+                const fileContent = getFileContent(tree, cap);
+                return new WorkspaceNode(tree.path, fileContent, []);
+            }
+            return new WorkspaceNode(tree.path, "", []);
         }
     };
 
@@ -109,9 +114,17 @@ export class ContextManager {
     async getContext(env: Environment): Promise<string> {
         const todos = this.todos.join('\n');
         const memory = this.memory;
-        const actionHistory = formatObject(this.history);
-        const workspace = formatObject(getWorkspaceStructure(await env.getFileSystem(), 10000));
-        const context = `\nMemory:\n${memory}\nWorkspace:\n${workspace}\n\nYour objective:\n${this.objective}\nYour Todos:\n${todos}\nYour current focused task: **${this.focusedTask}**\n\n${actionHistory}`;
+        let actionHistory = '<history>\n';
+        for (const action of this.history) {
+            if ("type" in action) {
+                actionHistory += `<${action.type}>${action.content}</${action.type}>\n`;
+                continue;
+            }
+            actionHistory += '<invoked>\n' + formatObject(action, "xml") + '\n</invoked>\n';
+        }
+        actionHistory += '</history>';
+        const workspace = formatObject(getWorkspaceStructure(await env.getFileSystem(), 30000));
+        const context = `\nMemory:\n${memory}\nWorkspace:\n${workspace}\n\nThe user's request:\n**${this.objective}**\nYour Todos:\n${todos}\n\n\n${actionHistory}\n\nYour thoughts and actions (without a result for now, with <function_calls><invoke>):`;
         return context;
     }
 }

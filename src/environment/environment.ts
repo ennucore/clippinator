@@ -27,7 +27,7 @@ export class Environment {
     async deleteFile(path: string): Promise<void> {
         this.fileSystem.deleteFile(path);
     }
-    async runCommand(command: string, tabIndex?: number): Promise<number> {
+    async runCommand(command: string, tabIndex?: number): Promise<string> {
         return this.terminal.runCommand(command, tabIndex);
     }
     async openUrl(url: string, tabIndex?: number): Promise<string> {
@@ -97,15 +97,30 @@ interface TerminalTab {
 
 interface Terminal {
     getTerminalState(): Promise<TerminalTab[]>;
-    runCommand(command: string, tabIndex?: number): Promise<number>;   // returns the tab index
+    runCommand(command: string, tabIndex?: number): Promise<string>;   // returns the tab index
 }
 
 export class DummyTerminal implements Terminal {
     async getTerminalState(): Promise<TerminalTab[]> {
         return [];
     }
-    async runCommand(command: string, tabIndex?: number): Promise<number> {
-        return 0;
+    async runCommand(command: string, tabIndex?: number): Promise<string> {
+        return "";
+    }
+}
+
+export class SimpleTerminal implements Terminal {
+    rootPath: string;
+    constructor(rootPath: string) {
+        this.rootPath = rootPath;
+    }
+
+    async getTerminalState(): Promise<TerminalTab[]> {
+        return [];
+    }
+    async runCommand(command: string, tabIndex?: number): Promise<string> {
+        const commandOutput = (require('child_process').execSync(command, { cwd: this.rootPath })).toString();
+        return commandOutput;
     }
 }
 
@@ -118,7 +133,7 @@ export class DummyBrowser implements Browser {
     }
 }
 
-import inquirer from 'inquirer';
+// import * as inquirer from 'inquirer';
 
 export class CLIUserInterface implements UserInterface {
     async showMessage(message: string): Promise<void> {
@@ -126,7 +141,8 @@ export class CLIUserInterface implements UserInterface {
     }
     async askPrompt(prompt: string): Promise<string> {
         // ask for input from the user using inquirer
-        const response = await inquirer.prompt([
+        const inquirer = await import('inquirer');
+        const response = await inquirer.default.prompt([
             {
                 type: 'input',
                 name: 'response',

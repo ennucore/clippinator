@@ -23,7 +23,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "start": "node dist/cli.js",
+    "start": "tsc && node dist/cli.js",
     "repl": "ts-node src/clippinatorRepl.ts"
   }
 }

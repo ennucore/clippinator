@@ -2,6 +2,13 @@ import Anthropic from '@anthropic-ai/sdk';
 import { XMLParser } from 'fast-xml-parser';
 import { ToolCall } from './toolbox';
 
+import { config } from 'dotenv';
+config();
+
+/* HAIKU_API_KEY if exists, otherwise ANTHROPIC_API_KEY */
+const haiku_key = process.env.HAIKU_API_KEY || process.env.ANTHROPIC_API_KEY;
+const anthropic_key = process.env.ANTHROPIC_API_KEY;
+
 export interface Tool {
     function: {
         name: string;
@@ -93,7 +100,7 @@ export async function callLLMTools(
     onParameterValue?: (toolName: string, currentToolArguments: Record<string, any>, parameterName: string, parameterValue: any) => void,
     preprompt: string = ''
 ): Promise<{ toolCalls: { name: string, arguments: Record<string, any> }[], toolResults: string[], response: string, toolCallsFull: ToolCall[] }> {
-    const anthropic = new Anthropic();
+    const anthropic = new Anthropic({ apiKey: anthropic_key });
     const toolCallingSystemPrompt = constructToolUseSystemPrompt(tools);
     console.log(prompt);
 
@@ -159,7 +166,7 @@ export async function callLLMTools(
 }
 
 
-export async function callLLM(prompt: string): Promise<string> {
+export async function callLLM(prompt: string,): Promise<string> {
     const anthropic = new Anthropic();
     const message = await anthropic.messages.create({
         max_tokens: 4096,
@@ -169,11 +176,6 @@ export async function callLLM(prompt: string): Promise<string> {
     return message.content[0].text;
 }
 
-
-import { config } from 'dotenv';
-config();
-/* HAIKU_API_KEY if exists, otherwise ANTHROPIC_API_KEY */
-const haiku_key = process.env.HAIKU_API_KEY || process.env.ANTHROPIC_API_KEY;
 
 export async function callLLMFast(prompt: string): Promise<string> {
     const anthropic = new Anthropic({ apiKey: haiku_key });

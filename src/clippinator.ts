@@ -50,7 +50,7 @@ export class Clipinator {
         const prompt = await this.getPrompt();
         const { toolCallsFull, response } = await callLLMTools(prompt, tools, this.runToolCall.bind(this), undefined, preprompt);
         this.contextManager.history.push({ type: "thoughts", content: response });
-        this.contextManager.history.push(...toolCallsFull);
+        this.contextManager.history.push(toolCallsFull);
         return response
     }
 

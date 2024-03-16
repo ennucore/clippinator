@@ -1,6 +1,6 @@
 import { Environment, FileSystemTree } from './environment/environment';
 import { callLLMFast } from './llm';
-import { ToolCall } from './toolbox';
+import { ToolCall, ToolCallsGroup} from './toolbox';
 import { hashString } from './utils';
 
 export function formatFileContent(lines: string[], line_threshold: number = 2000): string {
@@ -101,7 +101,7 @@ export interface Message {
 export class ContextManager {
     todos: string[];
     memory: string;
-    history: (ToolCall | Message)[];
+    history: (ToolCallsGroup | Message)[];
     objective: string;
     lastFileSystemHash: string;
     lastWorkspaceSummary: string;
@@ -139,9 +139,21 @@ It should be in a very similar format to the one you see below, but with a lot l
         for (const action of this.history) {
             if ("type" in action) {
                 actionHistory += `<${action.type}>${action.content}</${action.type}>\n`;
-                continue;
+            } else {
+                actionHistory += '<function_calls>\n';
+                for (const toolCall of action) {
+                    actionHistory += '<invoke>\n' + formatObject({tool_name: toolCall.tool_name, parameters: toolCall.parameters}, "xml") + '\n</invoke>\n';
+                }
+                actionHistory += '</function_calls>\n';
+                actionHistory += '<function_results>\n';
+                for (const toolCall of action) {
+                    actionHistory += '<result>\n';
+                    actionHistory += '<tool_name>' + toolCall.tool_name + '</tool_name>\n';
+                    actionHistory += '<stdout>\n' + toolCall.result + '\n</stdout>\n';
+                    actionHistory += '</result>\n';
+                }
+                actionHistory += '</function_results>\n';
             }
-            actionHistory += '<invoked>\n' + formatObject(action, "xml") + '\n</invoked>\n';
         }
         actionHistory += '</history>';
         const workspace = formatObject(getWorkspaceStructure(await env.getFileSystem(), 30000));

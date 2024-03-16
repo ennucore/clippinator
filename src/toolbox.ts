@@ -15,6 +15,8 @@ export interface ToolCall {
     result?: string;
 }
 
+export type ToolCallsGroup = ToolCall[];
+
 export let tools: Tool[] = [
     // The tool to run a shell command
     {

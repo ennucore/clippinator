@@ -1,0 +1,29 @@
+{
+  "name": "clippinator",
+  "version": "1.0.0",
+  "description": "Clippinator does what you tell it to do in a coding project",
+  "main": "index.js",
+  "repository": "git@github.com:ennucore/clippinator.git",
+  "author": "Lev <lc@lev.la>",
+  "license": "MIT",
+  "private": false,
+  "devDependencies": {
+    "@types/inquirer": "^9.0.7",
+    "@types/node": "^20.11.28",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.2"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.18.0",
+    "commander": "^12.0.0",
+    "dotenv": "^16.4.5",
+    "fast-xml-parser": "^4.3.6",
+    "inquirer": "^9.2.16",
+    "xml-js": "^1.6.11"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/cli.js",
+    "repl": "ts-node src/clippinatorRepl.ts"
+  }
+}

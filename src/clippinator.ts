@@ -3,6 +3,7 @@ import { Environment, CLIUserInterface, DummyBrowser, DummyTerminal } from "./en
 import { DefaultFileSystem } from "./environment/filesystem";
 import { Tool, ToolCall, final_result_tool, tool_functions, tools } from "./toolbox";
 import { callLLMTools } from "./llm";
+var clc = require("cli-color");
 
 let preprompt = `You are Clippinator, an AI software engineer. You operate in the environment where you have access to tools. You can use these tools to execute the user's request.
 When you are done executing everything in the plan, write "<DONE/>" as a separate line.
@@ -116,6 +117,7 @@ First, think about how to achieve it using the tools available, then write down 
         let additionalContext = "";
         if (result) {
             additionalContext = `The plan for the task is: ${result.plan}\nSome relevant facts: ${result.relevantSummary}\nThe list of relevant files is: ${result.pathList}`;
+            console.log(clc.blue.bold("Additional context for the task:\n") + clc.green(additionalContext) + '\n');
             // now, the files themselves
             let files = result.pathList.split("\n");
             for (let file of files) {
@@ -153,7 +155,6 @@ Start by writing your analysis of the situation, then write the new plan using t
     }
 
     async fullCycle() {
-        var clc = require("cli-color");
         await this.generatePlan();
         console.log(clc.blue.bold("Plan generated:\n") + clc.green(this.contextManager.todos.join('\n')) + '\n');
         while (this.contextManager.getFirstTodo()) {

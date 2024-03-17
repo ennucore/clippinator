@@ -102,7 +102,7 @@ export async function callLLMTools(
 ): Promise<{ toolCalls: { name: string, arguments: Record<string, any> }[], toolResults: string[], response: string, toolCallsFull: ToolCall[] }> {
     const anthropic = new Anthropic({ apiKey: anthropic_key });
     const toolCallingSystemPrompt = constructToolUseSystemPrompt(tools);
-    console.log(prompt);
+    // console.log(prompt);
 
     const stream = await anthropic.messages.create({
         max_tokens: 4096,

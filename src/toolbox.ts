@@ -84,7 +84,7 @@ export let tools: Tool[] = [
     {
         function: {
             name: 'set_todos',
-            description: 'Set the plan, as Markdown todos',
+            description: 'Set the plan, as Markdown todos. x marks a completed todo (it will not get). Each line should be a todo starting with "- [ ]" or "- [x]" (no subtasks)',
             parameters: {
                 todos: '- [x] Todo 1\n- [ ] Todo 2\n- [ ] Todo 3',
             },
@@ -136,7 +136,11 @@ export let tool_functions: Record<string, (args: Record<string, any>, env: Envir
         return `Command ${command} ran in terminal.\n${res}`;
     },
     rewrite_file: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
-        const { path, content } = args;
+        let { path, content } = args;
+        // if there are more 3 lines and each line starts with "number|", then we remove the line numbers from the beginnings of lines
+        if (content.split('\n').length > 3 && content.split('\n').every((line: any, index: any) => line.startsWith(`${index + 1}|`))) {
+            content = content.split('\n').map((line: any, index: any) => line.split('|').slice(1).join('|')).join('\n');
+        }
         env.writeFile(path, content);
         return `Wrote content to file ${path}`;
     },
@@ -146,15 +150,22 @@ export let tool_functions: Record<string, (args: Record<string, any>, env: Envir
 
         let old_line_start = parseInt(args.old_line_start);
         let old_line_end = parseInt(args.old_line_end);
-        if (file && file.content) {
-            let lines = file.content;
+        if (file ) {
+            let lines = file.content || [];
             const patchedLines = [
                 ...lines.slice(0, old_line_start - 1),
                 new_content,
                 ...lines.slice(old_line_end + 1),
             ];
             env.writeFile(path, patchedLines.join('\n'));
-            return `Patched file ${path}`;
+            // Get neighboring lines (-3, +3)
+            let neighboringLines = [];
+            for (let i = old_line_start - 5; i < old_line_end + 5; i++) {
+                if (i >= 0 && i < patchedLines.length) {
+                    neighboringLines.push(`${i + 1}|${patchedLines[i]}`);
+                }
+            }
+            return `Patched file ${path} from line ${old_line_start} to ${old_line_end} with new content. Neighboring lines:\n${neighboringLines.join('\n')}\nRemember that the line numbers below these have changed`;
         } else {
             return `File ${path} not found`;
         }
@@ -167,8 +178,9 @@ export let tool_functions: Record<string, (args: Record<string, any>, env: Envir
     read_file: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
         const { path } = args;
         const file = (await env.getFileSystem()).getByPath(path);
-        if (file && file.content) {
-            return formatFileContent(file.content, 10000);
+        if (file) {
+            let content = file.content || [];
+            return formatFileContent(content, 10000);
         } else {
             return `File ${path} not found`;
         }
@@ -180,7 +192,6 @@ export let tool_functions: Record<string, (args: Record<string, any>, env: Envir
     },
     set_todos: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
         const { todos } = args;
-        console.log(args)
         ctx.todos = todos.split('\n');
         return `The todos are updated.`;
     },

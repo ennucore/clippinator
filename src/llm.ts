@@ -4,6 +4,7 @@ import { ToolCall } from './toolbox';
 
 import { config } from 'dotenv';
 config();
+var clc = require("cli-color");
 
 /* HAIKU_API_KEY if exists, otherwise ANTHROPIC_API_KEY */
 const haiku_key = process.env.HAIKU_API_KEY || process.env.ANTHROPIC_API_KEY;
@@ -130,7 +131,8 @@ export async function callLLMTools(
             response += messageStreamEvent.delta.text;
 
             if (response.includes('<tool_name>', last_handled_length)) {
-                currentToolName = extractBetweenTags('tool_name', response)[0];
+                let extracted = extractBetweenTags('tool_name', response);
+                currentToolName = extracted[extracted.length - 1];
                 currentToolArguments = {};
             }
 
@@ -150,11 +152,12 @@ export async function callLLMTools(
             }
 
             if (response.includes('</invoke>', last_handled_length)) {
-                console.log(currentToolArguments);
-                console.log(response, toolCalls, toolResults);
+                console.log(response)
+                console.log(clc.green('Calling tool'), currentToolName, currentToolArguments);
                 let result = await onToolCall(currentToolName, currentToolArguments);
                 toolCalls.push({ name: currentToolName, arguments: currentToolArguments });
                 toolResults.push(result);
+                console.log(result)
                 last_handled_length = response.indexOf('</invoke>', last_handled_length) + 1;
                 toolCallsFull.push({ tool_name: currentToolName, parameters: currentToolArguments, result } as ToolCall);
             }

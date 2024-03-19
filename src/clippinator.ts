@@ -53,11 +53,14 @@ export class Clipinator {
         return res;
     }
 
-    async oneStep(task: string = "", result_format?: Record<string, any>, result_description?: string, additional_context?: string, disableTools: boolean = false) {
+    async oneStep(task: string = "", result_format?: Record<string, any>, result_description?: string, additional_context?: string, disableTools: boolean | string[] = false) {
         const prompt = await this.getPrompt(task, additional_context);
         let tools_now = tools;
-        if (disableTools) {
+        if (disableTools === true) {
             tools_now = [];
+        }
+        if (Array.isArray(disableTools)) {
+            tools_now = tools_now.filter((tool) => !disableTools.includes(tool.function.name));
         }
         if (result_format) {
             tools_now = tools_now.concat([final_result_tool(result_description || '', result_format)]);
@@ -76,20 +79,20 @@ export class Clipinator {
         return { response, toolCallsFull, result };
     }
 
-    async run(task: string = "", result_format?: Record<string, any>, result_description?: string, additional_context?: string, stop_at_tool?: string) {
+    async run(task: string = "", result_format?: Record<string, any>, result_description?: string, additional_context?: string, stop_at_tool?: string, disableTools: boolean | string[] = false) {
         while (true) {
-            let { response, result, toolCallsFull } = await this.oneStep(task, result_format, result_description, additional_context);
+            let { response, result, toolCallsFull } = await this.oneStep(task, result_format, result_description, additional_context, disableTools);
             if (result) {
                 return result;
             }
             if (response.includes("<DONE/>")) {
-                console.log(await this.getPrompt())
+                // console.log(await this.getPrompt())
                 break;
             }
             if (stop_at_tool) {
                 let stop_tool_index = toolCallsFull.findIndex((toolCall) => toolCall.tool_name === stop_at_tool);
                 if (stop_tool_index !== -1) {
-                    console.log(await this.getPrompt())
+                    // console.log(await this.getPrompt())
                     break;
                 }
             }
@@ -113,6 +116,9 @@ First, think about how to achieve it using the tools available, then write down 
         let { result } = await this.oneStep(
             `Please, take the workspace structure above and this task: "${currentTask}" and provide a plan for achieving the task, the summary of the aspects of workspace structure relevant to the task, and the list of relevant files.`,
             { plan: "", relevantSummary: "", pathList: "folder1/file1.txt\nanotherfile.py" },
+            "Declare the task parameters",
+            undefined,
+            ["set_todos"]
         );
         let additionalContext = "";
         if (result) {
@@ -131,7 +137,9 @@ First, think about how to achieve it using the tools available, then write down 
             `Please, execute the following task: "${currentTask}". After everything is finished, write <DONE/>.`,
             undefined,
             undefined,
-            additionalContext
+            additionalContext,
+            undefined,
+            ["set_todos"]
         );
     }
 

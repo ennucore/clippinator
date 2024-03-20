@@ -3,12 +3,14 @@ export class Environment {
     browser: Browser;
     terminal: Terminal;
     user_interface: UserInterface;
+    linter: Linter;
 
-    constructor(fileSystem: FileSystem, browser: Browser, terminal: Terminal, user_interface: UserInterface) {
+    constructor(fileSystem: FileSystem, browser: Browser, terminal: Terminal, user_interface: UserInterface, linter: Linter) {
         this.fileSystem = fileSystem;
         this.browser = browser;
         this.terminal = terminal;
         this.user_interface = user_interface;
+        this.linter = linter;
     }
 
     async getFileSystem(): Promise<FileSystemTree> {
@@ -41,6 +43,9 @@ export class Environment {
     }
     async getNewMessages(): Promise<string[]> {
         return this.user_interface.getNewMessages();
+    }
+    async getLinterOutput(): Promise<string> {
+        return await this.linter.getOutput();
     }
 }
 
@@ -100,6 +105,10 @@ interface Terminal {
     runCommand(command: string, tabIndex?: number): Promise<string>;   // returns the tab index
 }
 
+interface Linter {
+    getOutput(): Promise<string>;
+}
+
 export class DummyTerminal implements Terminal {
     async getTerminalState(): Promise<TerminalTab[]> {
         return [];
@@ -153,6 +162,36 @@ export class CLIUserInterface implements UserInterface {
     }
     async getNewMessages(): Promise<string[]> {
         return [];
+    }
+}
+
+export class TrunkLinter implements Linter {
+    repo_path: string;
+    constructor(repo_path: string) {
+        try {
+            require('child_process').execSync('trunk init -n', { cwd: repo_path, input: " " });
+        } catch (e: any) {
+            console.log(e.stdout.toString());
+        }
+        
+        this.repo_path = repo_path;
+    }
+
+    async getOutput(): Promise<string> {
+        let res;
+        console.log("Running the linter...")
+        try {
+            res = (require('child_process').execSync('trunk check -n', { cwd: this.repo_path, timeout: 60000 })).toString();
+        } catch (e: any) {
+            res = e.stdout.toString();
+        }
+        // console.log("Linter output: ", res);
+        // console.log("Linter finished.")
+        console.log(res)
+        if (res.includes('Please run ') || res.includes('Trunk can only')) {
+            return "";
+        }
+        return res;
     }
 }
 

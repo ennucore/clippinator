@@ -1,8 +1,9 @@
 import { ContextManager, Message } from "./context_management";
-import { Environment, CLIUserInterface, DummyBrowser, DummyTerminal } from "./environment/environment";
+import { Environment, CLIUserInterface, DummyBrowser, DummyTerminal, TrunkLinter, SimpleTerminal } from "./environment/environment";
 import { DefaultFileSystem } from "./environment/filesystem";
 import { Tool, ToolCall, final_result_tool, tool_functions, tools } from "./toolbox";
 import { callLLMTools } from "./llm";
+import { planning_examples, task_prompts } from "./prompts";
 var clc = require("cli-color");
 
 let preprompt = `You are Clippinator, an AI software engineer. You operate in the environment where you have access to tools. You can use these tools to execute the user's request.
@@ -10,6 +11,7 @@ When you are done executing everything in the plan, write "<DONE/>" as a separat
 Try to execute the actions you need to take in one step (one invoke) if you don't need the output of the previous ones.
 Before calling the tools, write your thoughts out loud and describe why you are doing that and what you expect to happen.
 `;
+
 
 // `When you get the request, make a plan and save it into todos. 
 // Try to make the plan as simple as possible, with a few steps (one step can be "refactor ... to be ..." or something on that level). Before declaring the plan, think about what you have to do. Don't make the plan too specific, the steps should be more like milestones. Each step will correspond to multiple tool calls. 
@@ -23,7 +25,7 @@ export class Clipinator {
 
     constructor(objective: string = "", path: string = ".") {
         this.contextManager = new ContextManager(objective);
-        this.env = new Environment(new DefaultFileSystem(path), new DummyBrowser(), new DummyTerminal(), new CLIUserInterface());
+        this.env = new Environment(new DefaultFileSystem(path), new DummyBrowser(), new SimpleTerminal(path), new CLIUserInterface(), new TrunkLinter(path));
     }
 
     async runTool(tool: Tool, parameters: Record<string, any>): Promise<string> {
@@ -101,9 +103,16 @@ export class Clipinator {
 
     async generatePlan() {
         await this.run(
-            `Please, generate a plan to achieve the following objective: "${this.contextManager.objective}".
+            `
+Current linter output:
+\`\`\`
+${await this.contextManager.getLinterOutput(this.env)}
+\`\`\`
+Please, generate a plan to achieve the following objective: "${this.contextManager.objective}".
 Don't make the todos too small. "Refactor ... to be ..." is a good level of granularity.
-First, think about how to achieve it using the tools available, then write down the plan using the set_todos() tool. After that, write '<DONE/>'`,
+First, think about how to achieve it using the tools available, then write down the plan using the set_todos() tool. After that, write '<DONE/>'
+
+${planning_examples}`,
             undefined,
             undefined,
             undefined,
@@ -114,8 +123,13 @@ First, think about how to achieve it using the tools available, then write down 
     async executeATask() {
         let currentTask = this.contextManager.getFirstTodo()!;
         let { result } = await this.oneStep(
-            `Please, take the workspace structure above and this task: "${currentTask}" and provide a plan for achieving the task, the summary of the aspects of workspace structure relevant to the task, and the list of relevant files.`,
-            { plan: "", relevantSummary: "", pathList: "folder1/file1.txt\nanotherfile.py" },
+            `Please, take the workspace structure above and this task: "${currentTask}" and provide a plan for achieving the task, the summary of the aspects of workspace structure relevant to the task, and the list of relevant files.
+Also, select advice out of the list below that might be relevant:
+\`\`\`
+${task_prompts}
+\`\`\`
+`,
+            { plan: "", relevantSummary: "", pathList: "folder1/file1.txt\nanotherfile.py", relevantAdvice: "" },
             "Declare the task parameters",
             undefined,
             ["set_todos"]
@@ -154,12 +168,22 @@ In the new plan, don't make the todos too small. "Refactor ... to be ..." is a g
 It's fine if the new plan is the same as the old one, but with the current task marked as done.
 It's also fine if the new plan only has one or two todos. If the objective is complete, set_todos() with all the todos marked as done.
 Start by writing your analysis of the situation, then write the new plan using the set_todos() tool. After that, write '<DONE/>'
+
+Previous linter output:
+\`\`\`
+${this.contextManager.lastLinterOutput}
+\`\`\`
+Linter output:
+\`\`\`
+${await this.contextManager.getLinterOutput(this.env)}
+\`\`\`
 `,
             undefined,
             undefined,
             undefined,
             "set_todos"
         );
+        console.log(this.contextManager.lastLinterOutput);
     }
 
     async fullCycle() {

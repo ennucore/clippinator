@@ -65,6 +65,7 @@ function getFileContent(fileSystemTree: FileSystemTree, symbolCap: number): stri
 }
 
 const skip_ext = ['lock', 'png']
+const skip_paths = ['node_modules', '.git', '.trunk']
 
 export function getWorkspaceStructure(fileSystemTree: FileSystemTree, symbolCap: number): WorkspaceNode {
     let currentCap = symbolCap;
@@ -73,6 +74,9 @@ export function getWorkspaceStructure(fileSystemTree: FileSystemTree, symbolCap:
         if (tree.isDirectory && tree.children) {
             const children: WorkspaceNode[] = [];
             for (const child of tree.children) {
+                if (skip_paths.includes(child.path.split('/').pop() || '')) {
+                    continue;
+                }
                 const nextCap = Math.max(cap - CAP_REDUCTION_PER_LEVEL, MIN_CAP);
                 const childTree = readDirRecursive(child, nextCap);
                 children.push(childTree);
@@ -105,6 +109,7 @@ export class ContextManager {
     objective: string;
     lastFileSystemHash: string;
     lastWorkspaceSummary: string;
+    lastLinterOutput: string;
 
     constructor(objective: string = "") {
         this.todos = [];
@@ -113,6 +118,7 @@ export class ContextManager {
         this.objective = objective;
         this.lastFileSystemHash = "";
         this.lastWorkspaceSummary = "";
+        this.lastLinterOutput = "";
     }
 
     getFirstTodo(): string | undefined {
@@ -122,6 +128,12 @@ export class ContextManager {
                 return todo.replace("- [ ]", "");
             }
         }
+    }
+
+    async getLinterOutput(env: Environment): Promise<string> {
+        let output = await env.getLinterOutput();
+        this.lastLinterOutput = output;
+        return output;
     }
 
     async getWorkspaceStructure(env: Environment): Promise<string> {

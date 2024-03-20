@@ -158,9 +158,8 @@ export let tool_functions: Record<string, (args: Record<string, any>, env: Envir
                 ...lines.slice(old_line_end + 1),
             ];
             env.writeFile(path, patchedLines.join('\n'));
-            // Get neighboring lines (-3, +3)
             let neighboringLines = [];
-            for (let i = old_line_start - 5; i < old_line_end + 5; i++) {
+            for (let i = old_line_start - 5; i < old_line_end + 5 || i < old_line_start + new_content.length + 5; i++) {
                 if (i >= 0 && i < patchedLines.length) {
                     neighboringLines.push(`${i + 1}|${patchedLines[i]}`);
                 }

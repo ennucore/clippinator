@@ -33,7 +33,7 @@ export let tools: Tool[] = [
     {
         function: {
             name: 'rewrite_file',
-            description: 'Rewrite a file completely (or write to a new one) - without line numbers',
+            description: 'Rewrite a file completely (or write to a new one) - provide full content of the entire file without line numbers',
             parameters: {
                 path: 'src/hello.txt',
                 content: 'Hello, World!',
@@ -109,6 +109,13 @@ export let tools: Tool[] = [
             },
         }
     },
+    {
+        function: {
+            name: 'linter',
+            description: 'Run the linter on the code',
+            parameters: {},
+        }
+    }
     // {
     //     function: {
     //         name: 'set_focused_task',
@@ -228,5 +235,9 @@ export let tool_functions: Record<string, (args: Record<string, any>, env: Envir
     },
     final_result: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
         return `Done`;
+    },
+    linter: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
+        const output = await ctx.getLinterOutput(env);
+        return output;
     }
 };

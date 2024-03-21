@@ -18,5 +18,5 @@ export function trimString(text: string, threshold: number): string {
 }
 
 export const skip_ext = ['lock', 'png'];
-export const skip_paths = ['node_modules', '.git', '.trunk', 'linter'];
+export const skip_paths = ['node_modules', '.git', '.trunk', 'linter', '__pycache__'];
 

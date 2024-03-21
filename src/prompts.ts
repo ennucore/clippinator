@@ -1,11 +1,11 @@
 export let planning_examples = `
-<planning_advice>
-There is no need to put creating a file and writing several of its sections in different tasks. You can just write the entire file right away
-</planning_advice>
+<planning_advice>There is no need to put creating a file and writing several of its sections in different tasks. You can just write the entire file right away</planning_advice>
+<planning_advice>When you encounter an issue, if you can say how to fix it without investigating with decent confidence, you can just write the fix and after that test itß</planning_advice>
+<planning_advice>Be concise</planning_advice>
 `;
 
 export let task_prompts = `
-<advice>Sometimes, it's easier to rewirte a file than to patch it (if it's less than ~300 lines) - but make sure you know its full content and you write the correct and complete content</advice>
+<advice>Sometimes, it's easier to rewirte a file than to patch it (if it's less than ~1500 lines) - but make sure you know its full content and you write the correct and complete content</advice>
 <advice>To delete a line, you can use patch with n and n+1 as arguments and <new_content></new_content></advice>
 <advice>If you want to use several patches in a row, use them in the order of decreasing line numbers - then the line numbers won't be changes for the following patches</advice>
 
@@ -126,5 +126,15 @@ The new content in the neighborhood:
 </example>
 
 <advice>When investigating or looking for some context, read the required files all at the same time, in one function_calls block. If they are provided above (in the workspace or relevant files sections), you don't need to read them at all.</advice>
-<advice>Use rewrite_file instead of patches if the file is less than 500 lines</advice>
+<advice>Use rewrite_file instead of patches if the file is less than 2000 lines</advice>
+<advice>When rewriting a file, make sure you know its full content and you write the correct and complete content - you cannot skip anything</advice>
+<advice>Usually, you should first make a plan, then use the function calls to implement it. After that, check that everything has been done correctly: read files, etc. After that you can write <DONE/></advice>
+<advice>After making some changes to the codebase, run the linter to check for any issues</advice>
+<advice>Usualy, the plan should look kind of like this:
+1. Read the relevant files if they are not provided
+2. Write your thoughts on how to perform the necessary changes
+3. Rewrite the files with your changes
+4. Run the linter, sometimes run the tests too
+5. If everything is fine, write <DONE/></advice>
+<advice>If you can't read some file, use ls or tree to see what's in that directory and which file you should read</advice>
 `;

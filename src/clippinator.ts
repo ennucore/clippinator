@@ -89,6 +89,7 @@ export class Clipinator {
                 return result;
             }
             if (response.includes("<DONE/>")) {
+                console.log(response)
                 // console.log(await this.getPrompt())
                 break;
             }
@@ -125,7 +126,7 @@ ${planning_examples}`,
         let currentTask = this.contextManager.getFirstTodo()!;
         let { result } = await this.oneStep(
             `Please, take the workspace structure above and this task: "${currentTask}" and provide a plan for achieving the task, the summary of the aspects of workspace structure relevant to the task, and the list of relevant files.
-Also, select advice out of the list below that might be relevant (you can select a lot; if the task will envolve patching, repeat everything from the patching section, including the examples):
+Also, select advice out of the list below that might be relevant. You can select a lot; if the task will envolve patching, repeat everything from the patching section, including the examples; include all the general advice. If the files involved are small, tell the agent not to patch and to write instead. Here is the entire advice (it's fine to copy it entirely):
 \`\`\`
 ${task_prompts}
 \`\`\`
@@ -134,7 +135,8 @@ ${task_prompts}
             "Declare the task parameters",
             "",
             ["set_todos"],
-            sonnet_model
+            "random_sonnet_opus"
+            // sonnet_model
         );
         let additionalContext = "";
         if (result) {
@@ -168,7 +170,8 @@ ${task_prompts}
 If everything is well, use set_todos() to update the plan marking this task as done. If some new information was discovered, you can edit the next steps of the plan.
 If the task wasn't achieved, update the plan in order to achieve the objective successfully: re-attempting this task with the new information, or trying another way.
 If some damage was done while trying to complete the task, add a task specifying how to fix it.
-Look at the linter output below, look at the workspace structure above to check that everything is ok. If the agent was supposed to write to a file, check that the file contents are correct and that the task was completed.
+Look at the linter output below, look at the workspace structure above to check that everything is ok (not just the history). If the agent was supposed to write to a file, check that the file contents are correct and that the task was completed.
+If there are linter errors, add a task to fix them.
 
 In the new plan, don't make the todos too small. "Refactor ... to be ..." is a good level of granularity.
 It's fine if the new plan is the same as the old one, but with the current task marked as done.
@@ -189,7 +192,7 @@ ${await this.contextManager.getLinterOutput(this.env)}
             undefined,
             "set_todos",
             undefined,
-            sonnet_model
+            // sonnet_model
         );
         console.log("Linter output:\n\n", this.contextManager.lastLinterOutput);
     }

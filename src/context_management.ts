@@ -76,21 +76,18 @@ export function getWorkspaceStructure(fileSystemTree: FileSystemTree, symbolCap:
                     continue;
                 }
                 const nextCap = Math.max(cap / CAP_REDUCTION_PER_LEVEL, MIN_CAP);
-                if (cap > MIN_CAP) {
-                    const childTree = readDirRecursive(child, nextCap);
-                    children.push(childTree);
-                    cap -= childTree.contentLength() || 0;
-                } else {
-                    // no child tree
-                    const fileContent = getFileContent(child, cap);
-                    children.push(new WorkspaceNode(child.path, fileContent, []));
-                }
+                const childTree = readDirRecursive(child, nextCap);
+                children.push(childTree);
+                cap -= childTree.contentLength() || 0;
+
+                // const fileContent = getFileContent(child, cap);
+                // children.push(new WorkspaceNode(child.path, fileContent, []));
 
                 cap = Math.max(cap, MIN_CAP);
             }
             return new WorkspaceNode(tree.path, "", children);
         } else {
-            if (!skip_ext.includes(tree.path.split('.').pop() || '')) {
+            if ((!skip_ext.includes(tree.path.split('.').pop() || '')) && symbolCap > MIN_CAP && currentCap > MIN_CAP) {
                 const fileContent = getFileContent(tree, cap);
                 return new WorkspaceNode(tree.path, fileContent, []);
             }
@@ -152,7 +149,11 @@ export class ContextManager {
                 term_str += `Tab ${index}:\n${tab.history.join('\n')}\n`;
             });
         }
-        return `${fs_str}\n${term_str}`;
+        let linter_output = this.lastLinterOutput;
+        if (!linter_output) {
+            linter_output = await this.getLinterOutput(env);
+        }
+        return `${fs_str}\n${term_str}\nLinter output:\n${linter_output}`;
     }
 
     async getWorkspaceStructureSummary(env: Environment): Promise<string> {
@@ -161,9 +162,18 @@ export class ContextManager {
         if (hash === this.lastFileSystemHash && this.lastWorkspaceSummary) {
             return this.lastWorkspaceSummary;
         }
+        console.log(fullStructure)
         this.lastFileSystemHash = hash;
-        this.lastWorkspaceSummary = await callLLMFast(`Please, provide a summary of the following workspace structure. 
-It should be in a very similar format to the one you see below, but with a lot less details. It should contain all the files and directories and an outline of the meaning of each file, the main classes and functions etc it contains (same with the terminal tabs if they are there). Reply ONLY with the summary, in a similar format to the original structure. Here is the workspace:\n\`\`\`\n${fullStructure}\n\`\`\``);
+        this.lastWorkspaceSummary = await callLLMFast(`We are working in a workspace with some files and terminals. We have the following objective:
+<objective>${this.objective}</objective>
+Please, provide a summary of the following workspace structure. 
+It should be in a very similar format to the one you see below, but with a lot less details. 
+It should contain all the files and directories and an outline of the meaning of each file, the main classes and functions etc it contains (same with the terminal tabs if they are there). Reply ONLY with the summary, in a similar format to the original structure. 
+In the summary, you have to includ **all** the paths exactly the same as in the original, and the content should be in the same form as the original content although you can omit some lines. However, do include all the important lines with important classes and functions etc. in the format \`n|class ClassName:\' with some descriptions. If some file is tangentially related to the overall objective, include its content **fully**.
+Here is the workspace:\n\`\`\`\n${fullStructure}\n\`\`\`
+Now, based on that, provide your edit. IT HAS TO BE ALMOST THE SAME LENGTH AS THE ORIGINAL, SAME FORMAT, AND VERY SIMILAR IN MANY WAYS. INCLUDE IMPORTANT OR RELEVANT LINES FROM EACH FILE
+`);
+        console.log("\n\n\nWorkspace Summary:\n", this.lastWorkspaceSummary)
         return this.lastWorkspaceSummary;
     }
 

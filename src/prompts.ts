@@ -7,9 +7,8 @@ export let planning_examples = `
 export let task_prompts = `
 <advice>Sometimes, it's easier to rewirte a file than to patch it (if it's less than ~1500 lines) - but make sure you know its full content and you write the correct and complete content</advice>
 <advice>To delete a line, you can use patch with n and n+1 as arguments and <new_content></new_content></advice>
-<advice>If you want to use several patches in a row, use them in the order of decreasing line numbers - then the line numbers won't be changes for the following patches</advice>
-
-Example of patching - insertion:
+<advice>If you want to use several patches in a row, use them in the order of decreasing line numbers - then the line numbers won't be changes for the following patches</advice>`
+/*Example of patching - insertion:
 <example>
 <function_calls>
 <invoke>
@@ -123,9 +122,9 @@ The new content in the neighborhood:
 </stdout>
 </result>
 </function_results>
-</example>
+</example>*/
 
-<advice>When investigating or looking for some context, read the required files all at the same time, in one function_calls block. If they are provided above (in the workspace or relevant files sections), you don't need to read them at all.</advice>
+task_prompts += `<advice>When investigating or looking for some context, read the required files all at the same time, in one function_calls block. If they are provided above (in the workspace or relevant files sections), you don't need to read them at all.</advice>
 <advice>Use rewrite_file instead of patches if the file is less than 2000 lines</advice>
 <advice>When rewriting a file, make sure you know its full content and you write the correct and complete content - you cannot skip anything</advice>
 <advice>Usually, you should first make a plan, then use the function calls to implement it. After that, check that everything has been done correctly: read files, etc. After that you can write <DONE/></advice>

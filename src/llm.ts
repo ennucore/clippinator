@@ -4,6 +4,7 @@ import { ToolCall, all_possible_parameter_names } from './toolbox';
 import OpenAI from "openai"
 
 import { config } from 'dotenv';
+import { hashString, loadCache, saveCache } from './utils';
 config();
 var clc = require("cli-color");
 
@@ -116,7 +117,7 @@ export async function callLLMTools(
     const toolCallingSystemPrompt = constructToolUseSystemPrompt(tools);
     // console.log(prompt);
     if (model === "random_sonnet_opus") {
-        Math.random() > 0.75 ? model = opus_model : model = sonnet_model;
+        Math.random() > 0.63 ? model = opus_model : model = sonnet_model;
     }
 
     let stream;
@@ -225,14 +226,23 @@ export async function callLLM(prompt: string, model: string = opus_model): Promi
     return message.content[0].text;
 }
 
+let fastCallCache: Record<string, string> = loadCache('.fastCallCache.json');
+
 
 export async function callLLMFast(prompt: string, model: string = haiku_model): Promise<string> {
+    let promptHash = hashString(prompt);
+    if (fastCallCache[promptHash]) {
+        return fastCallCache[promptHash];
+    }
     if (use_open) {
         const response = await openai.chat.completions.create({
             model: haiku_model,
             messages: [{ role: "user", content: prompt }],
         })
-        return response.choices[0].message.content || "";
+        let res = response.choices[0].message.content || "";
+        fastCallCache[promptHash] = res;
+        saveCache(fastCallCache, '.fastCallCache.json');
+        return res;
     }
     const anthropic = new Anthropic({ apiKey: haiku_key });
     const message = await anthropic.messages.create({
@@ -240,5 +250,7 @@ export async function callLLMFast(prompt: string, model: string = haiku_model): 
         messages: [{ role: 'user', content: prompt }],
         model,
     });
+    fastCallCache[promptHash] = message.content[0].text;
+    saveCache(fastCallCache, '.fastCallCache.json');
     return message.content[0].text;
 }

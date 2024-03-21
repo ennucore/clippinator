@@ -99,6 +99,77 @@ export function getWorkspaceStructure(fileSystemTree: FileSystemTree, symbolCap:
     return rootTree;
 }
 
+export async function buildSmartWorkspaceStructure(fileSystemTree: FileSystemTree, objective: string = ""): Promise<string> {
+    if (!fileSystemTree.isDirectory) {
+        if (fileSystemTree.content && fileSystemTree.content!.length > 10000) {
+            let fileContent = formatFileContent(fileSystemTree.content!, 50000);
+            let fileContentSummarized = await callLLMFast(`We are working in a workspace with a lot of files. 
+Overall, we are pursuing this objective:
+<objective>${objective}</objective>
+Here is a file with the path ${fileSystemTree.path} and its content:
+
+${fileContent}
+
+Please, provide the main lines of this file with some comments. Respond only with the lines. Make it in a format similar to the original, with all the important classes and functions included with their description.
+If the content is relevant to the objective, make it especially detailed.
+For example, write something like this:
+40|class MyClass:   # handling the logic for ...
+50|    def my_function():   # function to ...
+55|class AnotherClass:   # ...
+
+Do not respond with any lines that are not in the format above.
+`);
+            return fileSystemTree.path + '\n' + fileContentSummarized;
+        } else {
+            return fileSystemTree.path + '\n' + formatFileContent(fileSystemTree.content || [], 10000);
+        }
+    } else {
+        // now we draw a tree
+        let tree = `${fileSystemTree.path}\n`;
+        // call this function for all children
+
+        if (!fileSystemTree.children) {
+            return tree;
+        }
+        let childrenContent = [];
+        // for (let child of fileSystemTree.children!) {
+        //     childrenContent.push(await buildSmartWorkspaceStructure(child, objective));
+        // }
+        let n = 7;
+
+        // iterate over groups of 4 children and use Promise.allSettled to parallelize the calls
+        for (let i = 0; i < fileSystemTree.children.length; i += n) {
+            const children = fileSystemTree.children.slice(i, i + n);
+            const promises = children.map(child => buildSmartWorkspaceStructure(child, objective));
+            const results = await Promise.allSettled(promises);
+            for (const result of results) {
+                if (result.status === 'fulfilled') {
+                    childrenContent.push(result.value);
+                }
+            }
+        }
+        for (let childContent of childrenContent) {
+            childContent = '├── ' + childContent.replace(/\n/g, '\n│   ');
+            tree += childContent;
+        }
+        if (tree.length > 17000) {
+            tree = await callLLMFast(`We are working in a workspace with a lot of files.
+Overall, we are pursuing this objective:
+<objective>${objective}</objective>
+Here is the structure of a folder with the path ${fileSystemTree.path}:
+
+${tree}
+
+Please, provide a smart tree for this folder. Respond only with the tree in the format like above. Each of your line should start with something like '├── ' or '│   ', and then contain either a path or a line in the format 'n|class ClassName:   # description'. Include only the most important files, classes and functions.
+For some files, you can skip their content and just write their path. If something is relevant to the objective, include it in more detail.
+Do not respond with anything other than the resulting tree. If you say something like "Here is the tree" or "Ok", it will be a great mistake.
+Make sure to have correct syntax in the tree.
+`);
+        }
+        return tree;
+    }
+}
+
 export interface Message {
     type: "thoughts" | "user" | "system";
     content: string;
@@ -162,17 +233,17 @@ export class ContextManager {
         if (hash === this.lastFileSystemHash && this.lastWorkspaceSummary) {
             return this.lastWorkspaceSummary;
         }
-        console.log(fullStructure)
         this.lastFileSystemHash = hash;
-        this.lastWorkspaceSummary = await callLLMFast(`We are working in a workspace with some files and terminals. We have the following objective:
-<objective>${this.objective}</objective>
-Please, provide a summary of the following workspace structure. 
-It should be in a very similar format to the one you see below, but with a lot less details. 
-It should contain all the files and directories and an outline of the meaning of each file, the main classes and functions etc it contains (same with the terminal tabs if they are there). Reply ONLY with the summary, in a similar format to the original structure. 
-In the summary, you have to includ **all** the paths exactly the same as in the original, and the content should be in the same form as the original content although you can omit some lines. However, do include all the important lines with important classes and functions etc. in the format \`n|class ClassName:\' with some descriptions. If some file is tangentially related to the overall objective, include its content **fully**.
-Here is the workspace:\n\`\`\`\n${fullStructure}\n\`\`\`
-Now, based on that, provide your edit. IT HAS TO BE ALMOST THE SAME LENGTH AS THE ORIGINAL, SAME FORMAT, AND VERY SIMILAR IN MANY WAYS. INCLUDE IMPORTANT OR RELEVANT LINES FROM EACH FILE
-`);
+        //         this.lastWorkspaceSummary = await callLLMFast(`We are working in a workspace with some files and terminals. We have the following objective:
+        // <objective>${this.objective}</objective>
+        // Please, provide a summary of the following workspace structure. 
+        // It should be in a very similar format to the one you see below, but with a lot less details. 
+        // It should contain all the files and directories and an outline of the meaning of each file, the main classes and functions etc it contains (same with the terminal tabs if they are there). Reply ONLY with the summary, in a similar format to the original structure. 
+        // In the summary, you have to includ **all** the paths exactly the same as in the original, and the content should be in the same form as the original content although you can omit some lines. However, do include all the important lines with important classes and functions etc. in the format \`n|class ClassName:\' with some descriptions. If some file is tangentially related to the overall objective, include its content **fully**.
+        // Here is the workspace:\n\`\`\`\n${fullStructure}\n\`\`\`
+        // Now, based on that, provide your edit. IT HAS TO BE ALMOST THE SAME LENGTH AS THE ORIGINAL, SAME FORMAT, AND VERY SIMILAR IN MANY WAYS. INCLUDE IMPORTANT OR RELEVANT LINES FROM EACH FILE
+        // `);
+        this.lastWorkspaceSummary = await buildSmartWorkspaceStructure(await env.getFileSystem(), this.objective);
         console.log("\n\n\nWorkspace Summary:\n", this.lastWorkspaceSummary)
         return this.lastWorkspaceSummary;
     }
@@ -201,10 +272,7 @@ Now, based on that, provide your edit. IT HAS TO BE ALMOST THE SAME LENGTH AS TH
             }
         }
         actionHistory += '</history>';
-        let workspace = formatObject(getWorkspaceStructure(await env.getFileSystem(), 30000));
-        if (!is_full) {
-            workspace = await this.getWorkspaceStructureSummary(env);
-        }
+        let workspace = await this.getWorkspaceStructureSummary(env);
         const context = `\nMemory:\n${memory}\nWorkspace:\n${workspace}\n\nThe user's request (the overall objective):\n${this.objective}\nThe plan:\n${todos}\n\n\n${actionHistory}\n\n`;
         return context;
     }

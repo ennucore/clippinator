@@ -29,7 +29,7 @@ export class Environment {
     async deleteFile(path: string): Promise<void> {
         this.fileSystem.deleteFile(path);
     }
-    async runCommand(command: string, tabIndex?: number): Promise<string> {
+    async runCommand(command: string, tabIndex?: number | "new"): Promise<string> {
         return this.terminal.runCommand(command, tabIndex);
     }
     async openUrl(url: string, tabIndex?: number): Promise<string> {
@@ -96,13 +96,13 @@ interface Browser {
     openUrl(url: string, tabIndex?: number): Promise<string>;
 }
 
-interface TerminalTab {
+export interface TerminalTab {
     history: string[];
 }
 
-interface Terminal {
+export interface Terminal {
     getTerminalState(): Promise<TerminalTab[]>;
-    runCommand(command: string, tabIndex?: number): Promise<string>;   // returns the tab index
+    runCommand(command: string, tabIndex?: number | "new"): Promise<string>;   // returns the tab index
 }
 
 interface Linter {
@@ -115,21 +115,6 @@ export class DummyTerminal implements Terminal {
     }
     async runCommand(command: string, tabIndex?: number): Promise<string> {
         return "";
-    }
-}
-
-export class SimpleTerminal implements Terminal {
-    rootPath: string;
-    constructor(rootPath: string) {
-        this.rootPath = rootPath;
-    }
-
-    async getTerminalState(): Promise<TerminalTab[]> {
-        return [];
-    }
-    async runCommand(command: string, tabIndex?: number): Promise<string> {
-        const commandOutput = (require('child_process').execSync(command, { cwd: this.rootPath })).toString();
-        return commandOutput;
     }
 }
 

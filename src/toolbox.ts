@@ -22,9 +22,10 @@ export let tools: Tool[] = [
     {
         function: {
             name: 'run_shell_command',
-            description: 'Run a shell command',
+            description: 'Run a shell command (use a tab if you want to continue working in the terminal later and you need the history; by default, use \'-1\' to run it in-place)',
             parameters: {
                 command: 'echo "Hello, World!"',
+                tab: "-1"
             },
         },
     },
@@ -132,8 +133,16 @@ export function final_result_tool(description: string, params: Record<string, an
 export let tool_functions: Record<string, (args: Record<string, any>, env: Environment, ctx: ContextManager) => Promise<string>> = {
     run_shell_command: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
         const { command } = args;
-        const res = await env.runCommand(command);
-        return `Command ${command} ran in terminal.\n${res}`;
+        let tab;
+        if (args.tab === "-1") {
+            tab = undefined;
+        } else if (args.tag === "new") {
+            tab = "new" as "new";
+        } else {
+            tab = parseInt(args.tab);
+        }
+        const res = await env.runCommand(command, tab);
+        return `Command ${command} ran in terminal.\n\`\`\`\n${res}\n\`\`\``;
     },
     rewrite_file: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
         let { path, content } = args;

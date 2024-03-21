@@ -1,5 +1,6 @@
 import { ContextManager, Message } from "./context_management";
-import { Environment, CLIUserInterface, DummyBrowser, DummyTerminal, TrunkLinter, SimpleTerminal } from "./environment/environment";
+import { Environment, CLIUserInterface, DummyBrowser, DummyTerminal, TrunkLinter } from "./environment/environment";
+import { SimpleTerminal } from './environment/terminal';
 import { DefaultFileSystem } from "./environment/filesystem";
 import { Tool, ToolCall, final_result_tool, tool_functions, tools } from "./toolbox";
 import { callLLMTools } from "./llm";

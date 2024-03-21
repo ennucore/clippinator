@@ -138,7 +138,16 @@ export class ContextManager {
 
     async getWorkspaceStructure(env: Environment): Promise<string> {
         const workspace = getWorkspaceStructure(await env.getFileSystem(), 30000);
-        return formatObject(workspace);
+        let fs_str = formatObject(workspace);
+        let term_state = await env.getTerminalState();
+        let term_str = '';
+        if (term_state.length > 0 && term_state[0].history.length > 0) {
+            term_str = '**Terminal state:**\n';
+            term_state.forEach((tab, index) => {
+                term_str += `Tab ${index}:\n${tab.history.join('\n')}\n`;
+            });            
+        }
+        return `${fs_str}\n${term_str}`;
     }
 
     async getWorkspaceStructureSummary(env: Environment): Promise<string> {
@@ -149,7 +158,7 @@ export class ContextManager {
         }
         this.lastFileSystemHash = hash;
         this.lastWorkspaceSummary = await callLLMFast(`Please, provide a summary of the following workspace structure. 
-It should be in a very similar format to the one you see below, but with a lot less details. It should contain all the files and directories and an outline of the meaning of each file, the main classes and functions etc it contains. Reply ONLY with the summary, in a similar format to the original structure. Here is the workspace structure:\n\`\`\`\n${fullStructure}\n\`\`\``);
+It should be in a very similar format to the one you see below, but with a lot less details. It should contain all the files and directories and an outline of the meaning of each file, the main classes and functions etc it contains (same with the terminal tabs if they are there). Reply ONLY with the summary, in a similar format to the original structure. Here is the workspace structure:\n\`\`\`\n${fullStructure}\n\`\`\``);
         return this.lastWorkspaceSummary;
     }
 

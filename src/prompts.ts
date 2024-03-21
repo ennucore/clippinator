@@ -124,4 +124,7 @@ The new content in the neighborhood:
 </result>
 </function_results>
 </example>
+
+<advice>When investigating or looking for some context, read the required files all at the same time, in one function_calls block. If they are provided above (in the workspace or relevant files sections), you don't need to read them at all.</advice>
+<advice>Use rewrite_file instead of patches if the file is less than 500 lines</advice>
 `;

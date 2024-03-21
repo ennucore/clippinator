@@ -82,9 +82,9 @@ export class Clipinator {
         return { response, toolCallsFull, result };
     }
 
-    async run(task: string = "", result_format?: Record<string, any>, result_description?: string, additional_context?: string, stop_at_tool?: string, disableTools: boolean | string[] = false) {
+    async run(task: string = "", result_format?: Record<string, any>, result_description?: string, additional_context?: string, stop_at_tool?: string, disableTools: boolean | string[] = false, model: string = opus_model) {
         while (true) {
-            let { response, result, toolCallsFull } = await this.oneStep(task, result_format, result_description, additional_context, disableTools);
+            let { response, result, toolCallsFull } = await this.oneStep(task, result_format, result_description, additional_context, disableTools, model);
             if (result) {
                 return result;
             }
@@ -156,7 +156,8 @@ ${task_prompts}
             undefined,
             additionalContext,
             undefined,
-            ["set_todos"]
+            ["set_todos"],
+            sonnet_model
         );
     }
 
@@ -186,7 +187,9 @@ ${await this.contextManager.getLinterOutput(this.env)}
             undefined,
             undefined,
             undefined,
-            "set_todos"
+            "set_todos",
+            undefined,
+            sonnet_model
         );
         console.log("Linter output:\n\n", this.contextManager.lastLinterOutput);
     }

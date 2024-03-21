@@ -120,6 +120,8 @@ export let tools: Tool[] = [
     // }
 ];
 
+export let all_possible_parameter_names: string[] = /* extract from tools */ tools.flatMap(tool => Object.keys(tool.function.parameters || {}));
+
 export function final_result_tool(description: string, params: Record<string, any>): Tool {
     return {
         function: {

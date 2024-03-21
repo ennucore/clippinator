@@ -30,7 +30,7 @@ export function formatObject(obj: any, format: "json" | "xml" = "xml"): string {
 
 
 const THRESHOLD = 300; // Define a threshold for the number of lines
-const CAP_REDUCTION_PER_LEVEL = 5; // Symbol cap reduction per recursion level
+const CAP_REDUCTION_PER_LEVEL = 10; // Symbol cap reduction per recursion level
 const MIN_CAP = 500; // Minimum symbol cap
 
 export class WorkspaceNode {

@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { XMLParser } from 'fast-xml-parser';
-import { ToolCall } from './toolbox';
+import { ToolCall, all_possible_parameter_names } from './toolbox';
 
 import { config } from 'dotenv';
 config();
@@ -141,16 +141,26 @@ export async function callLLMTools(
             const parameterMatches = response.slice(last_handled_length).match(/<parameters>([\s\S]*?)<\/parameters>/g);
             if (parameterMatches) {
                 const parameterBlock = parameterMatches[0];
-                const parser = new XMLParser();
-                const json = parser.parse(parameterBlock);
-                if (json.parameters) {
-                    Object.entries(json.parameters).forEach(([parameterName, parameterValue]) => {
-                    if (onParameterValue) {
-                        onParameterValue(currentToolName, currentToolArguments, parameterName, parameterValue);
+                // const parser = new XMLParser();
+                // const json = parser.parse(parameterBlock);
+                // if (json.parameters) {
+                //     Object.entries(json.parameters).forEach(([parameterName, parameterValue]) => {
+                //     if (onParameterValue) {
+                //         onParameterValue(currentToolName, currentToolArguments, parameterName, parameterValue);
+                //     }
+                //     currentToolArguments[parameterName] = parameterValue;
+                //     });
+                // }
+                all_possible_parameter_names.forEach((parameterName) => {
+                    const valueMatches = parameterBlock.match(new RegExp(`<${parameterName}>[\\s\\S]*?</${parameterName}>`, 'g'));
+                    if (valueMatches) {
+                        const value = valueMatches[0].replace(new RegExp(`</?${parameterName}>`, 'g'), '');
+                        if (onParameterValue) {
+                            onParameterValue(currentToolName, currentToolArguments, parameterName, value);
+                        }
+                        currentToolArguments[parameterName] = value;
                     }
-                    currentToolArguments[parameterName] = parameterValue;
-                    });
-                }
+                });
             }
 
             if (response.includes('</invoke>', last_handled_length)) {

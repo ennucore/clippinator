@@ -3,7 +3,7 @@ import { Environment, CLIUserInterface, DummyBrowser, DummyTerminal, TrunkLinter
 import { SimpleTerminal } from './environment/terminal';
 import { DefaultFileSystem } from "./environment/filesystem";
 import { Tool, ToolCall, final_result_tool, tool_functions, tools } from "./toolbox";
-import { callLLMTools } from "./llm";
+import { callLLMTools, haiku_model, opus_model, sonnet_model } from "./llm";
 import { planning_examples, task_prompts } from "./prompts";
 var clc = require("cli-color");
 
@@ -46,7 +46,7 @@ export class Clipinator {
     }
 
     async getPrompt(task: string = "", additional_context?: string): Promise<string> {
-        let is_full = additional_context ? false : true;
+        let is_full = additional_context !== undefined ? false : true;
         let res = await this.contextManager.getContext(this.env, is_full) + '\n';
         if (additional_context) {
             res += additional_context + '\n' + task;
@@ -56,7 +56,7 @@ export class Clipinator {
         return res;
     }
 
-    async oneStep(task: string = "", result_format?: Record<string, any>, result_description?: string, additional_context?: string, disableTools: boolean | string[] = false) {
+    async oneStep(task: string = "", result_format?: Record<string, any>, result_description?: string, additional_context?: string, disableTools: boolean | string[] = false, model: string = opus_model) {
         const prompt = await this.getPrompt(task, additional_context);
         let tools_now = tools;
         if (disableTools === true) {
@@ -68,7 +68,7 @@ export class Clipinator {
         if (result_format) {
             tools_now = tools_now.concat([final_result_tool(result_description || '', result_format)]);
         }
-        const { toolCallsFull, response } = await callLLMTools(prompt, tools_now, this.runToolCall.bind(this), undefined, preprompt);
+        const { toolCallsFull, response } = await callLLMTools(prompt, tools_now, this.runToolCall.bind(this), undefined, preprompt, model);
         this.contextManager.history.push({ type: "thoughts", content: response });
         this.contextManager.history.push(toolCallsFull);
         let result = null;
@@ -116,7 +116,7 @@ First, think about how to achieve it using the tools available, then write down 
 ${planning_examples}`,
             undefined,
             undefined,
-            undefined,
+            "",
             "set_todos"
         );
     }
@@ -125,19 +125,21 @@ ${planning_examples}`,
         let currentTask = this.contextManager.getFirstTodo()!;
         let { result } = await this.oneStep(
             `Please, take the workspace structure above and this task: "${currentTask}" and provide a plan for achieving the task, the summary of the aspects of workspace structure relevant to the task, and the list of relevant files.
-Also, select advice out of the list below that might be relevant:
+Also, select advice out of the list below that might be relevant (you can select a lot; if the task will envolve patching, repeat everything from the patching section, including the examples):
 \`\`\`
 ${task_prompts}
 \`\`\`
 `,
             { plan: "", relevantSummary: "", pathList: "folder1/file1.txt\nanotherfile.py", relevantAdvice: "" },
             "Declare the task parameters",
-            undefined,
-            ["set_todos"]
+            "",
+            ["set_todos"],
+            sonnet_model
         );
         let additionalContext = "";
         if (result) {
-            additionalContext = `The plan for the task is: ${result.plan}\nSome relevant facts: ${result.relevantSummary}\nThe list of relevant files is: ${result.pathList}`;
+            // The course of actions for the task:\n${result.plan}\n
+            additionalContext = `Some relevant facts: ${result.relevantSummary}\nSome advice that might be relevant:\n${result.relevantAdvice}\nThe list of relevant files is: ${result.pathList}`;
             console.log(clc.blue.bold("Additional context for the task:\n") + clc.green(additionalContext) + '\n');
             // now, the files themselves
             let files = result.pathList.split("\n");
@@ -165,6 +167,8 @@ ${task_prompts}
 If everything is well, use set_todos() to update the plan marking this task as done. If some new information was discovered, you can edit the next steps of the plan.
 If the task wasn't achieved, update the plan in order to achieve the objective successfully: re-attempting this task with the new information, or trying another way.
 If some damage was done while trying to complete the task, add a task specifying how to fix it.
+Look at the linter output below, look at the workspace structure above to check that everything is ok. If the agent was supposed to write to a file, check that the file contents are correct and that the task was completed.
+
 In the new plan, don't make the todos too small. "Refactor ... to be ..." is a good level of granularity.
 It's fine if the new plan is the same as the old one, but with the current task marked as done.
 It's also fine if the new plan only has one or two todos. If the objective is complete, set_todos() with all the todos marked as done.
@@ -184,7 +188,7 @@ ${await this.contextManager.getLinterOutput(this.env)}
             undefined,
             "set_todos"
         );
-        console.log(this.contextManager.lastLinterOutput);
+        console.log("Linter output:\n\n", this.contextManager.lastLinterOutput);
     }
 
     async fullCycle() {

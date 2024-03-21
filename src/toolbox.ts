@@ -44,7 +44,7 @@ export let tools: Tool[] = [
     {
         function: {
             name: 'patch_file',
-            description: 'Patch a file: Replace lines from old_line_start (indexing from 1) to old_line_end (inclusive, 1-indexing) in a file with new content - new_content is without line numbers. Note that after using patch, the line numbers change for all following lines',
+            description: 'Patch a file: Replace lines from old_line_start (indexing from 1) to old_line_end (non-inclusive, 1-indexing) in a file with new content - new_content is without line numbers. Note that after using patch, the line numbers change for all following lines; 15:15 inserts the content, 15:16 replaces a line with the content',
             parameters: {
                 path: 'hello.txt',
                 old_line_start: 10,
@@ -85,7 +85,7 @@ export let tools: Tool[] = [
     {
         function: {
             name: 'set_todos',
-            description: 'Set the plan, as Markdown todos. x marks a completed todo (it will not get). Each line should be a todo starting with "- [ ]" or "- [x]" (no subtasks)',
+            description: 'Set the plan, as Markdown todos. x marks a completed todo (it will not get). Each line should be a todo starting with "- [ ]" or "- [x]" (no subtasks), and each todo is only one line',
             parameters: {
                 todos: '- [x] Todo 1\n- [ ] Todo 2\n- [ ] Todo 3',
             },
@@ -154,7 +154,8 @@ export let tool_functions: Record<string, (args: Record<string, any>, env: Envir
         return `Wrote content to file ${path}`;
     },
     patch_file: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
-        const { path, new_content } = args;
+        let { path } = args;
+        let new_content = /* lines */ args.new_content.split('\n');
         const file = (await env.getFileSystem()).getByPath(path);
 
         let old_line_start = parseInt(args.old_line_start);
@@ -163,17 +164,27 @@ export let tool_functions: Record<string, (args: Record<string, any>, env: Envir
             let lines = file.content || [];
             const patchedLines = [
                 ...lines.slice(0, old_line_start - 1),
-                new_content,
-                ...lines.slice(old_line_end + 1),
+                ...new_content,
+                ...lines.slice(old_line_end - 1),
             ];
             env.writeFile(path, patchedLines.join('\n'));
+            let oldNeighboringLines = [];
             let neighboringLines = [];
-            for (let i = old_line_start - 5; i < old_line_end + 5 || i < old_line_start + new_content.length + 5; i++) {
+            for (let i = old_line_start - 10; i < old_line_end + 5 || i < old_line_start + new_content.length + 5; i++) {
                 if (i >= 0 && i < patchedLines.length) {
                     neighboringLines.push(`${i + 1}|${patchedLines[i]}`);
                 }
+                if (i >= 0 && i < lines.length) {
+                    if (i === old_line_start - 1) {
+                        oldNeighboringLines.push(`---`);
+                    }
+                    if (i === old_line_end - 1) {
+                        oldNeighboringLines.push(`---`);
+                    }
+                    oldNeighboringLines.push(`${i + 1}|${lines[i]}`);
+                }
             }
-            return `Patched file ${path} from line ${old_line_start} to ${old_line_end} with new content. Neighboring lines:\n${neighboringLines.join('\n')}\nRemember that the line numbers below these have changed`;
+            return `Patched file ${path} from line ${old_line_start} to ${old_line_end} with new content. Here is what was in the file:\n${oldNeighboringLines.join('\n')}\nThe new content in the neighborhood:\n${neighboringLines.join('\n')}\nRemember that the line numbers below these have changed, and check that what we got (see above) is what you wanted`;
         } else {
             return `File ${path} not found`;
         }

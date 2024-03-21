@@ -1,16 +1,17 @@
 import { Environment, FileSystemTree } from './environment/environment';
 import { callLLMFast } from './llm';
-import { ToolCall, ToolCallsGroup} from './toolbox';
-import { hashString } from './utils';
+import { ToolCall, ToolCallsGroup } from './toolbox';
+import { skip_paths, skip_ext } from './utils';
+import { hashString, trimString } from './utils';
 
 export function formatFileContent(lines: string[], line_threshold: number = 2000): string {
     let formattedLines;
     if (lines.length > line_threshold) {
-      const startLines = lines.slice(0, line_threshold / 2);
-      const endLines = lines.slice(-line_threshold / 2);
-      formattedLines = [...startLines, '...', ...endLines];
+        const startLines = lines.slice(0, line_threshold / 2);
+        const endLines = lines.slice(-line_threshold / 2);
+        formattedLines = [...startLines, '...', ...endLines];
     } else {
-      formattedLines = lines;
+        formattedLines = lines;
     }
 
     const formattedContent = formattedLines.map((line, index) => `${index + 1}|${line}`).join('\n');
@@ -29,8 +30,8 @@ export function formatObject(obj: any, format: "json" | "xml" = "xml"): string {
 
 
 const THRESHOLD = 300; // Define a threshold for the number of lines
-const CAP_REDUCTION_PER_LEVEL = 2500; // Symbol cap reduction per recursion level
-const MIN_CAP = 1000; // Minimum symbol cap
+const CAP_REDUCTION_PER_LEVEL = 5; // Symbol cap reduction per recursion level
+const MIN_CAP = 500; // Minimum symbol cap
 
 export class WorkspaceNode {
     path: string;
@@ -58,14 +59,11 @@ function getFileContent(fileSystemTree: FileSystemTree, symbolCap: number): stri
     if (!fileSystemTree.isDirectory && fileSystemTree.content) {
         const fileContent = fileSystemTree.content.join('\n').slice(0, symbolCap);
         const lines = fileContent.split(/\r?\n/);
-        const formattedContent = formatFileContent(lines, THRESHOLD);
+        const formattedContent = trimString(formatFileContent(lines, THRESHOLD), symbolCap);
         return formattedContent;
     }
     return '';
 }
-
-const skip_ext = ['lock', 'png']
-const skip_paths = ['node_modules', '.git', '.trunk']
 
 export function getWorkspaceStructure(fileSystemTree: FileSystemTree, symbolCap: number): WorkspaceNode {
     let currentCap = symbolCap;
@@ -77,11 +75,18 @@ export function getWorkspaceStructure(fileSystemTree: FileSystemTree, symbolCap:
                 if (skip_paths.includes(child.path.split('/').pop() || '')) {
                     continue;
                 }
-                const nextCap = Math.max(cap - CAP_REDUCTION_PER_LEVEL, MIN_CAP);
-                const childTree = readDirRecursive(child, nextCap);
-                children.push(childTree);
-                // currentCap -= childTree.contentLength() || 0;
-                // if (currentCap <= 0) break;
+                const nextCap = Math.max(cap / CAP_REDUCTION_PER_LEVEL, MIN_CAP);
+                if (cap > MIN_CAP) {
+                    const childTree = readDirRecursive(child, nextCap);
+                    children.push(childTree);
+                    cap -= childTree.contentLength() || 0;
+                } else {
+                    // no child tree
+                    const fileContent = getFileContent(child, cap);
+                    children.push(new WorkspaceNode(child.path, fileContent, []));
+                }
+
+                cap = Math.max(cap, MIN_CAP);
             }
             return new WorkspaceNode(tree.path, "", children);
         } else {
@@ -145,7 +150,7 @@ export class ContextManager {
             term_str = '**Terminal state:**\n';
             term_state.forEach((tab, index) => {
                 term_str += `Tab ${index}:\n${tab.history.join('\n')}\n`;
-            });            
+            });
         }
         return `${fs_str}\n${term_str}`;
     }
@@ -158,7 +163,7 @@ export class ContextManager {
         }
         this.lastFileSystemHash = hash;
         this.lastWorkspaceSummary = await callLLMFast(`Please, provide a summary of the following workspace structure. 
-It should be in a very similar format to the one you see below, but with a lot less details. It should contain all the files and directories and an outline of the meaning of each file, the main classes and functions etc it contains (same with the terminal tabs if they are there). Reply ONLY with the summary, in a similar format to the original structure. Here is the workspace structure:\n\`\`\`\n${fullStructure}\n\`\`\``);
+It should be in a very similar format to the one you see below, but with a lot less details. It should contain all the files and directories and an outline of the meaning of each file, the main classes and functions etc it contains (same with the terminal tabs if they are there). Reply ONLY with the summary, in a similar format to the original structure. Here is the workspace:\n\`\`\`\n${fullStructure}\n\`\`\``);
         return this.lastWorkspaceSummary;
     }
 
@@ -172,14 +177,14 @@ It should be in a very similar format to the one you see below, but with a lot l
             } else {
                 actionHistory += '<function_calls>\n';
                 for (const toolCall of action) {
-                    actionHistory += '<invoke>\n' + formatObject({tool_name: toolCall.tool_name, parameters: toolCall.parameters}, "xml") + '\n</invoke>\n';
+                    actionHistory += '<invoke>\n' + trimString(formatObject({ tool_name: toolCall.tool_name, parameters: toolCall.parameters }, "xml"), 5000) + '\n</invoke>\n';
                 }
                 actionHistory += '</function_calls>\n';
                 actionHistory += '<function_results>\n';
                 for (const toolCall of action) {
                     actionHistory += '<result>\n';
                     actionHistory += '<tool_name>' + toolCall.tool_name + '</tool_name>\n';
-                    actionHistory += '<stdout>\n' + toolCall.result + '\n</stdout>\n';
+                    actionHistory += '<stdout>\n' + trimString(toolCall.result || "", 10000) + '\n</stdout>\n';
                     actionHistory += '</result>\n';
                 }
                 actionHistory += '</function_results>\n';

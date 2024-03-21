@@ -18,8 +18,9 @@ export interface Tool {
     };
 }
 
-const haiku_model = "claude-3-haiku-20240307";
-const opus_model = "claude-3-opus-20240229";
+export const haiku_model = "claude-3-haiku-20240307";
+export const opus_model = "claude-3-opus-20240229";
+export const sonnet_model = "claude-3-sonnet-20240229";
 
 function constructFormatToolForClaudePrompt(
     name: string,
@@ -82,7 +83,7 @@ function extractBetweenTags(tag: string, str: string, strip: boolean = false): s
     if (matches) {
       return matches.map((match) => {
         const content = match.replace(new RegExp(`</?${tag}>`, 'g'), '');
-        return strip ? content.trim() : content;
+        return strip ? content : content;
       });
     }
     return [];
@@ -99,7 +100,8 @@ export async function callLLMTools(
     tools: Tool[],
     onToolCall: (toolName: string, toolArguments: Record<string, any>) => Promise<string>,
     onParameterValue?: (toolName: string, currentToolArguments: Record<string, any>, parameterName: string, parameterValue: any) => void,
-    preprompt: string = ''
+    preprompt: string = '',
+    model: string = opus_model
 ): Promise<{ toolCalls: { name: string, arguments: Record<string, any> }[], toolResults: string[], response: string, toolCallsFull: ToolCall[] }> {
     const anthropic = new Anthropic({ apiKey: anthropic_key });
     const toolCallingSystemPrompt = constructToolUseSystemPrompt(tools);
@@ -113,7 +115,7 @@ export async function callLLMTools(
                 content: preprompt + '\n' + toolCallingSystemPrompt + '\n\n' + prompt,
             },
         ],
-        model: opus_model,
+        model,
         stream: true,
         stop_sequences: ['</function_calls>'],
     });

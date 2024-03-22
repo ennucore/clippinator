@@ -1,5 +1,6 @@
 import { Environment } from './environment/environment'
-import { ContextManager, formatFileContent } from './context_management';
+import { ContextManager } from './context_management';
+import { formatFileContent } from './utils';
 
 export interface Tool {
     function: {

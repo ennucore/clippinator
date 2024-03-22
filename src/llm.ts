@@ -13,12 +13,17 @@ const haiku_key = process.env.HAIKU_API_KEY || process.env.ANTHROPIC_API_KEY;
 const anthropic_key = process.env.ANTHROPIC_API_KEY;
 const openai_key = process.env.OPEN_API_KEY;
 const openai_base = process.env.OPENAI_BASE || "https://openrouter.ai/api/v1";   // we actually use openrouter instead
-export const use_open = openai_key ? true : false;
+export const use_open = anthropic_key ? false : true;
 
-let openai = new OpenAI({
-    apiKey: openai_key || "sk-no-key", // defaults to process.env["OPENAI_API_KEY"]
+let open_client = new OpenAI({
+    apiKey: openai_key || "sk-no-key",
     baseURL: openai_base,
 })
+
+let openai_client = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY || "sk-no-key", // defaults to process.env["OPENAI_API_KEY"]
+    baseURL: process.env.OPENAI_BASE,
+});
 
 export interface Tool {
     function: {
@@ -135,7 +140,7 @@ export async function callLLMTools(
             stop_sequences: ['</function_calls>'],
         });
     } else {
-        stream = await openai.chat.completions.create({
+        stream = await open_client.chat.completions.create({
             model,
             messages: [{ role: "user", content: preprompt + '\n' + toolCallingSystemPrompt + '\n\n' + prompt }],
             stream: true,
@@ -211,7 +216,7 @@ export async function callLLMTools(
 
 export async function callLLM(prompt: string, model: string = opus_model): Promise<string> {
     if (use_open) {
-        const response = await openai.chat.completions.create({
+        const response = await open_client.chat.completions.create({
             model: opus_model,
             messages: [{ role: "user", content: prompt }],
         })
@@ -240,16 +245,16 @@ export async function callLLMFast(prompt: string, model: string = haiku_model, s
     }
     let res = assistant_message_predicate ? assistant_message_predicate : "";
     if (use_open) {
-        const response = await openai.chat.completions.create({
+        const response = await open_client.chat.completions.create({
             model: haiku_model,
             messages,
             stop: stop_token,
         })
         res += response.choices[0].message.content || "";
-        if((response.choices[0] as any).finish_reason == "stop_sequence") {
+        if ((response.choices[0] as any).finish_reason == "stop_sequence") {
             res += stop_token;
         }
-        
+
     } else {
         const anthropic = new Anthropic({ apiKey: haiku_key });
         const message = await anthropic.messages.create({
@@ -260,7 +265,7 @@ export async function callLLMFast(prompt: string, model: string = haiku_model, s
         res += message.content[0].text;
         res += message.stop_reason || "";
     }
-    if (require_stop_token && !res.includes(stop_token!) && res.length < 10000) {
+    if (require_stop_token && !res.includes(stop_token!) && res.length < 30000) {
         // we continue until we get the stop token
         console.log("Continuing generation");
         res = await callLLMFast(prompt, model, stop_token, require_stop_token, assistant_message_predicate);
@@ -268,4 +273,28 @@ export async function callLLMFast(prompt: string, model: string = haiku_model, s
     fastCallCache[promptHash] = res;
     saveCache(fastCallCache, '.fastCallCache.json');
     return res;
+}
+
+export async function callOpenAIStructured(prompt: string, format: OpenAI.FunctionParameters, model: string = "gpt-4-0125-preview") {
+    const response = await openai_client.chat.completions.create({
+        model,
+        messages: [{
+            role: "user", content: prompt,
+        }],
+        tools: [{
+            type: "function",
+            function: {
+                name: "result",
+                parameters: format
+            }
+        }],
+        tool_choice: {
+            type: "function",
+            function: {
+                name: "result",
+            }
+        }
+    })
+    // we need the tool call arguments
+    return JSON.parse(response.choices[0].message.tool_calls![0].function.arguments);
 }

@@ -13,9 +13,10 @@ const haiku_key = process.env.HAIKU_API_KEY || process.env.ANTHROPIC_API_KEY;
 const anthropic_key = process.env.ANTHROPIC_API_KEY;
 const openai_key = process.env.OPEN_API_KEY;
 const openai_base = process.env.OPENAI_BASE || "https://openrouter.ai/api/v1";   // we actually use openrouter instead
+export const use_open = openai_key ? true : false;
 
-const openai = new OpenAI({
-    apiKey: openai_key, // defaults to process.env["OPENAI_API_KEY"]
+let openai = new OpenAI({
+    apiKey: openai_key || "sk-no-key", // defaults to process.env["OPENAI_API_KEY"]
     baseURL: openai_base,
 })
 
@@ -27,10 +28,9 @@ export interface Tool {
     };
 }
 
-export const use_open = openai_key ? true : false;
-export const haiku_model = use_open ? "anthropic/claude-3-haiku" : "claude-3-haiku-20240307";
-export const opus_model = use_open ? "anthropic/claude-3-opus" : "claude-3-opus-20240229";
-export const sonnet_model = use_open ? "anthropic/claude-3-sonnet" : "claude-3-sonnet-20240229";
+export const haiku_model = use_open ? "anthropic/claude-3-haiku:beta" : "claude-3-haiku-20240307";
+export const opus_model = use_open ? "anthropic/claude-3-opus:beta" : "claude-3-opus-20240229";
+export const sonnet_model = use_open ? "anthropic/claude-3-sonnet:beta" : "claude-3-sonnet-20240229";
 
 function constructFormatToolForClaudePrompt(
     name: string,
@@ -229,28 +229,43 @@ export async function callLLM(prompt: string, model: string = opus_model): Promi
 let fastCallCache: Record<string, string> = loadCache('.fastCallCache.json');
 
 
-export async function callLLMFast(prompt: string, model: string = haiku_model): Promise<string> {
+export async function callLLMFast(prompt: string, model: string = haiku_model, stop_token?: string, require_stop_token: boolean = false, assistant_message_predicate?: string): Promise<string> {
     let promptHash = hashString(prompt);
     if (fastCallCache[promptHash]) {
         return fastCallCache[promptHash];
     }
+    let messages: any = [{ role: "user", content: prompt }];
+    if (assistant_message_predicate) {
+        messages.push({ role: "assistant", content: assistant_message_predicate });
+    }
+    let res = assistant_message_predicate ? assistant_message_predicate : "";
     if (use_open) {
         const response = await openai.chat.completions.create({
             model: haiku_model,
-            messages: [{ role: "user", content: prompt }],
+            messages,
+            stop: stop_token,
         })
-        let res = response.choices[0].message.content || "";
-        fastCallCache[promptHash] = res;
-        saveCache(fastCallCache, '.fastCallCache.json');
-        return res;
+        res += response.choices[0].message.content || "";
+        if((response.choices[0] as any).finish_reason == "stop_sequence") {
+            res += stop_token;
+        }
+        
+    } else {
+        const anthropic = new Anthropic({ apiKey: haiku_key });
+        const message = await anthropic.messages.create({
+            max_tokens: 4096,
+            messages,
+            model,
+        });
+        res += message.content[0].text;
+        res += message.stop_reason || "";
     }
-    const anthropic = new Anthropic({ apiKey: haiku_key });
-    const message = await anthropic.messages.create({
-        max_tokens: 4096,
-        messages: [{ role: 'user', content: prompt }],
-        model,
-    });
-    fastCallCache[promptHash] = message.content[0].text;
+    if (require_stop_token && !res.includes(stop_token!) && res.length < 10000) {
+        // we continue until we get the stop token
+        console.log("Continuing generation");
+        res = await callLLMFast(prompt, model, stop_token, require_stop_token, assistant_message_predicate);
+    }
+    fastCallCache[promptHash] = res;
     saveCache(fastCallCache, '.fastCallCache.json');
-    return message.content[0].text;
+    return res;
 }

@@ -1,7 +1,7 @@
-import { Environment } from './environment/environment';
-import { getWorkspaceStructure, buildSmartWorkspaceStructure, getWorkspaceWithEstimations } from './filesystem_context';
-import { ToolCall, ToolCallsGroup } from './toolbox';
-import { hashString, trimString } from './utils';
+import { Environment } from '../environment/environment';
+import { getWorkspaceStructure, buildSmartWorkspaceStructure, getWorkspaceWithEstimations, fmtTree, simplifyTree } from './filesystem_context';
+import { ToolCall, ToolCallsGroup } from '../toolbox';
+import { hashString, trimString } from '../utils';
 
 const xmljs = require('xml-js');
 export function formatObject(obj: any, format: "json" | "xml" = "xml"): string {
@@ -54,8 +54,9 @@ export class ContextManager {
     }
 
     async getWorkspaceStructure(env: Environment): Promise<string> {
-        const workspace = getWorkspaceStructure(await env.getFileSystem(), 30000);
-        let fs_str = formatObject(workspace);
+        // const workspace = getWorkspaceStructure(await env.getFileSystem(), 30000);
+        // let fs_str = formatObject(workspace);
+        let fs_str = fmtTree((await simplifyTree(await env.getFileSystem(), 80000, async (cmd) => await env.runCommand(cmd))) as any);
         let term_state = await env.getTerminalState();
         let term_str = '';
         if (term_state.length > 0 && term_state[0].history.length > 0) {
@@ -72,27 +73,28 @@ export class ContextManager {
     }
 
     async getWorkspaceStructureSummary(env: Environment): Promise<string> {
+        if (this.lastWorkspaceSummary && this.staticSummary) {
+            return this.lastWorkspaceSummary;
+        }
         const fullStructure = await this.getWorkspaceStructure(env);
+        this.lastWorkspaceSummary = fullStructure;
         const hash = hashString(fullStructure);
         if (hash === this.lastFileSystemHash && this.lastWorkspaceSummary) {
             return this.lastWorkspaceSummary;
         }
-        if (this.lastWorkspaceSummary && this.staticSummary) {
-            return this.lastWorkspaceSummary;
-        }
         this.lastFileSystemHash = hash;
-        //         this.lastWorkspaceSummary = await callLLMFast(`We are working in a workspace with some files and terminals. We have the following objective:
-        // <objective>${this.objective}</objective>
-        // Please, provide a summary of the following workspace structure. 
-        // It should be in a very similar format to the one you see below, but with a lot less details. 
-        // It should contain all the files and directories and an outline of the meaning of each file, the main classes and functions etc it contains (same with the terminal tabs if they are there). Reply ONLY with the summary, in a similar format to the original structure. 
-        // In the summary, you have to includ **all** the paths exactly the same as in the original, and the content should be in the same form as the original content although you can omit some lines. However, do include all the important lines with important classes and functions etc. in the format \`n|class ClassName:\' with some descriptions. If some file is tangentially related to the overall objective, include its content **fully**.
-        // Here is the workspace:\n\`\`\`\n${fullStructure}\n\`\`\`
-        // Now, based on that, provide your edit. IT HAS TO BE ALMOST THE SAME LENGTH AS THE ORIGINAL, SAME FORMAT, AND VERY SIMILAR IN MANY WAYS. INCLUDE IMPORTANT OR RELEVANT LINES FROM EACH FILE
-        // `);
-        this.lastWorkspaceSummary = await buildSmartWorkspaceStructure(await env.getFileSystem(), this.objective);
-        // console.log("\n\n\nWorkspace Summary:\n", this.lastWorkspaceSummary)
-        return this.lastWorkspaceSummary;
+        // //         this.lastWorkspaceSummary = await callLLMFast(`We are working in a workspace with some files and terminals. We have the following objective:
+        // // <objective>${this.objective}</objective>
+        // // Please, provide a summary of the following workspace structure. 
+        // // It should be in a very similar format to the one you see below, but with a lot less details. 
+        // // It should contain all the files and directories and an outline of the meaning of each file, the main classes and functions etc it contains (same with the terminal tabs if they are there). Reply ONLY with the summary, in a similar format to the original structure. 
+        // // In the summary, you have to includ **all** the paths exactly the same as in the original, and the content should be in the same form as the original content although you can omit some lines. However, do include all the important lines with important classes and functions etc. in the format \`n|class ClassName:\' with some descriptions. If some file is tangentially related to the overall objective, include its content **fully**.
+        // // Here is the workspace:\n\`\`\`\n${fullStructure}\n\`\`\`
+        // // Now, based on that, provide your edit. IT HAS TO BE ALMOST THE SAME LENGTH AS THE ORIGINAL, SAME FORMAT, AND VERY SIMILAR IN MANY WAYS. INCLUDE IMPORTANT OR RELEVANT LINES FROM EACH FILE
+        // // `);
+        // this.lastWorkspaceSummary = await buildSmartWorkspaceStructure(await env.getFileSystem(), this.objective);
+        // // console.log("\n\n\nWorkspace Summary:\n", this.lastWorkspaceSummary)
+        return fullStructure
     }
 
     async getContext(env: Environment, is_full: boolean = true): Promise<string> {

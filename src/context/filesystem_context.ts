@@ -1,8 +1,9 @@
-import { FileSystemTree } from './environment/environment';
-import { callLLMFast, callOpenAIStructured } from './llm';
-import { skip_paths, skip_ext } from './utils';
-import { trimString } from './utils';
-import { formatFileContent } from './utils';
+import { FileSystemTree } from '../environment/environment';
+import { callLLMFast, callOpenAIStructured } from '../llm';
+import { skip_paths, skip_ext } from '../utils';
+import { trimString } from '../utils';
+import { formatFileContent } from '../utils';
+import { getFileSummary } from './ctags';
 
 const THRESHOLD = 300; // Define a threshold for the number of lines
 
@@ -74,6 +75,83 @@ export function getWorkspaceStructure(fileSystemTree: FileSystemTree, symbolCap:
 
     const rootTree = readDirRecursive(fileSystemTree, currentCap);
     return rootTree;
+}
+
+interface File {
+    path: string;
+    content: string;
+}
+
+interface Directory {
+    path: string;
+    children: (File | Directory)[];
+    summary: string;
+}
+
+export async function simplifyTree(tree: FileSystemTree, symbolCap: number, exec: (cmd: string) => Promise<string>): Promise<Directory | File> {
+    const estimateLenght = (tree: Directory): number => {
+        let length = tree.path.length;
+        for (const child of tree.children) {
+            if ('content' in child) {
+                length += child.content.length + child.path.length;
+            } else {
+                length += estimateLenght(child);
+            }
+        }
+        return length;
+    }
+    // handle skip_ext, skip_paths
+    if (skip_paths.includes(tree.path.split('/').pop() || '')) return {path: tree.path, children: [], summary: ''};
+    if ((skip_ext.concat(['sql', 'yml'])).includes(tree.path.split('.').pop() || '')) return {path: tree.path, content: ""};
+    if (!tree.isDirectory && tree.content) {
+        let content = "";
+        if (['py', 'js', 'ts', 'cpp', 'rs', 'go', 'md'].includes(tree.path.split('.').pop() || '')) {
+            content = await getFileSummary(tree.path, tree.content!, "", 120, 120, exec)
+        }
+        return {content, path: tree.path};
+    }
+    const children = tree.children || [];
+    
+    // if there are too many files
+    if (children.filter(child => !child.isDirectory).length > 25 && tree.path !== '') {
+        // it's a junk directory, we just give a summary
+        let summary = await callLLMFast(`Give a one-line summary of the directory ${tree.path}. Here is a list of its children:\n${children.map(child => child.path).join('\n')}`);
+        return {path: tree.path, children: [], summary};
+    }
+    // const childNodes = await Promise.all(children.map(child => simplifyTree(child, symbolCap, exec)));
+    let childNodes: (File | Directory)[] = [];
+    for (const child of children) {
+        const childNode = await simplifyTree(child, symbolCap / 2, exec);
+        childNodes.push(childNode);
+    }
+    let res = {path: tree.path, children: childNodes, summary: ''};
+    if (estimateLenght(res) > symbolCap) {
+        let summary = await callLLMFast(
+            `Give a shorter description of the directory ${tree.path}. Here it is:\n<ws-structure>\n${fmtTree(res)}\n</ws-structure>\nYour result should start with <ws-structure> and end with </ws-structure>, and be in the same format.`, 
+            undefined, "</ws-structure>", true, "<ws-structure>");
+        summary = summary.replace(/<\/?ws-structure>/g, '').trim();
+        res.summary = summary;
+        res.children = [];
+    }
+    return res;
+}
+
+export function fmtTree(root: Directory): string {
+    
+    let result = root.path + '\n';
+    for (const child of root.children) {
+        if ('content' in child) {
+            result += '  ' + child.path + '\n';
+            if (child.content) {
+                result += '  ' + child.content.split('\n').join('\n  ') + '\n';
+            }
+        } else if ('summary' in child && child.summary !== '') {
+            result += '  ' + child.path + '\n  ' + child.summary + '\n';
+        } else {
+            result += fmtTree(child).split('\n').map(line => '  ' + line).join('\n') + '\n';
+        }
+    }
+    return result;
 }
 
 interface ConvertedFileSystemTree {

@@ -244,9 +244,9 @@ export async function callLLMFast(prompt: string, model: string = haiku_model, s
         messages.push({ role: "assistant", content: assistant_message_predicate });
     }
     let res = assistant_message_predicate ? assistant_message_predicate : "";
-    if (use_open) {
+    if (use_open || true) {
         const response = await open_client.chat.completions.create({
-            model: haiku_model,
+            model: 'anthropic/claude-3-haiku:beta',
             messages,
             stop: stop_token,
         })

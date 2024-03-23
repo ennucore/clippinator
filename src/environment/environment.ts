@@ -23,11 +23,11 @@ export class Environment {
         return this.terminal.getTerminalState();
     }
     async writeFile(path: string, content: string): Promise<void> {
-        this.fileSystem.writeFile(path, content);
+        return await this.fileSystem.writeFile(path, content);
     }
 
     async deleteFile(path: string): Promise<void> {
-        this.fileSystem.deleteFile(path);
+        await this.fileSystem.deleteFile(path);
     }
     async runCommand(command: string, tabIndex?: number | "new"): Promise<string> {
         return this.terminal.runCommand(command, tabIndex);

@@ -1,4 +1,4 @@
-import { ContextManager, Message } from "./context_management";
+import { ContextManager, Message } from "./context/context_management";
 import { Environment, CLIUserInterface, DummyBrowser, DummyTerminal, TrunkLinter } from "./environment/environment";
 import { SimpleTerminal } from './environment/terminal';
 import { DefaultFileSystem } from "./environment/filesystem";
@@ -82,8 +82,8 @@ export class Clipinator {
         return { response, toolCallsFull, result };
     }
 
-    async run(task: string = "", result_format?: Record<string, any>, result_description?: string, additional_context?: string, stop_at_tool?: string, disableTools: boolean | string[] = false, model: string = opus_model) {
-        while (true) {
+    async run(task: string = "", result_format?: Record<string, any>, result_description?: string, additional_context?: string, stop_at_tool?: string, disableTools: boolean | string[] = false, model: string = opus_model, max_iterations: number = 100) {
+        while (max_iterations-- > 0) {
             let { response, result, toolCallsFull } = await this.oneStep(task, result_format, result_description, additional_context, disableTools, model);
             if (result) {
                 return result;
@@ -207,5 +207,18 @@ ${await this.contextManager.getLinterOutput(this.env)}
             await this.reflection();
             console.log(clc.blue.bold("Current plan:\n") + clc.green(this.contextManager.todos.join('\n')) + '\n');
         }
+    }
+
+    async simpleApproach() {
+        return await this.run(
+            'Please, achieve the objective using the tools available. Read the files needed to understand the issue in one <function_calls> call, state your ideas to fix it, write the files to fix it. After, write <DONE/>.',
+            undefined,
+            undefined,
+            "",
+            undefined,
+            ["set_todos", "run_shell_command", "patch_file", "set_memory", "remember"],
+            opus_model,   // haiku_model,
+            7
+        )
     }
 }

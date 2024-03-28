@@ -157,56 +157,63 @@ export async function callLLMTools(
     let last_handled_length = 0;
     let toolCallsFull = [];
 
-    for await (const messageStreamEvent of stream) {
-        if (!use_open && (messageStreamEvent as any).type === 'content_block_delta') {
-            response += (messageStreamEvent as any).delta.text;
-        }
-        if (use_open && (messageStreamEvent as any).choices[0]?.delta?.content) {
-            response += (messageStreamEvent as any).choices[0].delta.content || '';
-        }
+    try {
 
-        if (response.includes('<tool_name>', last_handled_length)) {
-            let extracted = extractBetweenTags('tool_name', response);
-            currentToolName = extracted[extracted.length - 1];
-            currentToolArguments = {};
-        }
+        for await (const messageStreamEvent of stream) {
+            if (!use_open && (messageStreamEvent as any).type === 'content_block_delta') {
+                response += (messageStreamEvent as any).delta.text;
+            }
+            if (use_open && (messageStreamEvent as any).choices[0]?.delta?.content) {
+                response += (messageStreamEvent as any).choices[0].delta.content || '';
+            }
 
-        const parameterMatches = response.slice(last_handled_length).match(/<parameters>([\s\S]*?)<\/parameters>/g);
-        if (parameterMatches) {
-            const parameterBlock = parameterMatches[0];
-            // const parser = new XMLParser();
-            // const json = parser.parse(parameterBlock);
-            // if (json.parameters) {
-            //     Object.entries(json.parameters).forEach(([parameterName, parameterValue]) => {
-            //     if (onParameterValue) {
-            //         onParameterValue(currentToolName, currentToolArguments, parameterName, parameterValue);
-            //     }
-            //     currentToolArguments[parameterName] = parameterValue;
-            //     });
-            // }
-            all_possible_parameter_names.forEach((parameterName) => {
-                const valueMatches = parameterBlock.match(new RegExp(`<${parameterName}>[\\s\\S]*?</${parameterName}>`, 'g'));
-                if (valueMatches) {
-                    const value = valueMatches[0].replace(new RegExp(`</?${parameterName}>`, 'g'), '');
-                    if (onParameterValue) {
-                        onParameterValue(currentToolName, currentToolArguments, parameterName, value);
+            if (response.includes('<tool_name>', last_handled_length)) {
+                let extracted = extractBetweenTags('tool_name', response);
+                currentToolName = extracted[extracted.length - 1];
+                currentToolArguments = {};
+            }
+
+            const parameterMatches = response.slice(last_handled_length).match(/<parameters>([\s\S]*?)<\/parameters>/g);
+            if (parameterMatches) {
+                const parameterBlock = parameterMatches[0];
+                // const parser = new XMLParser();
+                // const json = parser.parse(parameterBlock);
+                // if (json.parameters) {
+                //     Object.entries(json.parameters).forEach(([parameterName, parameterValue]) => {
+                //     if (onParameterValue) {
+                //         onParameterValue(currentToolName, currentToolArguments, parameterName, parameterValue);
+                //     }
+                //     currentToolArguments[parameterName] = parameterValue;
+                //     });
+                // }
+                all_possible_parameter_names.forEach((parameterName) => {
+                    const valueMatches = parameterBlock.match(new RegExp(`<${parameterName}>[\\s\\S]*?</${parameterName}>`, 'g'));
+                    if (valueMatches) {
+                        const value = valueMatches[0].replace(new RegExp(`</?${parameterName}>`, 'g'), '');
+                        if (onParameterValue) {
+                            onParameterValue(currentToolName, currentToolArguments, parameterName, value);
+                        }
+                        currentToolArguments[parameterName] = value;
                     }
-                    currentToolArguments[parameterName] = value;
-                }
-            });
-        }
+                });
+            }
 
-        if (response.includes('</invoke>', last_handled_length)) {
-            console.log(response)
-            console.log(clc.green('Calling tool'), currentToolName, currentToolArguments);
-            let result = await onToolCall(currentToolName, currentToolArguments);
-            toolCalls.push({ name: currentToolName, arguments: currentToolArguments });
-            toolResults.push(result);
-            console.log(result)
-            last_handled_length = response.indexOf('</invoke>', last_handled_length) + 1;
-            toolCallsFull.push({ tool_name: currentToolName, parameters: currentToolArguments, result } as ToolCall);
-        }
+            if (response.includes('</invoke>', last_handled_length)) {
+                console.log(response)
+                console.log(clc.green('Calling tool'), currentToolName, currentToolArguments);
+                let result = await onToolCall(currentToolName, currentToolArguments);
+                toolCalls.push({ name: currentToolName, arguments: currentToolArguments });
+                toolResults.push(result);
+                console.log(result)
+                last_handled_length = response.indexOf('</invoke>', last_handled_length) + 1;
+                toolCallsFull.push({ tool_name: currentToolName, parameters: currentToolArguments, result } as ToolCall);
+            }
 
+        }
+    } catch (e) {
+        console.log(e);
+        console.log((e as any).cause);
+        throw e;
     }
     // remove the function calls from response
     response = response.replace(/<function_calls>[\s\S]*<\/invoke>/, '');
@@ -214,21 +221,62 @@ export async function callLLMTools(
 }
 
 
-export async function callLLM(prompt: string, model: string = opus_model): Promise<string> {
+export async function callLLM(prompt: string, model: string = opus_model, stop_token?: string, require_stop_token: boolean = false, assistant_message_predicate?: string): Promise<string> {
+    console.log("Predicate length: ", assistant_message_predicate?.length || "0");
+    let messages: any = [{ role: "user", content: prompt }];
+    if (assistant_message_predicate) {
+        messages.push({ role: "assistant", content: assistant_message_predicate });
+    }
+    let res = assistant_message_predicate && use_open ? assistant_message_predicate : "";
     if (use_open) {
         const response = await open_client.chat.completions.create({
-            model: opus_model,
-            messages: [{ role: "user", content: prompt }],
+            model,
+            messages,
+            stop: stop_token,
         })
-        return response.choices[0].message.content || "";
+        res += response.choices[0].message.content || "";
+        if ((response.choices[0] as any).finish_reason == "stop_sequence") {
+            res += stop_token;
+        }
+
+    } else {
+        const anthropic = new Anthropic({ apiKey: anthropic_key });
+        const stream = await anthropic.messages.create({
+            max_tokens: 4096,
+            messages,
+            model,
+            stream: true
+        });
+        try {
+            for await (const messageStreamEvent of stream) {
+                if ((messageStreamEvent as any).type === 'content_block_delta') {
+                    process.stdout.write((messageStreamEvent as any).delta.text);
+                    res += (messageStreamEvent as any).delta.text;
+                }
+                if ((messageStreamEvent as any).finish_reason == "stop_sequence") {
+                    res += stop_token;
+                }
+
+            }
+        } catch (e) {
+            console.log(res)
+            console.log(e);
+        }
+
+        // res += message.content[0].text;
+        // res += message.stop_reason || "";
     }
-    const anthropic = new Anthropic();
-    const message = await anthropic.messages.create({
-        max_tokens: 4096,
-        messages: [{ role: 'user', content: prompt }],
-        model,
-    });
-    return message.content[0].text;
+    if (require_stop_token && !res.includes(stop_token!) && res.length < 40000) {
+        // remove trailing whitespace from the end of res
+        res = res.replace(/\s+$/, '');
+        let res2 = await callLLM(prompt, model, stop_token, require_stop_token, assistant_message_predicate + res);
+        if (res2.startsWith(assistant_message_predicate!)) {
+            res = res2;
+        } else {
+            res += res2;
+        }
+    }
+    return res;
 }
 
 let fastCallCache: Record<string, string> = loadCache('.fastCallCache.json');
@@ -268,7 +316,7 @@ export async function callLLMFast(prompt: string, model: string = haiku_model, s
     if (require_stop_token && !res.includes(stop_token!) && res.length < 30000) {
         // we continue until we get the stop token
         console.log("Continuing generation");
-        res = await callLLMFast(prompt, model, stop_token, require_stop_token, assistant_message_predicate);
+        res = await callLLMFast(prompt, model, stop_token, require_stop_token, assistant_message_predicate + res);
     }
     fastCallCache[promptHash] = res;
     saveCache(fastCallCache, '.fastCallCache.json');

@@ -130,6 +130,13 @@ export let tools: Tool[] = [
 
 export let all_possible_parameter_names: string[] = /* extract from tools */ tools.flatMap(tool => Object.keys(tool.function.parameters || {}));
 
+export const clearLineNums: (content: string) => string = (content: string) => {
+    if (content.split('\n').length > 3 && content.split('\n').every((line: any, index: any) => line.startsWith(`${index + 1}|`))) {
+        content = content.split('\n').map((line: any, index: any) => line.split('|').slice(1).join('|')).join('\n');
+    }
+    return content;
+};
+
 export function final_result_tool(description: string, params: Record<string, any>): Tool {
     return {
         function: {
@@ -157,9 +164,7 @@ export let tool_functions: Record<string, (args: Record<string, any>, env: Envir
     rewrite_file: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
         let { path, content } = args;
         // if there are more 3 lines and each line starts with "number|", then we remove the line numbers from the beginnings of lines
-        if (content.split('\n').length > 3 && content.split('\n').every((line: any, index: any) => line.startsWith(`${index + 1}|`))) {
-            content = content.split('\n').map((line: any, index: any) => line.split('|').slice(1).join('|')).join('\n');
-        }
+        content = clearLineNums(content);
         env.writeFile(path, content);
         return `Wrote content to file ${path}`;
     },

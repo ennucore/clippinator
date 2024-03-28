@@ -57,6 +57,7 @@ export class DefaultFileSystem implements FileSystem {
     }
 
     async writeFile(path: string, content: string): Promise<void> {
+        console.log('writing to', this.rootPath + path);
         fs.writeFileSync(this.rootPath + path, content);
     }
 

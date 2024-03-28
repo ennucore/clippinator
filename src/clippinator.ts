@@ -2,8 +2,8 @@ import { ContextManager, Message } from "./context/context_management";
 import { Environment, CLIUserInterface, DummyBrowser, DummyTerminal, TrunkLinter } from "./environment/environment";
 import { SimpleTerminal } from './environment/terminal';
 import { DefaultFileSystem } from "./environment/filesystem";
-import { Tool, ToolCall, final_result_tool, tool_functions, tools } from "./toolbox";
-import { callLLMTools, haiku_model, opus_model, sonnet_model } from "./llm";
+import { Tool, ToolCall, clearLineNums, final_result_tool, tool_functions, tools } from "./toolbox";
+import { callLLM, callLLMFast, callLLMTools, haiku_model, opus_model, sonnet_model } from "./llm";
 import { planning_examples, task_prompts } from "./prompts";
 var clc = require("cli-color");
 
@@ -209,16 +209,192 @@ ${await this.contextManager.getLinterOutput(this.env)}
         }
     }
 
-    async simpleApproach() {
-        return await this.run(
-            'Please, achieve the objective using the tools available. Read the files needed to understand the issue in one <function_calls> call, state your ideas to fix it, write the files to fix it. After, write <DONE/>.',
+    async simpleApproach(with_reflection: boolean = false) {
+        // first, we extract files and workspace structure summary
+        let fs_str = await this.contextManager.getWorkspaceStructure(this.env);
+        let res = await callLLMFast(`We need to fix the issue in the codebase. Here is the repository structure and the objective:
+<ws-structure>
+${fs_str}
+</ws-structure>
+<objective>${this.contextManager.objective}</objective>
+I need you to respond with several things inside the <result></result> tag. 
+First, give me a project description, saying what the project does overall, and the analysis of the issue: why it might be happening, which parts of the project are related to that, and so on. Do that inside <analysis></analysis> tags.
+Then, write a slightly shorter overview of the workspace in a format similar to the one above. Focus on the parts that will be relevant to the issue. Write this inside a <ws-structure></ws-structure> tag. It should include most of the paths and some of the content of the files, similar to the original.
+Then, please, give me a list of files that might be relevant to the issue. This includes files that should be read to understand the issue and files that should be written to fix it. Write them as a list of paths, inside <relevant_files> tags, with each path inside a <path> tag.
+To sum up, you should have three blocks: one with the workspace structure summary, one with the analysis of the issue, and one with the list of relevant files.`,
             undefined,
-            undefined,
-            "",
-            undefined,
-            ["set_todos", "run_shell_command", "patch_file", "set_memory", "remember"],
-            opus_model,   // haiku_model,
-            7
-        )
+            '</result>',
+            true,
+            '<result>\n<analysis>\n');
+        // parse the result
+        let projectDescription = res.split('</analysis>')[0].split('<analysis>')[1];
+        let workspaceSummary = res.split('</ws-structure>')[0].split('<ws-structure>')[1];
+        let relevantFilesStr = res.split('</relevant_files>')[0].split('<relevant_files>')[1];
+        let relevantFiles = relevantFilesStr.split('</path>').map((path) => path.split('<path>')[1]);
+        relevantFiles = relevantFiles.slice(0, -1);
+        let relevantFilesContent = [];
+        for (let file of relevantFiles) {
+            let fileContent = ((await this.env.getFileSystem()).getByPath(file)?.content || []).join('\n');
+            relevantFilesContent.push(`<file>\n<path>${file}</path>\n<content>${fileContent}</content>\n</file>`);
+        }
+        console.log(projectDescription);
+        console.log(workspaceSummary);
+        console.log(relevantFiles);
+        let result = await callLLM(`You are a world-class software developer with ridiculous level of attention to detail. We need to fix the issue in the codebase. Here is the repository structure and the objective:
+<ws-structure>
+${fs_str.replace('...', '|skip|').replace('...', '|skip|')}
+</ws-structure>
+<objective>${this.contextManager.objective}</objective>
+Here is some analysis of the issue and the project:
+<analysis>${projectDescription}</analysis>
+Here is the content of the relevant files:
+<relevant_files>
+${relevantFilesContent.join('\n')}
+</relevant_files>
+Please, take a deep breath and write your thoughts on how to fix the issue. After that, write the complete content of the files that need to be written to fix the issue (and then some commands which would be helpful to understand whether the issue was fixed), like this:
+<thoughts>
+Your thoughts here
+</thoughts>
+<write_files>
+<file>
+<path>file1.py</path>
+<content>
+The content of the file here
+From the first line to the last
+Repeating the file with the changes
+Without skipping any code
+</content>
+</file>
+<file>
+<path>file2.py</path>
+<content>
+The content of the second file here
+From the first line to the last
+Potentially thousands of lines
+Without triple dots
+</content>
+</file>
+</write_files>
+<helpful_commands>
+<command>ls -l</command>
+<command>pytest --no-header -rA --tb=no -p no:cacheprovider TEST_FILE</command>
+</helpful_commands>
+
+Remember that you cannot use "..." in your answer to skip anything
+IF YOU USE "..." IN YOUR ANSWER OR WRITE INVALID FILE CONTENT OR SKIP ANYTHING, YOU WILL BE OBLITERATED.
+`, opus_model, '</write_files>', true, '<thoughts>');
+        // parse the result
+        let thoughts = result.split('</thoughts>')[0].split('<thoughts>')[1];
+        console.log(thoughts);
+        let filesContentStr = result.split('</write_files>')[0].split('<write_files>')[1];
+        console.log(filesContentStr);
+
+        console.log(clc.blue.bold("Entire output:"));
+        console.log(result);
+        let filesContentStr2 = filesContentStr.split('</file>').map((file) => file.split('<file>')[1]);
+        let filesContent = [];
+        for (let file of filesContentStr2.slice(0, -1)) {
+            let path = file.split('</path>')[0].split('<path>')[1];
+            let content = file.split('</content>')[0].split('<content>')[1];
+            filesContent.push({ path, content: clearLineNums(content) });
+        }
+        // write the files
+        for (let file of filesContent) {
+            console.log(file.path)
+            this.env.writeFile(file.path, file.content);
+        }
+        if (!with_reflection) {
+            console.log('Quitting Clippinator');
+            process.exit(0);
+        }
+        let linter_output = await this.contextManager.getLinterOutput(this.env);
+        // Second iteration
+        let commandsStr = result.split('</helpful_commands>')[0].split('<helpful_commands>')[1];
+        let commands = commandsStr.split('</command>').map((command) => command.split('<command>')[1]);
+        commands = commands.slice(0, -1);
+        let commandsOutput = [];
+        for (let command of commands) {
+            let output = await this.env.runCommand(command);
+            commandsOutput.push(output);
+        }
+        let commandsOutputStr = "";
+        for (let i = 0; i < commands.length; i++) {
+            commandsOutputStr += `$ ${commands[i]}\n${commandsOutput[i]}\n`;
+        }
+        console.log(clc.blue.bold("Commands output:"));
+        console.log(commandsOutputStr);
+        console.log(clc.blue.bold("Second iteration"));
+        let res2 = await callLLM(`We need to fix the issue in the codebase. Here is the repository structure and the objective:
+<ws-structure>
+${fs_str.replace('...', '|skip|').replace('...', '|skip|')}
+</ws-structure>
+<objective>${this.contextManager.objective}</objective>
+Here is some analysis of the issue and the project:
+<analysis>${projectDescription}</analysis>
+Here is the content of the relevant files:
+<relevant_files>
+${relevantFilesContent.join('\n')}
+</relevant_files>
+Here is a previously proposed solution by the agent:
+<files_to_write>
+${filesContentStr}
+</files_to_write>
+Here is the linter output (ignore the formatting!):
+<linter_output>
+${linter_output}
+</linter_output>
+And here is the output of some helpful commands:
+<commands_output>
+${commandsOutputStr}
+</commands_output>
+Please, review the proposed solution and write your thoughts on it. Evaluate the relevance of the previous response. Offer a better solution if necessary.
+After that, write the complete content of the files that need to be written to fix the issue, like this:
+<write_files>
+<file>
+<path>file1.py</path>
+<content>
+The content of the file here
+From the first line to the last
+</content>
+</file>
+<file>
+<path>file2.py</path>
+<content>
+The content of the second file here
+From the first line to the last
+</content>
+</file>
+</write_files>
+`, opus_model, '</write_files>', true, '<thoughts>');
+
+        // parse the result
+        let thoughts2 = res2.split('</thoughts>')[0].split('<thoughts>')[1];
+        let filesContentStr3 = res2.split('</write_files>')[0].split('<write_files>')[1];
+        let filesContentStr4 = filesContentStr3.split('</file>').map((file) => file.split('<file>')[1]);
+        let filesContent2 = [];
+        for (let file of filesContentStr4.slice(0, -1)) {
+            let path = file.split('</path>')[0].split('<path>')[1];
+            let content = file.split('</content>')[0].split('<content>')[1];
+            filesContent2.push({ path, content: clearLineNums(content) });
+        }
+        // write the files
+        for (let file of filesContent2) {
+            this.env.writeFile(file.path, file.content);
+        }
+//         console.log(thoughts2);
+//         console.log(filesContentStr3);
+        console.log('Quitting Clippinator');
+        process.exit(0);
+
+        // return await this.run(
+        //     'Please, achieve the objective using the tools available. Read the files needed to understand the issue in one <function_calls> call, state your ideas to fix it, write the files to fix it. YOU SHOULD HAVE TWO FUNCTION CALLS BLOCKS: ONE FOR READING ALL FILES, ANOTHER FOR WRITING THEM. After, write <DONE/>.',
+        //     undefined,
+        //     undefined,
+        //     "",
+        //     undefined,
+        //     ["set_todos", "run_shell_command", "patch_file", "set_memory", "remember"],
+        //     opus_model,   // haiku_model,
+        //     7
+        // )
     }
 }

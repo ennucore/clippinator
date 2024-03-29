@@ -221,14 +221,14 @@ export async function callLLMTools(
 }
 
 
-export async function callLLM(prompt: string, model: string = opus_model, stop_token?: string, require_stop_token: boolean = false, assistant_message_predicate?: string): Promise<string> {
+export async function callLLM(prompt: string, model: string = opus_model, stop_token?: string, require_stop_token: boolean = false, assistant_message_predicate?: string, force_use_open: boolean = false): Promise<string> {
     console.log("Predicate length: ", assistant_message_predicate?.length || "0");
     let messages: any = [{ role: "user", content: prompt }];
     if (assistant_message_predicate) {
         messages.push({ role: "assistant", content: assistant_message_predicate });
     }
     let res = assistant_message_predicate && use_open ? assistant_message_predicate : "";
-    if (use_open) {
+    if (use_open || force_use_open) {
         const response = await open_client.chat.completions.create({
             model,
             messages,

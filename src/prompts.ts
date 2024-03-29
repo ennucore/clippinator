@@ -137,3 +137,7 @@ task_prompts += `<advice>When investigating or looking for some context, read th
 5. If everything is fine, write <DONE/></advice>
 <advice>If you can't read some file, use ls or tree to see what's in that directory and which file you should read</advice>
 `;
+
+export const haiku_simple_additional_prompt = `
+<advice>For testing, the command is usually test_framework + test_path. It can be something like \`./tests/runtests.py --verbosity 2\` (if such a file is present), \`pytest --no-header -rA -p no:cacheprovider path/to/test/file.py\`</advice>
+`

@@ -30,10 +30,10 @@ export class SimpleTerminal implements Terminal {
     async runCommand(command: string, tabIndex?: number | "new" | "no", timeout: number = 5000): Promise<string> {
         if (tabIndex === undefined || tabIndex === "no") {
             try {
-                const commandOutput = (require('child_process').execSync(command, { cwd: this.rootPath })).toString();
+                const commandOutput = (require('child_process').execSync(command, { cwd: this.rootPath, env: process.env })).toString();
                 return commandOutput;
             } catch (e: any) {
-                return e.stdout.toString() + e.stderr.toString();
+                return (e.stdout || "").toString() + (e.stderr || "").toString();
             }
             
         }

@@ -4,7 +4,8 @@ import { SimpleTerminal } from './environment/terminal';
 import { DefaultFileSystem } from "./environment/filesystem";
 import { Tool, ToolCall, clearLineNums, final_result_tool, tool_functions, tools } from "./toolbox";
 import { callLLM, callLLMFast, callLLMTools, haiku_model, opus_model, sonnet_model } from "./llm";
-import { planning_examples, task_prompts } from "./prompts";
+import { haiku_simple_additional_prompt, planning_examples, task_prompts } from "./prompts";
+import { trimString } from "./utils";
 var clc = require("cli-color");
 
 let preprompt = `You are Clippinator, an AI software engineer. You operate in the environment where you have access to tools. You can use these tools to execute the user's request.
@@ -209,19 +210,48 @@ ${await this.contextManager.getLinterOutput(this.env)}
         }
     }
 
-    async simpleApproach(with_reflection: boolean = false) {
+    async simpleApproach(with_reflection: boolean = true) {
         // first, we extract files and workspace structure summary
         let fs_str = await this.contextManager.getWorkspaceStructure(this.env);
+        let ext_tree = 'Extended tree:\n$ tree -L 4 .\n' + await this.env.runCommand('tree -L 4 .') + '\n';
         let res = await callLLMFast(`We need to fix the issue in the codebase. Here is the repository structure and the objective:
 <ws-structure>
 ${fs_str}
+${ext_tree}
 </ws-structure>
 <objective>${this.contextManager.objective}</objective>
 I need you to respond with several things inside the <result></result> tag. 
 First, give me a project description, saying what the project does overall, and the analysis of the issue: why it might be happening, which parts of the project are related to that, and so on. Do that inside <analysis></analysis> tags.
+Then, please, give me a list of files that might be relevant to the issue. This includes files that should be read to understand the issue and files that should be written to fix it. You should write like 4-5 files. Write them as a list of paths, inside <relevant_files> tags, with each path inside a <path> tag.
 Then, write a slightly shorter overview of the workspace in a format similar to the one above. Focus on the parts that will be relevant to the issue. Write this inside a <ws-structure></ws-structure> tag. It should include most of the paths and some of the content of the files, similar to the original.
-Then, please, give me a list of files that might be relevant to the issue. This includes files that should be read to understand the issue and files that should be written to fix it. Write them as a list of paths, inside <relevant_files> tags, with each path inside a <path> tag.
-To sum up, you should have three blocks: one with the workspace structure summary, one with the analysis of the issue, and one with the list of relevant files.`,
+Then, give some comands that would be helpful to run to find out what the issue is about - usually, this is about tests. Write them inside <helpful_commands></helpful_commands> tags.
+To sum up, you should have four blocks: one with the workspace structure summary, one with the analysis of the issue, one with some helpful commands, and one with the list of relevant files.
+${haiku_simple_additional_prompt}
+
+Your answer should be in this format:
+<result>
+<analysis>
+Description of the project and analysis of the issue
+</analysis>
+<relevant_files>
+<path>write_a_relevant_file_here.txt</path>
+<path>file2.py</path>
+<path>yet_another_file.md</path>
+<path>file4.py</path>
+<path>file_5.py</path>
+</relevant_files>
+<ws-structure>
+Summary of the workspace structure (you should have the actual summary here)
+</ws-structure>
+<helpful_commands>
+<command>python -m unittest test_file.py</command>
+<command>./tests/runtests.py --verbosity 2 module.test_class.test_method</command>
+<command>pytest --no-header -rA --tb=no -p no:cacheprovider TEST_FILE</command>
+<command>ls some_folder_maybe</command>
+<command>grep something something</command>
+</helpful_commands>
+</result>
+`,
             undefined,
             '</result>',
             true,
@@ -230,6 +260,7 @@ To sum up, you should have three blocks: one with the workspace structure summar
         let projectDescription = res.split('</analysis>')[0].split('<analysis>')[1];
         let workspaceSummary = res.split('</ws-structure>')[0].split('<ws-structure>')[1];
         let relevantFilesStr = res.split('</relevant_files>')[0].split('<relevant_files>')[1];
+        let helpfullCommandsStr = res.split('</helpful_commands>')[0].split('<helpful_commands>')[1];
         let relevantFiles = relevantFilesStr.split('</path>').map((path) => path.split('<path>')[1]);
         relevantFiles = relevantFiles.slice(0, -1);
         let relevantFilesContent = [];
@@ -237,21 +268,35 @@ To sum up, you should have three blocks: one with the workspace structure summar
             let fileContent = ((await this.env.getFileSystem()).getByPath(file)?.content || []).join('\n');
             relevantFilesContent.push(`<file>\n<path>${file}</path>\n<content>${fileContent}</content>\n</file>`);
         }
+        let helpfulCommands = helpfullCommandsStr.split('</command>').map((command) => command.split('<command>')[1]);
+        helpfulCommands = helpfulCommands.slice(0, -1);
+        let helpfulCommandsOutput = [];
+        for (let command of helpfulCommands) {
+            let output = `$ ${command}\n${trimString(await this.env.runCommand(command), 1000)}`;
+            helpfulCommandsOutput.push(output);
+        }
         console.log(projectDescription);
         console.log(workspaceSummary);
         console.log(relevantFiles);
+        console.log(helpfulCommandsOutput);
         let result = await callLLM(`You are a world-class software developer with ridiculous level of attention to detail. We need to fix the issue in the codebase. Here is the repository structure and the objective:
 <ws-structure>
 ${fs_str.replace('...', '|skip|').replace('...', '|skip|')}
 </ws-structure>
 <objective>${this.contextManager.objective}</objective>
 Here is some analysis of the issue and the project:
-<analysis>${projectDescription}</analysis>
+<analysis>
+${projectDescription}
+${workspaceSummary}
+</analysis>
+<helpful_commands_output>
+${helpfulCommandsOutput.join('\n')}
+</helpful_commands_output>
 Here is the content of the relevant files:
 <relevant_files>
 ${relevantFilesContent.join('\n')}
 </relevant_files>
-Please, take a deep breath and write your thoughts on how to fix the issue. After that, write the complete content of the files that need to be written to fix the issue (and then some commands which would be helpful to understand whether the issue was fixed), like this:
+Please, take a deep breath and write your thoughts on how to fix the issue. After that, write the complete content of the files that need to be written to fix the issue, and then some commands which would be helpful to understand whether the issue was fixed (tests etc), in this format:
 <thoughts>
 Your thoughts here
 </thoughts>
@@ -263,15 +308,27 @@ The content of the file here
 From the first line to the last
 Repeating the file with the changes
 Without skipping any code
+You can include blocks of the original file using the following syntax:
+<insert-block start_line=X end_line=Y/>
+where X and Y are the start and end line numbers (inclusive and 1-indexed) of the block you want to include from the original file.
 </content>
 </file>
 <file>
-<path>file2.py</path>
+<path>file2.txt</path>
 <content>
-The content of the second file here
-From the first line to the last
-Potentially thousands of lines
-Without triple dots
+<insert-block start_line=1 end_line=100/>
+the 101th line of the new file
+and so on
+in this case, since we have 101 in the next block, these four lines will be inserted between the old 100th and 101st lines
+and here will be another block:
+<insert-block start_line=101 end_line=200/>
+Make sure the content here should actually go right after the 200th line of the original file. BE CAREFUL HERE
+The blocks are with both ends included and 1-indexed
+And now we include another block from later in the file, thereby replacing lines 201 to 250 with these two
+<insert-block start_line=251 end_line=289/>
+Some more lines here
+And then we continue until the last one of the original file
+<insert-block start_line=290 end_line=end/>
 </content>
 </file>
 </write_files>
@@ -281,8 +338,8 @@ Without triple dots
 </helpful_commands>
 
 Remember that you cannot use "..." in your answer to skip anything
-IF YOU USE "..." IN YOUR ANSWER OR WRITE INVALID FILE CONTENT OR SKIP ANYTHING, YOU WILL BE OBLITERATED.
-`, opus_model, '</write_files>', true, '<thoughts>');
+IF YOU USE "..." IN YOUR ANSWER OR WRITE INVALID FILE CONTENT OR SKIP ANYTHING WITHOUT AN insert-block, YOU WILL BE OBLITERATED.
+`, opus_model, '</helpful_commands>', true, '<thoughts>');
         // parse the result
         let thoughts = result.split('</thoughts>')[0].split('<thoughts>')[1];
         console.log(thoughts);
@@ -293,16 +350,40 @@ IF YOU USE "..." IN YOUR ANSWER OR WRITE INVALID FILE CONTENT OR SKIP ANYTHING, 
         console.log(result);
         let filesContentStr2 = filesContentStr.split('</file>').map((file) => file.split('<file>')[1]);
         let filesContent = [];
+        let fileContentMap: Record<string, string> = {};
         for (let file of filesContentStr2.slice(0, -1)) {
             let path = file.split('</path>')[0].split('<path>')[1];
             let content = file.split('</content>')[0].split('<content>')[1];
             filesContent.push({ path, content: clearLineNums(content) });
+            fileContentMap[path] = content;
         }
-        // write the files
         for (let file of filesContent) {
-            console.log(file.path)
-            this.env.writeFile(file.path, file.content);
+            console.log(file.path);
+            let originalContent = ((await this.env.getFileSystem()).getByPath(file.path)?.content || []).join('\n');
+            let newContent = file.content;
+        
+            // Replace <insert-block> tags with the corresponding content from the original file
+            let insertBlocks = newContent.match(/<insert-block (?:start_line=(\d+) end_line=end|start_line=(\d+) end_line=(\d+))\/>/g);
+            if (insertBlocks) {
+                for (let block of insertBlocks) {
+                    let originalLines = originalContent.split('\n');
+                    let [startLineS, endLineS] = block.match(/\d+/g)!;
+                    let startLine = Number(startLineS);
+                    let endLine;
+                    if (endLineS === 'end' || endLineS === undefined || block.includes('end_line=end')) {
+                        endLine = originalLines.length;
+                    } else {
+                        endLine = Number(endLineS);
+                    }
+                    
+                    let blockContent = originalLines.slice(startLine - 1, endLine).join('\n');
+                    newContent = newContent.replace(block, blockContent);
+                }
+            }
+        
+            this.env.writeFile(file.path, newContent);
         }
+        
         if (!with_reflection) {
             console.log('Quitting Clippinator');
             process.exit(0);
@@ -319,7 +400,7 @@ IF YOU USE "..." IN YOUR ANSWER OR WRITE INVALID FILE CONTENT OR SKIP ANYTHING, 
         }
         let commandsOutputStr = "";
         for (let i = 0; i < commands.length; i++) {
-            commandsOutputStr += `$ ${commands[i]}\n${commandsOutput[i]}\n`;
+            commandsOutputStr += `$ ${commands[i]}\n${trimString(commandsOutput[i], 1000)}\n`;
         }
         console.log(clc.blue.bold("Commands output:"));
         console.log(commandsOutputStr);
@@ -355,17 +436,36 @@ After that, write the complete content of the files that need to be written to f
 <content>
 The content of the file here
 From the first line to the last
+Repeating the file with the changes
+Without skipping any code
+You can include blocks of the original file using the following syntax:
+<insert-block start_line=X end_line=Y/>
+where X and Y are the start and end line numbers (inclusive and 1-indexed) of the block you want to include from the original file.
 </content>
 </file>
 <file>
 <path>file2.py</path>
 <content>
-The content of the second file here
-From the first line to the last
+<insert-block start_line=1 end_line=100/>
+the 101th line of the new file
+and so on
+in this case, since we have 101 in the next block, these four lines will be inserted between the old 100th and 101st lines
+and here will be another block:
+<insert-block start_line=101 end_line=200/>
+Make sure the content here should actually go right after the 200th line of the original file. BE CAREFUL HERE
+The blocks are with both ends included and 1-indexed
+And now we include another block from later in the file, thereby replacing lines 201 to 250 with these two
+<insert-block start_line=251 end_line=289/>
+Some more lines here
+And then we continue until the last one of the original file
+<insert-block start_line=290 end_line=end/>
 </content>
 </file>
 </write_files>
-`, opus_model, '</write_files>', true, '<thoughts>');
+
+Remember that you cannot use "..." in your answer to skip anything
+IF YOU USE "..." IN YOUR ANSWER OR WRITE INVALID FILE CONTENT OR SKIP ANYTHING, YOU WILL BE OBLITERATED.
+`, "anthropic/claude-3-sonnet:beta", '</write_files>', true, '<thoughts>', true);
 
         // parse the result
         let thoughts2 = res2.split('</thoughts>')[0].split('<thoughts>')[1];
@@ -377,9 +477,33 @@ From the first line to the last
             let content = file.split('</content>')[0].split('<content>')[1];
             filesContent2.push({ path, content: clearLineNums(content) });
         }
-        // write the files
+        console.log(clc.blue.bold("Second iteration output:"));
+        console.log(res2);
         for (let file of filesContent2) {
-            this.env.writeFile(file.path, file.content);
+            console.log(file.path);
+            let originalContent = fileContentMap[file.path];
+            let newContent = file.content;
+        
+            // Replace <insert-block> tags with the corresponding content from the original file
+            let insertBlocks = newContent.match(/<insert-block (?:start_line=(\d+) end_line=end|start_line=(\d+) end_line=(\d+))\/>/g);
+            if (insertBlocks) {
+                for (let block of insertBlocks) {
+                    let originalLines = originalContent.split('\n');
+                    let [startLineS, endLineS] = block.match(/\d+/g)!;
+                    let startLine = Number(startLineS);
+                    let endLine;
+                    if (endLineS === 'end' || endLineS === undefined || block.includes('end_line=end')) {
+                        endLine = originalLines.length;
+                    } else {
+                        endLine = Number(endLineS);
+                    }
+                    
+                    let blockContent = originalLines.slice(startLine - 1, endLine).join('\n');
+                    newContent = newContent.replace(block, blockContent);
+                }
+            }
+        
+            this.env.writeFile(file.path, newContent);
         }
 //         console.log(thoughts2);
 //         console.log(filesContentStr3);

@@ -221,7 +221,9 @@ export async function callLLMTools(
 }
 
 
-export async function callLLM(prompt: string, model: string = opus_model, stop_token?: string, require_stop_token: boolean = false, assistant_message_predicate?: string, force_use_open: boolean = false): Promise<string> {
+export async function callLLM(
+    prompt: string, model: string = opus_model, stop_token?: string, require_stop_token: boolean = false, 
+    assistant_message_predicate?: string, force_use_open: boolean = false, res_interprocessing?: (res: string) => string): Promise<string> {
     console.log("Predicate length: ", assistant_message_predicate?.length || "0");
     let messages: any = [{ role: "user", content: prompt }];
     if (assistant_message_predicate) {
@@ -269,7 +271,7 @@ export async function callLLM(prompt: string, model: string = opus_model, stop_t
     if (require_stop_token && !res.includes(stop_token!) && res.length < 40000) {
         // remove trailing whitespace from the end of res
         res = res.replace(/\s+$/, '');
-        let res2 = await callLLM(prompt, model, stop_token, require_stop_token, assistant_message_predicate + res);
+        let res2 = await callLLM(prompt, model, stop_token, require_stop_token, (res_interprocessing || ((res) => res))(assistant_message_predicate + res), force_use_open, res_interprocessing);
         if (res2.startsWith(assistant_message_predicate!)) {
             res = res2;
         } else {

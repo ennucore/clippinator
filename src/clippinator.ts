@@ -5,7 +5,7 @@ import { DefaultFileSystem } from "./environment/filesystem";
 import { Tool, ToolCall, clearLineNums, final_result_tool, tool_functions, tools } from "./toolbox";
 import { callLLM, callLLMFast, callLLMTools, haiku_model, opus_model, sonnet_model } from "./llm";
 import { haiku_simple_additional_prompt, planning_examples, task_prompts } from "./prompts";
-import { trimString } from "./utils";
+import { formatFileContent, trimString } from "./utils";
 var clc = require("cli-color");
 
 let preprompt = `You are Clippinator, an AI software engineer. You operate in the environment where you have access to tools. You can use these tools to execute the user's request.
@@ -210,7 +210,7 @@ ${await this.contextManager.getLinterOutput(this.env)}
         }
     }
 
-    async simpleApproach(with_reflection: boolean = true) {
+    async simpleApproach(with_reflection: boolean = false) {
         // first, we extract files and workspace structure summary
         let fs_str = await this.contextManager.getWorkspaceStructure(this.env);
         let ext_tree = 'Extended tree:\n$ tree -L 4 .\n' + await this.env.runCommand('tree -L 4 .') + '\n';
@@ -237,8 +237,6 @@ Description of the project and analysis of the issue
 <path>write_a_relevant_file_here.txt</path>
 <path>file2.py</path>
 <path>yet_another_file.md</path>
-<path>file4.py</path>
-<path>file_5.py</path>
 </relevant_files>
 <ws-structure>
 Summary of the workspace structure (you should have the actual summary here)
@@ -265,10 +263,11 @@ Summary of the workspace structure (you should have the actual summary here)
         relevantFiles = relevantFiles.slice(0, -1);
         let relevantFilesContent = [];
         for (let file of relevantFiles) {
-            let fileContent = ((await this.env.getFileSystem()).getByPath(file)?.content || []).join('\n');
+            let fileContent = formatFileContent((await this.env.getFileSystem()).getByPath(file)?.content || [], 10000);
             relevantFilesContent.push(`<file>\n<path>${file}</path>\n<content>${fileContent}</content>\n</file>`);
         }
-        let helpfulCommands = helpfullCommandsStr.split('</command>').map((command) => command.split('<command>')[1]);
+        console.log(relevantFilesContent.join('\n'));
+        let helpfulCommands = helpfullCommandsStr ? helpfullCommandsStr.split('</command>').map((command) => command.split('<command>')[1]) : [];
         helpfulCommands = helpfulCommands.slice(0, -1);
         let helpfulCommandsOutput = [];
         for (let command of helpfulCommands) {
@@ -296,9 +295,25 @@ Here is the content of the relevant files:
 <relevant_files>
 ${relevantFilesContent.join('\n')}
 </relevant_files>
+
+
 Please, take a deep breath and write your thoughts on how to fix the issue. After that, write the complete content of the files that need to be written to fix the issue, and then some commands which would be helpful to understand whether the issue was fixed (tests etc), in this format:
 <thoughts>
-Your thoughts here
+Your thoughts here about what you need to make
+Write here what kind of changes you will make in the codebase to fix the issue. In particular, say which files you'll need to write, and what want to change in them and what you want to leave unchanged (and therefore include using insert-block), with the first and last line with numbers.
+After that, write the insert blocks for each file (aka what you will leave as is), including the first and last lines for each block. Usually, you will have blocks in the beginning and the end - make sure not to break the files
+Make sure the lines below are exact quotes from the provided relevant file content, including the correct line numbers.
+
+Write it like this, including the quoted lines with numbers from the correct relevant files provided above, in this exact format:
+1. Modify clippinator/core/context.py to override __getstate__ and __setstate__ methods in the Context class
+- The first insert block will start with "1|class Context:" and end with "34|        return state"
+- After that, we add the __setstate__ method
+- The second insert block of example.txt will start with "35|    def save_context(self):" and end with "41|    return True"
+- Here we insert the __getstate__ method instead of the old one
+- The third insert block of example.txt will start with "56|def some_function():" and go until the end of the file
+2. Add a test case in clippinator/core/tests/test_context.py to verify the fix
+- The first insert block is from start to end of the file ("1|from unittest import TestCase" to end)
+
 </thoughts>
 <write_files>
 <file>
@@ -308,27 +323,61 @@ The content of the file here
 From the first line to the last
 Repeating the file with the changes
 Without skipping any code
-You can include blocks of the original file using the following syntax:
-<insert-block start_line=X end_line=Y/>
+You can insert blocks of the original file without fully reciting them using the following syntax:
+<insert-block start_line=X end_line=Y>
+X|the xth line from file1.py
+X+1|the x+1th line - you don't need many lines here
+...
+In this block, you should skip most of the lines, but include the lines near X in the beginning and near Y in the end
+Y-1|the y-1th line
+Y|the yth line
+</insert-block>
 where X and Y are the start and end line numbers (inclusive and 1-indexed) of the block you want to include from the original file.
+
+<insert-block start_line=150 end_line=end>
+150|class SomeClass:
+151|    def __init__(self,
+...
+</insert-block>
 </content>
 </file>
 <file>
-<path>file2.txt</path>
+<path>file2.py</path>
 <content>
-<insert-block start_line=1 end_line=100/>
-the 101th line of the new file
+<insert-block start_line=1 end_line=100>
+1|import something
+2|import os
+... (you can skip stuff inside the insert block)
+100|def some_function():
+</insert-block>
+    another_function()
+    return 5    # the 101th line of the new file
 and so on
 in this case, since we have 101 in the next block, these four lines will be inserted between the old 100th and 101st lines
 and here will be another block:
-<insert-block start_line=101 end_line=200/>
+<insert-block start_line=101 end_line=203>
+101|def another_function():
+102|    res = get_result(some_function())    # Note that the line numbers here are from the original file, so the same as the ones provided
+... 
+200|    return res
+201|
+202|
+203|class SomeClass:
+</insert-block>
+    def __init__(self):
+        pass
+
 Make sure the content here should actually go right after the 200th line of the original file. BE CAREFUL HERE
 The blocks are with both ends included and 1-indexed
 And now we include another block from later in the file, thereby replacing lines 201 to 250 with these two
 <insert-block start_line=251 end_line=289/>
 Some more lines here
 And then we continue until the last one of the original file
-<insert-block start_line=290 end_line=end/>
+<insert-block start_line=290 end_line=end>
+290|def last_function():
+291|    return 42
+...
+</insert-block>
 </content>
 </file>
 </write_files>
@@ -338,8 +387,17 @@ And then we continue until the last one of the original file
 </helpful_commands>
 
 Remember that you cannot use "..." in your answer to skip anything
-IF YOU USE "..." IN YOUR ANSWER OR WRITE INVALID FILE CONTENT OR SKIP ANYTHING WITHOUT AN insert-block, YOU WILL BE OBLITERATED.
-`, opus_model, '</helpful_commands>', true, '<thoughts>');
+IF YOU USE "..." OR "|skip|" IN YOUR ANSWER OUTSIDE AN <inside-block> OR WRITE INVALID FILE CONTENT OR SKIP ANYTHING WITHOUT AN insert-block, YOU WILL BE OBLITERATED.
+AT THE SAME TIME, YOU LOSE $0.5 FOR EACH UNNECESSARY LINE YOU WRITE IN THE INSERT BLOCK, SO BE CAREFUL. Write only the first and last lines inside an insert-block, but write everything outside of them.
+FOLLOW THE FORMAT CLOSELY
+Make sure to write exact line numbers when talking about insert-blocks.
+`, opus_model, '</helpful_commands>', true, '<thoughts>', false, (res) => {
+            // if there's more <insert-block> than </insert-block>, we add "...\n" to the end of the content
+            if ((res.match(/<insert-block/g) || []).length > (res.match(/<\/insert-block/g) || []).length) {
+                res += "...\n";
+            }
+            return res;
+        });
         // parse the result
         let thoughts = result.split('</thoughts>')[0].split('<thoughts>')[1];
         console.log(thoughts);
@@ -357,33 +415,33 @@ IF YOU USE "..." IN YOUR ANSWER OR WRITE INVALID FILE CONTENT OR SKIP ANYTHING W
             filesContent.push({ path, content: clearLineNums(content) });
             fileContentMap[path] = content;
         }
+        let filesContentFixed = '';
         for (let file of filesContent) {
             console.log(file.path);
             let originalContent = ((await this.env.getFileSystem()).getByPath(file.path)?.content || []).join('\n');
-            let newContent = file.content;
-        
-            // Replace <insert-block> tags with the corresponding content from the original file
-            let insertBlocks = newContent.match(/<insert-block (?:start_line=(\d+) end_line=end|start_line=(\d+) end_line=(\d+))\/>/g);
-            if (insertBlocks) {
-                for (let block of insertBlocks) {
-                    let originalLines = originalContent.split('\n');
-                    let [startLineS, endLineS] = block.match(/\d+/g)!;
-                    let startLine = Number(startLineS);
-                    let endLine;
-                    if (endLineS === 'end' || endLineS === undefined || block.includes('end_line=end')) {
-                        endLine = originalLines.length;
-                    } else {
-                        endLine = Number(endLineS);
-                    }
-                    
-                    let blockContent = originalLines.slice(startLine - 1, endLine).join('\n');
-                    newContent = newContent.replace(block, blockContent);
+            if (!file.content.trim()) {
+                continue;
+            }
+            let blocks = file.content.split("<insert-block ");
+            let newContent = blocks[0];
+            for (let i = 1; i < blocks.length; i++) {
+                let block = blocks[i];
+                let startLine = parseInt(block.split("start_line=")[1].split(" ")[0]);
+                let endLineS = block.split("end_line=")[1].split("/")[0].split(">")[0];
+                let endLine = endLineS === "end" ? originalContent.split('\n').length : parseInt(endLineS);
+                let blockContent = originalContent.split('\n').slice(startLine - 1, endLine).join('\n');
+                newContent += blockContent;
+                // if there is "/>" before the first ">"
+                if (block.split("end_line=")[1].split("/")[0].includes(">")) {
+                    newContent += block.split("</insert-block>")[1];
+                } else {
+                    newContent += block.split(">", 2)[1];
                 }
             }
-        
+            filesContentFixed += `<file>\n<path>${file.path}</path>\n<content>\n${newContent}\n</content>\n</file>\n`;
             this.env.writeFile(file.path, newContent);
         }
-        
+
         if (!with_reflection) {
             console.log('Quitting Clippinator');
             process.exit(0);
@@ -420,6 +478,10 @@ Here is a previously proposed solution by the agent:
 <files_to_write>
 ${filesContentStr}
 </files_to_write>
+After resolving the insert blocks, it becomes this:
+<files_to_write>
+${filesContentFixed}
+</files_to_write>
 Here is the linter output (ignore the formatting!):
 <linter_output>
 ${linter_output}
@@ -439,32 +501,53 @@ From the first line to the last
 Repeating the file with the changes
 Without skipping any code
 You can include blocks of the original file using the following syntax:
-<insert-block start_line=X end_line=Y/>
+<insert-block start_line=X end_line=Y>
+X|the xth line from file1.py
+X+1|the x+1th line - you don't need many lines here
+... (you can skip stuff inside the insert block)
+In this block, you should skip most of the lines, but include the lines near X in the beginning and near Y in the end
+Y-1|the y-1th line
+Y|the yth line
+</insert-block>
 where X and Y are the start and end line numbers (inclusive and 1-indexed) of the block you want to include from the original file.
 </content>
 </file>
 <file>
 <path>file2.py</path>
 <content>
-<insert-block start_line=1 end_line=100/>
-the 101th line of the new file
+<insert-block start_line=1 end_line=100>
+1|import something
+2|import os
+... YOU LOSE $0.2 FOR EACH UNNECESSARY LINE YOU WRITE IN THE INSERT BLOCK
+100|def some_function():
+</insert-block>
+    return 5    # the 101th line of the new file
 and so on
 in this case, since we have 101 in the next block, these four lines will be inserted between the old 100th and 101st lines
 and here will be another block:
-<insert-block start_line=101 end_line=200/>
+<insert-block start_line=101 end_line=200>
+101|def another_function():
+102|    res = get_result(some_function())
+...
+200|    return res
+</insert-block>
 Make sure the content here should actually go right after the 200th line of the original file. BE CAREFUL HERE
 The blocks are with both ends included and 1-indexed
 And now we include another block from later in the file, thereby replacing lines 201 to 250 with these two
 <insert-block start_line=251 end_line=289/>
 Some more lines here
 And then we continue until the last one of the original file
-<insert-block start_line=290 end_line=end/>
+<insert-block start_line=290 end_line=end>
+290|def last_function():
+291|    return 42
+...
+</insert-block>
 </content>
 </file>
 </write_files>
 
 Remember that you cannot use "..." in your answer to skip anything
-IF YOU USE "..." IN YOUR ANSWER OR WRITE INVALID FILE CONTENT OR SKIP ANYTHING, YOU WILL BE OBLITERATED.
+IF YOU USE "..." OR "|skip|" IN YOUR ANSWER OUTSIDE AN <inside-block> OR WRITE INVALID FILE CONTENT OR SKIP ANYTHING, YOU WILL BE OBLITERATED.
 `, "anthropic/claude-3-sonnet:beta", '</write_files>', true, '<thoughts>', true);
 
         // parse the result
@@ -482,43 +565,23 @@ IF YOU USE "..." IN YOUR ANSWER OR WRITE INVALID FILE CONTENT OR SKIP ANYTHING, 
         for (let file of filesContent2) {
             console.log(file.path);
             let originalContent = fileContentMap[file.path];
-            let newContent = file.content;
-        
-            // Replace <insert-block> tags with the corresponding content from the original file
-            let insertBlocks = newContent.match(/<insert-block (?:start_line=(\d+) end_line=end|start_line=(\d+) end_line=(\d+))\/>/g);
-            if (insertBlocks) {
-                for (let block of insertBlocks) {
-                    let originalLines = originalContent.split('\n');
-                    let [startLineS, endLineS] = block.match(/\d+/g)!;
-                    let startLine = Number(startLineS);
-                    let endLine;
-                    if (endLineS === 'end' || endLineS === undefined || block.includes('end_line=end')) {
-                        endLine = originalLines.length;
-                    } else {
-                        endLine = Number(endLineS);
-                    }
-                    
-                    let blockContent = originalLines.slice(startLine - 1, endLine).join('\n');
-                    newContent = newContent.replace(block, blockContent);
-                }
+            let blocks = file.content.split("<insert-block ");
+            let newContent = blocks[0];
+            for (let i = 1; i < blocks.length; i++) {
+                let block = blocks[i];
+                let startLine = parseInt(block.split("start_line=")[1].split(" ")[0]);
+                let endLineS = block.split("end_line=")[1].split(">")[0];
+                let endLine = endLineS === "end" ? originalContent.split('\n').length : parseInt(endLineS);
+                let blockContent = originalContent.split('\n').slice(startLine - 1, endLine).join('\n');
+                newContent += blockContent;
+                newContent += block.split("</insert-block>")[1];
             }
-        
+
+
+
             this.env.writeFile(file.path, newContent);
         }
-//         console.log(thoughts2);
-//         console.log(filesContentStr3);
         console.log('Quitting Clippinator');
         process.exit(0);
-
-        // return await this.run(
-        //     'Please, achieve the objective using the tools available. Read the files needed to understand the issue in one <function_calls> call, state your ideas to fix it, write the files to fix it. YOU SHOULD HAVE TWO FUNCTION CALLS BLOCKS: ONE FOR READING ALL FILES, ANOTHER FOR WRITING THEM. After, write <DONE/>.',
-        //     undefined,
-        //     undefined,
-        //     "",
-        //     undefined,
-        //     ["set_todos", "run_shell_command", "patch_file", "set_memory", "remember"],
-        //     opus_model,   // haiku_model,
-        //     7
-        // )
     }
 }

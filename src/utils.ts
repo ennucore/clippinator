@@ -36,7 +36,9 @@ export function loadCache(path: string): Record<string, any> {
     } catch (e: any) {
         return {};
     }
-}export function formatFileContent(lines: string[], line_threshold: number = 2000): string {
+}
+
+export function formatFileContent(lines: string[], line_threshold: number = 2000): string {
     let formattedLines;
     if (lines.length > line_threshold) {
         const startLines = lines.slice(0, line_threshold / 2);

@@ -58,7 +58,25 @@ export class DefaultFileSystem implements FileSystem {
 
     async writeFile(path: string, content: string): Promise<void> {
         console.log('writing to', this.rootPath + path);
+        // create directories if they don't exist
+        const dirs = path.split('/');
+        dirs.pop(); // remove the file name
+        let dirPath = this.rootPath;
+        try {
+            for (let dir of dirs) {
+                dirPath += dir + '/';
+                if (!fs.existsSync(dirPath)) {
+                    fs.mkdirSync(dirPath);
+                }
+            }
+        } catch (e) {
+            console.log(e);
+        }
+        try {
         fs.writeFileSync(this.rootPath + path, content);
+        } catch (e) {
+            console.log("Error writing file", e);
+        }
     }
 
     async deleteFile(path: string): Promise<void> {

@@ -140,4 +140,15 @@ task_prompts += `<advice>When investigating or looking for some context, read th
 
 export const haiku_simple_additional_prompt = `
 <advice>For testing, the command is usually test_framework + test_path. It can be something like \`./tests/runtests.py --verbosity 2\` (if such a file is present), \`pytest --no-header -rA -p no:cacheprovider path/to/test/file.py\`</advice>
+<strong_advice>The paths to files should be complete, starting from the repository root</strong_advice>
+`
+
+export const simple_approach_additional_advice = `
+REMEMBER AND VERY CAREFULLY FOLLOW THE FOLLOWING RULES:
+1. The line numbers have to be EXACT quotes from the original files
+2. You should usually have insert-blocks in the beginning and the end of the file
+3. You should never write long code snippets in the insert-blocks, never more than 5 lines
+4. Your insert-blocks should coincide with starts and ends of the functions and classes
+5. Be extremely careful with the indentation around insert-blocks
+6. THE CODE YOU WRITE BETWEEN INSERT BLOCKS SHOULD BE IN COMPLETE FUNCTIONS/CLASSES, DON'T HESITATE TO REWRITE THEM
 `

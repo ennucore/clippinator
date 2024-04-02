@@ -222,12 +222,12 @@ export async function callLLMTools(
 
 
 export async function callLLM(
-    prompt: string, model: string = opus_model, stop_token?: string, require_stop_token: boolean = false, 
-    assistant_message_predicate?: string, force_use_open: boolean = false, res_interprocessing?: (res: string) => string): Promise<string> {
+    prompt: string, model: string = opus_model, stop_token?: string, require_stop_token: boolean = false,
+    assistant_message_predicate?: string, force_use_open: boolean = false, res_interprocessing?: (res: string) => string, max_iterations: number = 8): Promise<string> {
     console.log("Predicate length: ", assistant_message_predicate?.length || "0");
     let messages: any = [{ role: "user", content: prompt }];
     if (assistant_message_predicate) {
-        messages.push({ role: "assistant", content: assistant_message_predicate });
+        messages.push({ role: "assistant", content: assistant_message_predicate.trimEnd() });
     }
     let res = assistant_message_predicate && use_open ? assistant_message_predicate : "";
     if (use_open || force_use_open) {
@@ -268,10 +268,10 @@ export async function callLLM(
         // res += message.content[0].text;
         // res += message.stop_reason || "";
     }
-    if (require_stop_token && !res.includes(stop_token!) && res.length < 40000) {
-        // remove trailing whitespace from the end of res
-        res = res.replace(/\s+$/, '');
-        let res2 = await callLLM(prompt, model, stop_token, require_stop_token, (res_interprocessing || ((res) => res))(assistant_message_predicate + res), force_use_open, res_interprocessing);
+    if (require_stop_token && !res.includes(stop_token!) && res.length < 40000 && max_iterations > 0) {
+        // remove trailing whitespace/endline from the end of res
+        res = res.trimEnd();
+        let res2 = await callLLM(prompt, model, stop_token, require_stop_token, (res_interprocessing || ((res) => res))(assistant_message_predicate + res), force_use_open, res_interprocessing, max_iterations - 1);
         if (res2.startsWith(assistant_message_predicate!)) {
             res = res2;
         } else {
@@ -284,14 +284,14 @@ export async function callLLM(
 let fastCallCache: Record<string, string> = loadCache('.fastCallCache.json');
 
 
-export async function callLLMFast(prompt: string, model: string = haiku_model, stop_token?: string, require_stop_token: boolean = false, assistant_message_predicate?: string): Promise<string> {
+export async function callLLMFast(prompt: string, model: string = haiku_model, stop_token?: string, require_stop_token: boolean = false, assistant_message_predicate?: string, max_iterations: number = 5): Promise<string> {
     let promptHash = hashString(prompt);
     if (fastCallCache[promptHash]) {
         return fastCallCache[promptHash];
     }
     let messages: any = [{ role: "user", content: prompt }];
     if (assistant_message_predicate) {
-        messages.push({ role: "assistant", content: assistant_message_predicate });
+        messages.push({ role: "assistant", content: assistant_message_predicate.trimEnd() });
     }
     let res = assistant_message_predicate ? assistant_message_predicate : "";
     if (use_open || true) {
@@ -300,8 +300,10 @@ export async function callLLMFast(prompt: string, model: string = haiku_model, s
             messages,
             stop: stop_token,
         })
-        res += response.choices[0].message.content || "";
-        if ((response.choices[0] as any).finish_reason == "stop_sequence") {
+        if (response.choices) {
+            res += response.choices[0].message.content || "";
+        }
+        if (response.choices && (response.choices[0] as any).finish_reason == "stop_sequence") {
             res += stop_token;
         }
 
@@ -315,10 +317,10 @@ export async function callLLMFast(prompt: string, model: string = haiku_model, s
         res += message.content[0].text;
         res += message.stop_reason || "";
     }
-    if (require_stop_token && !res.includes(stop_token!) && res.length < 30000) {
+    if (require_stop_token && !res.includes(stop_token!) && res.length < 30000 && max_iterations > 0) {
         // we continue until we get the stop token
         console.log("Continuing generation");
-        res = await callLLMFast(prompt, model, stop_token, require_stop_token, assistant_message_predicate + res);
+        res = await callLLMFast(prompt, model, stop_token, require_stop_token, assistant_message_predicate + res, max_iterations - 1);
     }
     fastCallCache[promptHash] = res;
     saveCache(fastCallCache, '.fastCallCache.json');

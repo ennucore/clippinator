@@ -4,8 +4,8 @@ import { SimpleTerminal } from './environment/terminal';
 import { DefaultFileSystem } from "./environment/filesystem";
 import { Tool, ToolCall, clearLineNums, final_result_tool, tool_functions, tools } from "./toolbox";
 import { callLLM, callLLMFast, callLLMTools, haiku_model, opus_model, sonnet_model } from "./llm";
-import { haiku_simple_additional_prompt, planning_examples, simple_approach_additional_advice, task_prompts } from "./prompts";
-import { formatFileContent, trimString } from "./utils";
+import { buildRepoInfo, extractTag, haiku_simple_additional_prompt, helpful_commands_prompt, planning_examples, simple_approach_additional_advice, task_prompts, write_files_prompt } from "./prompts";
+import { formatFileContent, runCommands, trimString } from "./utils";
 var clc = require("cli-color");
 
 let preprompt = `You are Clippinator, an AI software engineer. You operate in the environment where you have access to tools. You can use these tools to execute the user's request.
@@ -241,13 +241,7 @@ Description of the project and analysis of the issue
 <ws-structure>
 Summary of the workspace structure (you should have the actual summary here)
 </ws-structure>
-<helpful_commands>
-<command>python -m unittest test_file.py</command>
-<command>./tests/runtests.py --verbosity 2 module.test_class.test_method</command>
-<command>pytest --no-header -rA --tb=no -p no:cacheprovider TEST_FILE</command>
-<command>ls some_folder_maybe</command>
-<command>grep something something</command>
-</helpful_commands>
+${helpful_commands_prompt}
 </result>
 `,
             undefined,
@@ -255,12 +249,10 @@ Summary of the workspace structure (you should have the actual summary here)
             true,
             '<result>\n<analysis>\n');
         // parse the result
-        let projectDescription = res.split('</analysis>')[0].split('<analysis>')[1];
-        let workspaceSummary = res.split('</ws-structure>')[0].split('<ws-structure>')[1];
-        let relevantFilesStr = res.split('</relevant_files>')[0].split('<relevant_files>')[1];
-        let helpfullCommandsStr = res.split('</helpful_commands>')[0].split('<helpful_commands>')[1];
-        let relevantFiles = relevantFilesStr.split('</path>').map((path) => path.split('<path>')[1]);
-        relevantFiles = relevantFiles.slice(0, -1);
+        let projectDescription = extractTag(res, 'analysis');
+        let workspaceSummary = extractTag(res, 'ws-structure');
+        let relevantFilesStr = extractTag(res, 'relevant_files');
+        let relevantFiles = relevantFilesStr.split('</path>').map((path) => path.split('<path>')[1]).slice(0, -1);
         let relevantFilesContent = [];
         let originalContentMap = new Map<string, string[]>();
         for (let file of relevantFiles) {
@@ -268,35 +260,14 @@ Summary of the workspace structure (you should have the actual summary here)
             let fileContent = trimString(formatFileContent(originalContentMap.get(file)!, 10000), 30000);
             relevantFilesContent.push(`<file>\n<path>${file}</path>\n<content>${fileContent}</content>\n</file>`);
         }
-        console.log(relevantFilesContent.join('\n'));
-        let helpfulCommands = helpfullCommandsStr ? helpfullCommandsStr.split('</command>').map((command) => command.split('<command>')[1]) : [];
-        helpfulCommands = helpfulCommands.slice(0, -1);
-        let helpfulCommandsOutput = [];
-        for (let command of helpfulCommands) {
-            let output = `$ ${command}\n${trimString(await this.env.runCommand(command), 1000)}`;
-            helpfulCommandsOutput.push(output);
-        }
+        let helpfulCommandsOutput = await runCommands(extractTag(res, 'helpful_commands'), this.env);
         console.log(projectDescription);
         console.log(workspaceSummary);
         console.log(relevantFiles);
         console.log(helpfulCommandsOutput);
+        let repo_info = buildRepoInfo(fs_str, this.contextManager.objective, projectDescription, workspaceSummary, relevantFilesContent, helpfulCommandsOutput);
         let result = await callLLM(`You are a world-class software developer with ridiculous level of attention to detail. We need to fix the issue in the codebase. Here is the repository structure and the objective:
-<ws-structure>
-${fs_str.replace('...', '|skip|').replace('...', '|skip|')}
-</ws-structure>
-<objective>${this.contextManager.objective}</objective>
-Here is some analysis of the issue and the project:
-<analysis>
-${projectDescription}
-${workspaceSummary}
-</analysis>
-<helpful_commands_output>
-${helpfulCommandsOutput.join('\n')}
-</helpful_commands_output>
-Here is the content of the relevant files:
-<relevant_files>
-${relevantFilesContent.join('\n')}
-</relevant_files>
+${repo_info}
 
 
 Please, take a deep breath and write your thoughts on how to fix the issue. After that, write the complete content of the files that need to be written to fix the issue, and then some commands which would be helpful to understand whether the issue was fixed (tests etc), in this format:
@@ -310,33 +281,8 @@ After that, write a description of what you want to change in each file in a <wr
 ${simple_approach_additional_advice}
 
 </thoughts>
-<write_files>
-<file>
-<path>clippinator/core/context.py</path>
-<changes>
-Modify clippinator/core/context.py to override __getstate__ and __setstate__ methods in the Context class
-- The first insert block will start with "1|class Context:" and end with "34|        return state"
-- After the start of the class Context and line 34 "return state", we add the __setstate__ method
-- We modify the __setstate__ method to do this and that
-<patch>
-Write the changed lines here
-</patch>
-</changes>
-</file>
-<file>
-<path>file2.py</path>
-<changes>
-Changes described here
-<patch>
-Write the changed lines here
-</patch>
-</changes>
-</file>
-</write_files>
-<helpful_commands>
-<command>ls -l</command>
-<command>pytest --no-header -rA --tb=no -p no:cacheprovider TEST_FILE</command>
-</helpful_commands>
+${write_files_prompt}
+${helpful_commands_prompt}
 `, opus_model, '</helpful_commands>', true, '<thoughts>', false, (res) => {
             // if there's more <insert-block> than </insert-block>, we add "...\n" to the end of the content
             if ((res.match(/<insert-block/g) || []).length > (res.match(/<\/insert-block/g) || []).length) {
@@ -354,7 +300,7 @@ Write the changed lines here
         console.log(result);
 
 
-        let filesContentFixed = await handleFilesLLM(filesContentStr, originalContentMap, this.env, fs_str.replace('...', '|skip|').replace('...', '|skip|'), this.contextManager.objective, projectDescription, relevantFilesContent.join('\n'), thoughts, helpfulCommandsOutput.join('\n'));
+        let filesContentFixed = await handleFilesLLM(filesContentStr, originalContentMap, this.env, repo_info, thoughts);
         console.log('<CLIPPINATOR-S1-DIFF>');
         console.log(await this.env.runCommand('git diff | cat'));
         console.log('\n</CLIPPINATOR-S1-DIFF>');
@@ -365,33 +311,14 @@ Write the changed lines here
         }
         let linter_output = trimString(await this.contextManager.getLinterOutput(this.env), 15000);
         // Second iteration
-        let commandsStr = result.split('</helpful_commands>')[0].split('<helpful_commands>')[1];
-        let commands = commandsStr.split('</command>').map((command) => command.split('<command>')[1]);
-        commands = commands.slice(0, -1);
-        let commandsOutput = [];
-        for (let command of commands) {
-            let output = await this.env.runCommand(command);
-            commandsOutput.push(trimString(output, 3000));
-        }
-        let commandsOutputStr = "";
-        for (let i = 0; i < commands.length; i++) {
-            commandsOutputStr += `$ ${commands[i]}\n${trimString(commandsOutput[i], 1000)}\n`;
-        }
+        
+        let commandsOutputStr = await runCommands(extractTag(res, 'helpful_commands'), this.env);
         console.log(clc.blue.bold("Commands output:"));
         console.log(commandsOutputStr);
         console.log(clc.blue.bold("Second iteration"));
         let res2 = await callLLM(`We need to fix the issue in the codebase. Here is the repository structure and the objective:
-<ws-structure>
-${fs_str.replace('...', '|skip|').replace('...', '|skip|')}
-</ws-structure>
-<objective>${this.contextManager.objective}</objective>
-Here is some analysis of the issue and the project:
-<analysis>${projectDescription}</analysis>
-Here is the content of the relevant files:
-<relevant_files>
-${relevantFilesContent.join('\n')}
-</relevant_files>
-Here is a previously proposed solution by the agent:
+${repo_info}
+Some changes were made to the files to fix the issue:
 <changes>
 ${filesContentStr}
 </changes>
@@ -413,37 +340,14 @@ Please, take a deep breath and review the proposed solution and write your thoug
 First, think about what might be wrong (look at the output of the commands and the linter) and whether you need to fix anything. If not, just write <write_files></write_files> and we're done.
 If you need to fix something, write your thoughts on the changes you need to make.
 
-After that, write the changes that need to be made to the files to fix the issue
-
+After that, write the changes that need to be made to the original files to fix the issue. Write the patches (differences) between the original files and the ones that are needed.
 
 ${simple_approach_additional_advice}
 
 <thoughts>
 Your thoughts here on the proposed solution, what might be wrong with it, what might be the cause of the issue, and what needs to be changed compared to the files in the <files_to_write> block.
 </thoughts>
-<write_files>
-<file>
-<path>clippinator/core/context.py</path>
-<changes>
-Modify clippinator/core/context.py to override __getstate__ and __setstate__ methods in the Context class
-- The first insert block will start with "1|class Context:" and end with "34|        return state"
-- After the start of the class Context and line 34 "return state", we add the __setstate__ method
-- We modify the __setstate__ method to do this and that
-<patch>
-Write the changed lines here
-</patch>
-</changes>
-</file>
-<file>
-<path>file2.py</path>
-<changes>
-...
-<patch>
-...
-</patch>
-</changes>
-</file>
-</write_files>
+${write_files_prompt}
 `, opus_model, '</write_files>', true, '<thoughts>', false);
 
         // parse the result
@@ -452,7 +356,14 @@ Write the changed lines here
         console.log(clc.blue.bold("Second iteration output:"));
         console.log(res2);
 
-        handleFilesLLM(filesContentStr3, originalContentMap, this.env, fs_str.replace('...', '|skip|').replace('...', '|skip|'), this.contextManager.objective, projectDescription, filesContentFixed, thoughts2, commandsOutputStr);
+        handleFilesLLM(filesContentStr3, originalContentMap, this.env, repo_info + `
+Some changes were made to the files to fix the issue:
+<changes>
+${filesContentStr}
+</changes>
+
+<linter_output>\n${linter_output}\n</linter_output>
+<helpful_commands_output>${commandsOutputStr}</helpful_commands_output>`, thoughts2);
         console.log('<CLIPPINATOR-S2-DIFF>');
         console.log(await this.env.runCommand('git diff | cat'));
         console.log('\n</CLIPPINATOR-S2-DIFF>');
@@ -460,6 +371,8 @@ Write the changed lines here
         process.exit(0);
     }
 }
+
+
 
 async function handleFiles(filesContentStr: string, originalContentMap: Map<string, string[]>, env: Environment) {
     let filesContentStr2 = filesContentStr.split('</file>').map((file) => file.split('<file>')[file.split('<file>').length - 1]);
@@ -500,26 +413,12 @@ async function handleFiles(filesContentStr: string, originalContentMap: Map<stri
     return filesContentFixed;
 };
 
-// this function calls an llm with CallLLM and asks it to write the files completely following the directions from the previous llm, then parses the output and calls handleFiles
-//         let filesContentFixed = await handleFilesLLM(filesContentStr, originalContentMap, this.env, fs_str.replace('...', '|skip|').replace('...', '|skip|', this.contextManager.objective, projectDescription, relevantFilesContent.join('\n'), thoughts, helpfulCommandsOutput.join('\n')));
-async function handleFilesLLM(filesContentStr: string, originalContentMap: Map<string, string[]>, env: Environment, fs_str: string, objective: string, projectDescription: string, relevantFilesContent: string, thoughts: string, helpfulCommandsOutput: string) {
+
+
+async function handleFilesLLM(filesContentStr: string, originalContentMap: Map<string, string[]>, env: Environment, repo_info: string, thoughts: string) {
     let res = await callLLM(`You are a world-class software developer with ridiculous level of attention to detail. We need to fix the issue in the codebase. Here is the repository structure and the objective:
-<ws-structure>
-${fs_str}
-</ws-structure>
-<objective>${objective}</objective>
-Here is some analysis of the issue and the project and some thoughts:
-<analysis>
-${projectDescription}
-</analysis>
-Here is the content of the relevant files:
-<relevant_files>
-${relevantFilesContent}
-</relevant_files>
-Here is the output of some helpful commands:
-<helpful_commands_output>
-${helpfulCommandsOutput}
-</helpful_commands_output>
+
+${repo_info}
 
 Here are some thoughts about the issue:
 <thoughts>

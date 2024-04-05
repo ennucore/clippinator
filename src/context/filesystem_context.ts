@@ -121,7 +121,7 @@ export async function simplifyTree(tree: FileSystemTree, symbolCap: number, exec
     // const childNodes = await Promise.all(children.map(child => simplifyTree(child, symbolCap, exec)));
     let childNodes: (File | Directory)[] = [];
     for (const child of children) {
-        const childNode = await simplifyTree(child, symbolCap / 3.5, exec);
+        const childNode = await simplifyTree(child, symbolCap / 2.5, exec);
         childNodes.push(childNode);
     }
     let res = {path: tree.path, children: childNodes, summary: ''};
@@ -131,7 +131,7 @@ export async function simplifyTree(tree: FileSystemTree, symbolCap: number, exec
         res.children = [];
     } else if (estimateLenght(res) > symbolCap) {
         let summary = await callLLMFast(
-            `Give a shorter description of the directory ${tree.path}. Here it is:\n<ws-structure>\n${fmtTree(res)}\n</ws-structure>\nYour result should start with <ws-structure> and end with </ws-structure>, and be in the same format.`, 
+            `Give a description of the directory ${tree.path}, incorporating all necessary information about the files and their content while disregarding irrelevant info. Here it is:\n<ws-structure>\n${fmtTree(res)}\n</ws-structure>\nYour result should start with <ws-structure> and end with </ws-structure>, and be in the same format.`, 
             undefined, "</ws-structure>", true, "<ws-structure>");
         summary = trimString(summary.replace(/<\/?ws-structure>/g, '').trim(), symbolCap);
         res.summary = summary;

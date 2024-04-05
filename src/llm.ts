@@ -229,7 +229,7 @@ export async function callLLM(
     if (assistant_message_predicate) {
         messages.push({ role: "assistant", content: assistant_message_predicate.trimEnd() });
     }
-    let res = assistant_message_predicate && use_open ? assistant_message_predicate : "";
+    let res = assistant_message_predicate || ""; // && (use_open || force_use_open) ? assistant_message_predicate : "";
     if (use_open || force_use_open) {
         const response = await open_client.chat.completions.create({
             model,
@@ -257,7 +257,7 @@ export async function callLLM(
                     res += (messageStreamEvent as any).delta.text;
                 }
                 if ((messageStreamEvent as any).finish_reason == "stop_sequence") {
-                    res += stop_token;
+                    res += stop_token || "";
                 }
 
             }

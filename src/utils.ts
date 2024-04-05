@@ -1,4 +1,5 @@
 import { createHash } from 'crypto';
+import { Environment } from './environment/environment';
 
 export function hashString(text: string): string {
     const hash = createHash('sha256');
@@ -52,3 +53,12 @@ export function formatFileContent(lines: string[], line_threshold: number = 2000
     return formattedContent;
 }
 
+export async function runCommands(commandsStr: string, env: Environment) {
+    let helpfulCommands = commandsStr ? commandsStr.split('</command>').map((command) => command.split('<command>')[1]).slice(0, -1) : [];
+    let helpfulCommandsOutput = [];
+    for (let command of helpfulCommands) {
+        let output = `$ ${command}\n${trimString(await env.runCommand(command), 1000)}`;
+        helpfulCommandsOutput.push(output);
+    }
+    return helpfulCommandsOutput.join('\n');
+}

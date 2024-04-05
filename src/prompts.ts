@@ -147,3 +147,61 @@ export const simple_approach_additional_advice = `
 Note that you don't need to change the tests. Your solution will be tested against fixed tests which will pass if your solution resolves the issue.
 
 `
+
+export const helpful_commands_prompt = `<helpful_commands>
+<command>python -m unittest test_file.py</command>
+<command>./tests/runtests.py --verbosity 2 module.test_class.test_method</command>
+<command>pytest --no-header -rA --tb=no -p no:cacheprovider TEST_FILE</command>
+<command>ls some_folder_maybe</command>
+<command>grep something something</command>
+</helpful_commands>`
+
+export const write_files_prompt = `<write_files>
+<file>
+<path>clippinator/core/context.py</path>
+<changes>
+Modify clippinator/core/context.py to override __getstate__ and __setstate__ methods in the Context class
+- The first insert block will start with "1|class Context:" and end with "34|        return state"
+- After the start of the class Context and line 34 "return state", we add the __setstate__ method
+- We modify the __setstate__ method to do this and that
+<patch>
+Write the changed lines here
+</patch>
+</changes>
+</file>
+<file>
+<path>file2.py</path>
+<changes>
+Changes described here
+<patch>
+Write the changed lines here
+</patch>
+</changes>
+</file>
+</write_files>`
+
+
+export function buildRepoInfo(fs_str: string, objective: string, projectDescription: string, workspaceSummary: string, relevantFilesContent: string[], helpfulCommandsOutput: string): string {
+    return `<ws-structure>
+${fs_str.replace('...', '|skip|').replace('...', '|skip|')}
+</ws-structure>
+<objective>${objective}</objective>
+Here is some analysis of the issue and the project:
+<analysis>
+${projectDescription}
+${workspaceSummary}
+</analysis>
+Here is the content of the relevant files:
+<relevant_files>
+${relevantFilesContent.join('\n')}
+</relevant_files>
+<helpful_commands_output>
+${helpfulCommandsOutput}
+</helpful_commands_output>
+`;
+}
+
+
+export function extractTag(res: string, tag: string) {
+    return res.split(`</${tag}>`)[0].split(`<${tag}>`)[1];
+}

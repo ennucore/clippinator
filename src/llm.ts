@@ -236,11 +236,12 @@ export async function callLLM(
             messages,
             stop: stop_token,
         })
-        res += response.choices[0].message.content || "";
-        if ((response.choices[0] as any).finish_reason == "stop_sequence") {
+        if (response.choices) {
+            res += response.choices[0].message.content || "";
+        }
+        if (response.choices && (response.choices[0] as any).finish_reason == "stop_sequence") {
             res += stop_token;
         }
-
     } else {
         const anthropic = new Anthropic({ apiKey: anthropic_key });
         const stream = await anthropic.messages.create({

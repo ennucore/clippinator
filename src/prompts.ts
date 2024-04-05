@@ -144,11 +144,6 @@ export const haiku_simple_additional_prompt = `
 `
 
 export const simple_approach_additional_advice = `
-REMEMBER AND VERY CAREFULLY FOLLOW THE FOLLOWING RULES:
-1. The line numbers have to be EXACT quotes from the original files
-2. You should usually have insert-blocks in the beginning and the end of the file
-3. You should never write long code snippets in the insert-blocks, never more than 5 lines
-4. Your insert-blocks should coincide with starts and ends of the functions and classes
-5. Be extremely careful with the indentation around insert-blocks
-6. THE CODE YOU WRITE BETWEEN INSERT BLOCKS SHOULD BE IN COMPLETE FUNCTIONS/CLASSES, DON'T HESITATE TO REWRITE THEM
+Note that you don't need to change the tests. Your solution will be tested against fixed tests which will pass if your solution resolves the issue.
+
 `

@@ -22,19 +22,24 @@ function constructFileSystem(startPath: string, removePrefix: string = ""): File
         if (stats.size > 1024 * 1024) return new FileSystemTree(startPath.replace(removePrefix, ''), false, null);
 
         // Check for binary content by reading a small part of the file
-        const buffer = Buffer.alloc(512);
-        const fd = fs.openSync(startPath, 'r');
-        fs.readSync(fd, buffer, 0, 512, 0);
-        fs.closeSync(fd);
+        try {
+            const buffer = Buffer.alloc(512);
+            const fd = fs.openSync(startPath, 'r');
+            fs.readSync(fd, buffer, 0, 512, 0);
+            fs.closeSync(fd);
 
-        if (buffer.includes(0)) {
-            // File is likely binary, so skip it
+            if (buffer.includes(0)) {
+                // File is likely binary, so skip it
+                return new FileSystemTree(startPath.replace(removePrefix, ''), false, null);
+            }
+
+            const content = fs.readFileSync(startPath, 'utf-8');
+            const lines = content.split(/\r?\n/); // Split content into lines
+            return new FileSystemTree(startPath.replace(removePrefix, ''), false, lines);
+        } catch (e) {
+            console.log("Error reading file", e);
             return new FileSystemTree(startPath.replace(removePrefix, ''), false, null);
         }
-
-        const content = fs.readFileSync(startPath, 'utf-8');
-        const lines = content.split(/\r?\n/); // Split content into lines
-        return new FileSystemTree(startPath.replace(removePrefix, ''), false, lines);
     }
 }
 
@@ -73,7 +78,7 @@ export class DefaultFileSystem implements FileSystem {
             console.log(e);
         }
         try {
-        fs.writeFileSync(this.rootPath + path, content);
+            fs.writeFileSync(this.rootPath + path, content);
         } catch (e) {
             console.log("Error writing file", e);
         }

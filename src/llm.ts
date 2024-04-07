@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { XMLParser } from 'fast-xml-parser';
-import { ToolCall, all_possible_parameter_names } from './toolbox';
+import { ToolCall, all_possible_parameter_names } from './toolbox/toolbox';
 import OpenAI from "openai"
 
 import { config } from 'dotenv';

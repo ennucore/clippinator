@@ -102,11 +102,12 @@ export interface TerminalTab {
 
 export interface Terminal {
     getTerminalState(): Promise<TerminalTab[]>;
-    runCommand(command: string, tabIndex?: number | "new"): Promise<string>;   // returns the tab index
+    runCommand(command: string, tabIndex?: number | "new", timeout?: number, isHardTimeout?: boolean): Promise<string>;   // returns the tab index
 }
 
 interface Linter {
     getOutput(): Promise<string>;
+    lineFile(path: string): Promise<{ output: string, is_ok: boolean }>;
 }
 
 export class DummyTerminal implements Terminal {
@@ -177,6 +178,17 @@ export class TrunkLinter implements Linter {
             return "";
         }
         return res;
+    }
+
+    // use Flake8 for LintFile
+    async lineFile(path: string): Promise<{ output: string, is_ok: boolean }> {
+        let res;
+        try {
+            res = (require('child_process').execSync(`flake8 ${path}`, { cwd: this.repo_path })).toString();
+        } catch (e: any) {
+            res = e.stdout.toString();
+        }
+        return { output: res, is_ok: res.trim() === "" };
     }
 }
 

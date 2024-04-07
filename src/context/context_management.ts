@@ -1,6 +1,6 @@
 import { Environment } from '../environment/environment';
 import { getWorkspaceStructure, buildSmartWorkspaceStructure, getWorkspaceWithEstimations, fmtTree, simplifyTree } from './filesystem_context';
-import { ToolCall, ToolCallsGroup } from '../toolbox';
+import { ToolCall, ToolCallsGroup } from '../toolbox/toolbox';
 import { hashString, trimString } from '../utils';
 
 const xmljs = require('xml-js');
@@ -16,11 +16,10 @@ export function formatObject(obj: any, format: "json" | "xml" = "xml"): string {
 export interface Message {
     type: "thoughts" | "user" | "system";
     content: string;
+    author?: string;
 }
 
-export class ContextManager {
-    todos: string[];
-    memory: string;
+export class ContextManagerBase {
     history: (ToolCallsGroup | Message)[];
     objective: string;
     lastFileSystemHash: string;
@@ -29,22 +28,11 @@ export class ContextManager {
     staticSummary: boolean = true;
 
     constructor(objective: string = "") {
-        this.todos = [];
-        this.memory = "";
         this.history = [];
         this.objective = objective;
         this.lastFileSystemHash = "";
         this.lastWorkspaceSummary = "";
         this.lastLinterOutput = "";
-    }
-
-    getFirstTodo(): string | undefined {
-        /* Get the first one that isn't marked by "- [x]" and remove "- [ ]" */
-        for (const todo of this.todos) {
-            if (!todo.startsWith("- [x]")) {
-                return todo.replace("- [ ]", "");
-            }
-        }
     }
 
     async getLinterOutput(env: Environment): Promise<string> {
@@ -84,18 +72,44 @@ export class ContextManager {
             return this.lastWorkspaceSummary;
         }
         this.lastFileSystemHash = hash;
-        // //         this.lastWorkspaceSummary = await callLLMFast(`We are working in a workspace with some files and terminals. We have the following objective:
-        // // <objective>${this.objective}</objective>
-        // // Please, provide a summary of the following workspace structure. 
-        // // It should be in a very similar format to the one you see below, but with a lot less details. 
-        // // It should contain all the files and directories and an outline of the meaning of each file, the main classes and functions etc it contains (same with the terminal tabs if they are there). Reply ONLY with the summary, in a similar format to the original structure. 
-        // // In the summary, you have to includ **all** the paths exactly the same as in the original, and the content should be in the same form as the original content although you can omit some lines. However, do include all the important lines with important classes and functions etc. in the format \`n|class ClassName:\' with some descriptions. If some file is tangentially related to the overall objective, include its content **fully**.
-        // // Here is the workspace:\n\`\`\`\n${fullStructure}\n\`\`\`
-        // // Now, based on that, provide your edit. IT HAS TO BE ALMOST THE SAME LENGTH AS THE ORIGINAL, SAME FORMAT, AND VERY SIMILAR IN MANY WAYS. INCLUDE IMPORTANT OR RELEVANT LINES FROM EACH FILE
-        // // `);
-        // this.lastWorkspaceSummary = await buildSmartWorkspaceStructure(await env.getFileSystem(), this.objective);
-        // // console.log("\n\n\nWorkspace Summary:\n", this.lastWorkspaceSummary)
         return fullStructure
+    }
+}
+
+export class ContextManagerXml extends ContextManagerBase {
+    todos: string[];
+    memory: string;
+    history: (ToolCallsGroup | Message)[];
+    objective: string;
+    lastFileSystemHash: string;
+    lastWorkspaceSummary: string;
+    lastLinterOutput: string;
+    staticSummary: boolean = true;
+
+    constructor(objective: string = "") {
+        super();
+        this.todos = [];
+        this.memory = "";
+        this.history = [];
+        this.objective = objective;
+        this.lastFileSystemHash = "";
+        this.lastWorkspaceSummary = "";
+        this.lastLinterOutput = "";
+    }
+
+    getFirstTodo(): string | undefined {
+        /* Get the first one that isn't marked by "- [x]" and remove "- [ ]" */
+        for (const todo of this.todos) {
+            if (!todo.startsWith("- [x]")) {
+                return todo.replace("- [ ]", "");
+            }
+        }
+    }
+
+    async getLinterOutput(env: Environment): Promise<string> {
+        let output = await env.getLinterOutput();
+        this.lastLinterOutput = output;
+        return output;
     }
 
     async getContext(env: Environment, is_full: boolean = true): Promise<string> {

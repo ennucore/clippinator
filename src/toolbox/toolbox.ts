@@ -1,6 +1,6 @@
-import { Environment } from './environment/environment'
-import { ContextManager } from './context/context_management';
-import { formatFileContent } from './utils';
+import { Environment } from '../environment/environment'
+import { ContextManagerXml } from '../context/context_management';
+import { formatFileContent } from '../utils';
 
 export interface Tool {
     function: {
@@ -149,8 +149,8 @@ export function final_result_tool(description: string, params: Record<string, an
     };
 }
 
-export let tool_functions: Record<string, (args: Record<string, any>, env: Environment, ctx: ContextManager) => Promise<string>> = {
-    run_shell_command: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
+export let tool_functions: Record<string, (args: Record<string, any>, env: Environment, ctx: ContextManagerXml) => Promise<string>> = {
+    run_shell_command: async (args: Record<string, any>, env: Environment, ctx: ContextManagerXml) => {
         const { command } = args;
         let tab;
         if (args.tab === "-1") {
@@ -163,14 +163,14 @@ export let tool_functions: Record<string, (args: Record<string, any>, env: Envir
         const res = await env.runCommand(command, tab);
         return `Command ${command} ran in terminal.\n\`\`\`\n${res}\n\`\`\``;
     },
-    rewrite_file: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
+    rewrite_file: async (args: Record<string, any>, env: Environment, ctx: ContextManagerXml) => {
         let { path, content } = args;
         // if there are more 3 lines and each line starts with "number|", then we remove the line numbers from the beginnings of lines
         content = clearLineNums(content);
         env.writeFile(path, content);
         return `Wrote content to file ${path}`;
     },
-    patch_file: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
+    patch_file: async (args: Record<string, any>, env: Environment, ctx: ContextManagerXml) => {
         let { path } = args;
         let new_content = /* lines */ args.new_content.split('\n');
         const file = (await env.getFileSystem()).getByPath(path);
@@ -206,12 +206,12 @@ export let tool_functions: Record<string, (args: Record<string, any>, env: Envir
             return `File ${path} not found`;
         }
     },
-    show_message: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
+    show_message: async (args: Record<string, any>, env: Environment, ctx: ContextManagerXml) => {
         const { message } = args;
         env.showMessage(message);
         return `Showed message: ${message}`;
     },
-    read_file: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
+    read_file: async (args: Record<string, any>, env: Environment, ctx: ContextManagerXml) => {
         const { path } = args;
         const file = (await env.getFileSystem()).getByPath(path);
         if (file) {
@@ -221,30 +221,30 @@ export let tool_functions: Record<string, (args: Record<string, any>, env: Envir
             return `File ${path} not found`;
         }
     },
-    ask_user: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
+    ask_user: async (args: Record<string, any>, env: Environment, ctx: ContextManagerXml) => {
         const { prompt } = args;
         const response = await env.askPrompt(prompt);
         return response;
     },
-    set_todos: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
+    set_todos: async (args: Record<string, any>, env: Environment, ctx: ContextManagerXml) => {
         const { todos } = args;
         ctx.todos = todos.split('\n');
         return `The todos are updated.`;
     },
-    remember: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
+    remember: async (args: Record<string, any>, env: Environment, ctx: ContextManagerXml) => {
         const { factoid } = args;
         ctx.memory += '\n' + factoid;
         return `Remembered`;
     },
-    set_memory: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
+    set_memory: async (args: Record<string, any>, env: Environment, ctx: ContextManagerXml) => {
         const { memory } = args;
         ctx.memory = memory;
         return `Updated the memory.`;
     },
-    final_result: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
+    final_result: async (args: Record<string, any>, env: Environment, ctx: ContextManagerXml) => {
         return `Done`;
     },
-    linter: async (args: Record<string, any>, env: Environment, ctx: ContextManager) => {
+    linter: async (args: Record<string, any>, env: Environment, ctx: ContextManagerXml) => {
         const output = await ctx.getLinterOutput(env);
         return output;
     }

@@ -62,3 +62,7 @@ export async function runCommands(commandsStr: string, env: Environment) {
     }
     return helpfulCommandsOutput.join('\n');
 }
+
+export function formatTemplate(template: string, variables: { [key: string]: string }): string {
+    return template.replace(/{(\w+)}/g, (match, key) => variables[key] || match);
+}

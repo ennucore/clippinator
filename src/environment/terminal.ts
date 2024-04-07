@@ -27,7 +27,7 @@ export class SimpleTerminal implements Terminal {
         return this.tabs;
     }
 
-    async runCommand(command: string, tabIndex?: number | "new" | "no", timeout: number = 5000): Promise<string> {
+    async runCommand(command: string, tabIndex?: number | "new" | "no", timeout: number = 15000, isHardTimeout: boolean = false): Promise<string> {
         if (tabIndex === undefined || tabIndex === "no") {
             try {
                 const commandOutput = (require('child_process').execSync(command, { cwd: this.rootPath, env: process.env })).toString();
@@ -70,6 +70,10 @@ export class SimpleTerminal implements Terminal {
 
             // Set a timeout to resolve the promise after the specified duration
             const timeoutId = setTimeout(() => {
+                if (isHardTimeout) {
+                    selectedTab.pty.kill();
+                }
+                output += `\nCommand timed out after ${timeout}ms`;
                 resolve(output);
             }, timeout);
 

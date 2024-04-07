@@ -1,10 +1,10 @@
-import { ContextManager, Message } from "./context/context_management";
+import { ContextManagerXml, Message } from "./context/context_management";
 import { Environment, CLIUserInterface, DummyBrowser, DummyTerminal, TrunkLinter } from "./environment/environment";
 import { SimpleTerminal } from './environment/terminal';
 import { DefaultFileSystem } from "./environment/filesystem";
-import { Tool, ToolCall, clearLineNums, final_result_tool, tool_functions, tools } from "./toolbox";
+import { Tool, ToolCall, clearLineNums, final_result_tool, tool_functions, tools } from "./toolbox/toolbox";
 import { callLLM, callLLMFast, callLLMTools, haiku_model, opus_model, sonnet_model } from "./llm";
-import { buildRepoInfo, extractTag, filterAdvice, fullAdvice, haiku_simple_additional_prompt, helpful_commands_prompt, planning_examples, simple_approach_additional_advice, task_prompts, write_files_prompt } from "./prompts";
+import { buildRepoInfo, extractTag, filterAdvice, fullAdvice, haiku_simple_additional_prompt, helpful_commands_prompt, planning_examples, simple_approach_additional_advice, task_prompts, write_files_prompt } from "./prompts/promptsXml";
 import { formatFileContent, runCommands, trimString } from "./utils";
 var clc = require("cli-color");
 
@@ -23,10 +23,10 @@ Before calling the tools, write your thoughts out loud and describe why you are 
 
 export class Clipinator {
     env: Environment;
-    contextManager: ContextManager;
+    contextManager: ContextManagerXml;
 
     constructor(objective: string = "", path: string = ".") {
-        this.contextManager = new ContextManager(objective);
+        this.contextManager = new ContextManagerXml(objective);
         this.env = new Environment(new DefaultFileSystem(path), new DummyBrowser(), new SimpleTerminal(path), new CLIUserInterface(), new TrunkLinter(path));
     }
 

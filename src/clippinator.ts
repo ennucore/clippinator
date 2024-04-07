@@ -4,7 +4,7 @@ import { SimpleTerminal } from './environment/terminal';
 import { DefaultFileSystem } from "./environment/filesystem";
 import { Tool, ToolCall, clearLineNums, final_result_tool, tool_functions, tools } from "./toolbox";
 import { callLLM, callLLMFast, callLLMTools, haiku_model, opus_model, sonnet_model } from "./llm";
-import { buildRepoInfo, extractTag, haiku_simple_additional_prompt, helpful_commands_prompt, planning_examples, simple_approach_additional_advice, task_prompts, write_files_prompt } from "./prompts";
+import { buildRepoInfo, extractTag, filterAdvice, fullAdvice, haiku_simple_additional_prompt, helpful_commands_prompt, planning_examples, simple_approach_additional_advice, task_prompts, write_files_prompt } from "./prompts";
 import { formatFileContent, runCommands, trimString } from "./utils";
 var clc = require("cli-color");
 
@@ -210,7 +210,7 @@ ${await this.contextManager.getLinterOutput(this.env)}
         }
     }
 
-    async simpleApproach(with_reflection: boolean = true) {
+    async simpleApproach(with_reflection: boolean = false) {
         // first, we extract files and workspace structure summary
         let fs_str = trimString(await this.contextManager.getWorkspaceStructure(this.env), 30000);
         let ext_tree = 'Extended tree:\n$ tree -L 4 .\n' + trimString(await this.env.runCommand('tree -L 4 .'), 100000) + '\n';
@@ -266,9 +266,15 @@ ${helpful_commands_prompt}
         console.log(relevantFiles);
         console.log(helpfulCommandsOutput);
         let repo_info = buildRepoInfo(fs_str, this.contextManager.objective, projectDescription, workspaceSummary, relevantFilesContent, helpfulCommandsOutput);
+        let advice = await filterAdvice(repo_info, fullAdvice);
+        console.log(clc.green(advice))
         let result = await callLLM(`You are a world-class software developer with ridiculous level of attention to detail. We need to fix the issue in the codebase. Here is the repository structure and the objective:
 ${repo_info}
 
+Some advice:
+<advice>
+${advice}
+</advice>
 
 Please, take a deep breath and write your thoughts on how to fix the issue. After that, write the complete content of the files that need to be written to fix the issue, and then some commands which would be helpful to understand whether the issue was fixed (tests etc), in this format:
 <thoughts>
@@ -283,24 +289,12 @@ ${simple_approach_additional_advice}
 </thoughts>
 ${write_files_prompt}
 ${helpful_commands_prompt}
-`, opus_model, '</helpful_commands>', true, '<thoughts>', false, (res) => {
-            // if there's more <insert-block> than </insert-block>, we add "...\n" to the end of the content
-            if ((res.match(/<insert-block/g) || []).length > (res.match(/<\/insert-block/g) || []).length) {
-                res += "...\n";
-            }
-            return res;
-        });
-        // parse the result
-        let thoughts = result.split('</thoughts>')[0].split('<thoughts>')[1];
-        console.log(thoughts);
+`, "openai/gpt-4-turbo-preview", '</helpful_commands>', false, '<thoughts>', false);
         let filesContentStr = result.split('</write_files>')[0].split('<write_files>')[1];
-        console.log(filesContentStr);
-
         console.log(clc.blue.bold("Entire output:"));
         console.log(result);
 
-
-        let filesContentFixed = await handleFilesLLM(filesContentStr, originalContentMap, this.env, repo_info, thoughts);
+        let filesContentFixed = await handleFilesLLM(filesContentStr, originalContentMap, this.env, repo_info, extractTag(result, 'thoughts'));
         console.log('<CLIPPINATOR-S1-DIFF>');
         console.log(await this.env.runCommand('git diff | cat'));
         console.log('\n</CLIPPINATOR-S1-DIFF>');
@@ -335,6 +329,11 @@ And here is the output of some helpful commands:
 ${commandsOutputStr}
 </commands_output>
 
+Advice:
+<advice>
+${advice}
+</advice>
+
 
 Please, take a deep breath and review the proposed solution and write your thoughts on it. Evaluate the relevance of the previous response. Offer a better solution if necessary.
 First, think about what might be wrong (look at the output of the commands and the linter) and whether you need to fix anything. If not, just write <write_files></write_files> and we're done.
@@ -348,7 +347,7 @@ ${simple_approach_additional_advice}
 Your thoughts here on the proposed solution, what might be wrong with it, what might be the cause of the issue, and what needs to be changed compared to the files in the <files_to_write> block.
 </thoughts>
 ${write_files_prompt}
-`, opus_model, '</write_files>', true, '<thoughts>', false);
+`, "openai/gpt-4-turbo-preview", '</write_files>', true, '<thoughts>', false);
 
         // parse the result
         let thoughts2 = res2.split('</thoughts>')[0].split('<thoughts>')[1];
@@ -367,7 +366,6 @@ ${filesContentStr}
         console.log('<CLIPPINATOR-S2-DIFF>');
         console.log(await this.env.runCommand('git diff | cat'));
         console.log('\n</CLIPPINATOR-S2-DIFF>');
-        console.log('Quitting Clippinator');
         process.exit(0);
     }
 }
@@ -416,7 +414,8 @@ async function handleFiles(filesContentStr: string, originalContentMap: Map<stri
 
 
 async function handleFilesLLM(filesContentStr: string, originalContentMap: Map<string, string[]>, env: Environment, repo_info: string, thoughts: string) {
-    let res = await callLLM(`You are a world-class software developer with ridiculous level of attention to detail. We need to fix the issue in the codebase. Here is the repository structure and the objective:
+    filesContentStr = filesContentStr.replace('patch>', 'suggested_code>');
+    let res = await callLLMFast(`You are a world-class software developer with ridiculous level of attention to detail. We need to fix the issue in the codebase. Here is the repository structure and the objective:
 
 ${repo_info}
 
@@ -436,21 +435,32 @@ Please, respond in the following format with the new content of the files:
 <file>
 <path>file1.py</path>
 <content>
-The content of the file here
-From the first line to the last
-Repeating the file with the changes
-Very carefully fixing the issue
+import something
+import that
+
+
+# The content of the file here
+# From the first line to the last
+# Repeating the file with the changes
+# Apply the suggested code changes and so on
+# Very carefully fixing the issue
+
+def some_function():
+    return f2(5)
 </content>
 </file>
 <file>
-<path>file2.py</path>
+<path>file2.txt</path>
 <content>
-The content of the second file here
+The content of the second file here, changed according to file_changes
 From the first line to the last
 Potentially thousands of lines
 </content>
 </file>
-</write_files>`, sonnet_model, '</write_files>', true, '<write_files>\n<file>\n<path>', false, undefined, 15);
+</write_files>
+Obviously, you have to write the entire content of the files without skipping anything. If you do something like "# this part is unchanged" or "# ... (the rest of the file remains the same)" YOU WILL BE OBLITERATED.
+Just write the correct content for all the files from beginning to the end
+`, "anthropic/claude-3-sonnet:beta", '</write_files>', true, '<write_files>\n<file>\n<path>', 15);
     // now, parse and handle the files
     let fullFilesStr = res.split('</write_files>')[0];
     fullFilesStr = res.split('<write_files>')[res.split('<write_files>').length - 1];

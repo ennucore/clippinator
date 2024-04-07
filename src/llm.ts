@@ -230,13 +230,15 @@ export async function callLLM(
         messages.push({ role: "assistant", content: assistant_message_predicate.trimEnd() });
     }
     let res = assistant_message_predicate || ""; // && (use_open || force_use_open) ? assistant_message_predicate : "";
-    if (use_open || force_use_open) {
+    if (model.includes("/")) {
+        messages = [{ role: "system", content: "If you see last message from yourself, just continue generating from that point without saying anything else" }, ...messages];
         const response = await open_client.chat.completions.create({
             model,
             messages,
             stop: stop_token,
         })
         if (response.choices) {
+            console.log(response.choices[0].message.content || "")
             res += response.choices[0].message.content || "";
         }
         if (response.choices && (response.choices[0] as any).finish_reason == "stop_sequence") {
@@ -269,10 +271,10 @@ export async function callLLM(
         // res += message.content[0].text;
         // res += message.stop_reason || "";
     }
-    if (require_stop_token && !res.includes(stop_token!) && res.length < 40000 && max_iterations > 0) {
+    if (require_stop_token && stop_token && !res.includes(stop_token!) && res.length < 40000 && max_iterations > 0) {
         // remove trailing whitespace/endline from the end of res
         res = res.trimEnd();
-        let res2 = await callLLM(prompt, model, stop_token, require_stop_token, (res_interprocessing || ((res) => res))(assistant_message_predicate + res), force_use_open, res_interprocessing, max_iterations - 1);
+        let res2 = await callLLM(prompt, model, stop_token, require_stop_token, (res_interprocessing || ((res) => res))(res), force_use_open, res_interprocessing, max_iterations - 1);
         if (res2.startsWith(assistant_message_predicate!)) {
             res = res2;
         } else {

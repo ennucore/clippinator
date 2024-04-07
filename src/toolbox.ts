@@ -131,7 +131,9 @@ export let tools: Tool[] = [
 export let all_possible_parameter_names: string[] = /* extract from tools */ tools.flatMap(tool => Object.keys(tool.function.parameters || {}));
 
 export const clearLineNums: (content: string) => string = (content: string) => {
-    if (content.split('\n').length > 3 && content.split('\n').every((line: any, index: any) => line.startsWith(`${index + 1}|`))) {
+    if (content.split('\n').length > 3 && content.trim().split('\n').every(
+        (line: any, index: any) => !line.trim() || line.startsWith(`${index + 1}|`) || /^\d+\|/.test(line)
+        )) {
         content = content.split('\n').map((line: any, index: any) => line.split('|').slice(1).join('|')).join('\n');
     }
     return content;

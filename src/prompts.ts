@@ -1,3 +1,6 @@
+import { readFileSync } from "fs";
+import { callLLMFast } from "./llm";
+
 export let planning_examples = `
 <planning_advice>There is no need to put creating a file and writing several of its sections in different tasks. You can just write the entire file right away</planning_advice>
 <planning_advice>When you encounter an issue, if you can say how to fix it without investigating with decent confidence, you can just write the fix and after that test itß</planning_advice>
@@ -201,7 +204,45 @@ ${helpfulCommandsOutput}
 `;
 }
 
+const filterAdvicePrompt = (repo_info: string, advice: string) => `We are working on a task in a repository.
+Here is a lot of advice for a lot of different tasks and situations:
+<advice>
+${advice}
+</advice>
+
+Filter the advice relevant for the current task using the following information:
+${repo_info}
+
+Answer only with the relevant advice.
+`;
+
 
 export function extractTag(res: string, tag: string) {
     return res.split(`</${tag}>`)[0].split(`<${tag}>`)[1];
 }
+
+export async function filterAdvice(repo_info: string, full_advice: string) {
+    // We split the advice into pieces by lines such that each piece is no longer that 100k characters
+    if (!full_advice.length) {
+        return '';
+    }
+    let advice_lines = full_advice.split('\n');
+    let advice_pieces = [];
+    let current_piece = '';
+    for (let line of advice_lines) {
+        if (current_piece.length + line.length > 100000) {
+            advice_pieces.push(current_piece);
+            current_piece = '';
+        }
+        current_piece += line + '\n';
+    }
+    advice_pieces.push(current_piece);
+    // now we filter the advice by running each piece through Haiku using callLLMFast **in parallel**
+    let promises = advice_pieces.map((piece) => callLLMFast(filterAdvicePrompt(repo_info, piece), undefined, undefined, false, "Relevant advice:"));
+    let results = await Promise.all(promises);
+    return results.map((res) => res.replace('Relevant advice:', '').trim()).join('\n');
+}
+
+
+// load promptyara.txt
+export const fullAdvice = '';   // readFileSync('promptyara.txt', 'utf8');

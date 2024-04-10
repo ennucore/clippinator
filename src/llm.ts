@@ -220,19 +220,28 @@ export async function callLLMTools(
     return { toolCalls, toolResults, response, toolCallsFull };
 }
 
+export interface APIMessage {
+    role: "user" | "assistant" | "system",
+    content: string
+}
+
 
 export async function callLLM(
-    prompt: string, model: string = opus_model, stop_token?: string, require_stop_token: boolean = false,
+    prompt: string | APIMessage[], model: string = opus_model, stop_token?: string, require_stop_token: boolean = false,
     assistant_message_predicate?: string, force_use_open: boolean = false, res_interprocessing?: (res: string) => string, max_iterations: number = 8): Promise<string> {
-    console.log("Predicate length: ", assistant_message_predicate?.length || "0");
-    let messages: any = [{ role: "user", content: prompt }];
+    let messages: APIMessage[] = prompt instanceof Array ? prompt : [{ role: "user", content: prompt }];
     if (assistant_message_predicate) {
         messages.push({ role: "assistant", content: assistant_message_predicate.trimEnd() });
     }
     let res = assistant_message_predicate || ""; // && (use_open || force_use_open) ? assistant_message_predicate : "";
     if (model.includes("/")) {
         messages = [{ role: "system", content: "If you see last message from yourself, just continue generating from that point without saying anything else" }, ...messages];
-        const response = await open_client.chat.completions.create({
+        let cl = open_client;
+        if (process.env.OPENAI_API_KEY && model.startsWith('openai/')) {
+            model = model.split("/")[1];
+            cl = openai_client;
+        }
+        const response = await cl.chat.completions.create({
             model,
             messages,
             stop: stop_token,
@@ -246,11 +255,15 @@ export async function callLLM(
         }
     } else {
         const anthropic = new Anthropic({ apiKey: anthropic_key });
+        let messages_anthropic = messages.filter((message) => message.role !== "system") as { role: "assistant" | "user", content: string }[];
+        let system_message = messages.filter((message) => message.role === "system").join("\n");
         const stream = await anthropic.messages.create({
             max_tokens: 4096,
-            messages,
+            messages: messages_anthropic,
             model,
-            stream: true
+            stream: true,
+            system: system_message,
+            stop_sequences: stop_token ? [stop_token] : undefined
         });
         try {
             for await (const messageStreamEvent of stream) {

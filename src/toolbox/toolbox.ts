@@ -1,5 +1,6 @@
 import { Environment } from '../environment/environment'
-import { ContextManagerXml } from '../context/context_management';
+import { ContextManagerBase } from '../context/context_management';
+import { ContextManagerXml } from '../context/context_manager_xml';
 import { formatFileContent } from '../utils';
 
 export interface Tool {
@@ -117,15 +118,6 @@ export let tools: Tool[] = [
             parameters: {},
         }
     }
-    // {
-    //     function: {
-    //         name: 'set_focused_task',
-    //         description: 'Set the focused task',
-    //         parameters: {
-    //             task: 'Move the class ... from file ... to ...',
-    //         },
-    //     }
-    // }
 ];
 
 export let all_possible_parameter_names: string[] = /* extract from tools */ tools.flatMap(tool => Object.keys(tool.function.parameters || {}));
@@ -149,8 +141,8 @@ export function final_result_tool(description: string, params: Record<string, an
     };
 }
 
-export let tool_functions: Record<string, (args: Record<string, any>, env: Environment, ctx: ContextManagerXml) => Promise<string>> = {
-    run_shell_command: async (args: Record<string, any>, env: Environment, ctx: ContextManagerXml) => {
+export let tool_functions: Record<string, (args: Record<string, any>, env: Environment, ctx: ContextManagerBase) => Promise<string>> = {
+    run_shell_command: async (args: Record<string, any>, env: Environment, ctx: ContextManagerBase) => {
         const { command } = args;
         let tab;
         if (args.tab === "-1") {
@@ -163,14 +155,14 @@ export let tool_functions: Record<string, (args: Record<string, any>, env: Envir
         const res = await env.runCommand(command, tab);
         return `Command ${command} ran in terminal.\n\`\`\`\n${res}\n\`\`\``;
     },
-    rewrite_file: async (args: Record<string, any>, env: Environment, ctx: ContextManagerXml) => {
+    rewrite_file: async (args: Record<string, any>, env: Environment, ctx: ContextManagerBase) => {
         let { path, content } = args;
         // if there are more 3 lines and each line starts with "number|", then we remove the line numbers from the beginnings of lines
         content = clearLineNums(content);
         env.writeFile(path, content);
         return `Wrote content to file ${path}`;
     },
-    patch_file: async (args: Record<string, any>, env: Environment, ctx: ContextManagerXml) => {
+    patch_file: async (args: Record<string, any>, env: Environment, ctx: ContextManagerBase) => {
         let { path } = args;
         let new_content = /* lines */ args.new_content.split('\n');
         const file = (await env.getFileSystem()).getByPath(path);
@@ -206,12 +198,12 @@ export let tool_functions: Record<string, (args: Record<string, any>, env: Envir
             return `File ${path} not found`;
         }
     },
-    show_message: async (args: Record<string, any>, env: Environment, ctx: ContextManagerXml) => {
+    show_message: async (args: Record<string, any>, env: Environment, ctx: ContextManagerBase) => {
         const { message } = args;
         env.showMessage(message);
         return `Showed message: ${message}`;
     },
-    read_file: async (args: Record<string, any>, env: Environment, ctx: ContextManagerXml) => {
+    read_file: async (args: Record<string, any>, env: Environment, ctx: ContextManagerBase) => {
         const { path } = args;
         const file = (await env.getFileSystem()).getByPath(path);
         if (file) {
@@ -221,11 +213,22 @@ export let tool_functions: Record<string, (args: Record<string, any>, env: Envir
             return `File ${path} not found`;
         }
     },
-    ask_user: async (args: Record<string, any>, env: Environment, ctx: ContextManagerXml) => {
+    ask_user: async (args: Record<string, any>, env: Environment, ctx: ContextManagerBase) => {
         const { prompt } = args;
         const response = await env.askPrompt(prompt);
         return response;
     },
+    
+    final_result: async (args: Record<string, any>, env: Environment, ctx: ContextManagerBase) => {
+        return `Done`;
+    },
+    linter: async (args: Record<string, any>, env: Environment, ctx: ContextManagerBase) => {
+        const output = await ctx.getLinterOutput(env);
+        return output;
+    }
+};
+
+export let tool_functions_xml: Record<string, (args: Record<string, any>, env: Environment, ctx: ContextManagerXml) => Promise<string>> = {
     set_todos: async (args: Record<string, any>, env: Environment, ctx: ContextManagerXml) => {
         const { todos } = args;
         ctx.todos = todos.split('\n');
@@ -241,11 +244,4 @@ export let tool_functions: Record<string, (args: Record<string, any>, env: Envir
         ctx.memory = memory;
         return `Updated the memory.`;
     },
-    final_result: async (args: Record<string, any>, env: Environment, ctx: ContextManagerXml) => {
-        return `Done`;
-    },
-    linter: async (args: Record<string, any>, env: Environment, ctx: ContextManagerXml) => {
-        const output = await ctx.getLinterOutput(env);
-        return output;
-    }
 };

@@ -39,18 +39,42 @@ export function loadCache(path: string): Record<string, any> {
     }
 }
 
-export function formatFileContent(lines: string[], line_threshold: number = 2000): string {
-    let formattedLines;
-    if (lines.length > line_threshold) {
-        const startLines = lines.slice(0, line_threshold / 2);
-        const endLines = lines.slice(-line_threshold / 2);
-        formattedLines = [...startLines, '...', ...endLines];
-    } else {
-        formattedLines = lines;
+export function formatFileContent(lines: string[], line_threshold: number = 2000, line_range?: {start: number, length: number}): string {
+    console.log(`Formatting file content with ${lines.length} lines with ${line_range} (${line_range?.start} ${line_range?.length})`)
+    let formattedLines = lines.map((line, index) => `${index + 1}|${line}`);
+    if (line_range) {
+        formattedLines = formattedLines.slice(line_range.start, line_range.start + line_range.length);
     }
+    if (line_threshold != -1 && lines.length > line_threshold) {
+        const startLines = formattedLines.slice(0, line_threshold / 2);
+        const endLines = formattedLines.slice(-line_threshold / 2);
+        formattedLines = [...startLines, '...', ...endLines];
+    }
+    return formattedLines.join('\n');
+}
 
-    const formattedContent = formattedLines.map((line, index) => `${index + 1}|${line}`).join('\n');
-    return formattedContent;
+
+export function splitN(str: string, sep: string | RegExp, n: number): string[] {
+    let parts = str.split(sep);
+    let result = parts.slice(0, n - 1);
+    if (parts.length >= n) {
+        result.push(parts.slice(n - 1).join(sep.toString()));
+    }
+    return result;
+}
+
+export function removePrefix(text: string, prefix: string): string {
+    if (text.startsWith(prefix)) {
+        return text.slice(prefix.length);
+    }
+    return text;
+}
+
+export function removeSuffix(text: string, suffix: string): string {
+    if (text.endsWith(suffix)) {
+        return text.slice(0, -suffix.length);
+    }
+    return text;
 }
 
 export async function runCommands(commandsStr: string, env: Environment) {
@@ -65,4 +89,14 @@ export async function runCommands(commandsStr: string, env: Environment) {
 
 export function formatTemplate(template: string, variables: { [key: string]: string }): string {
     return template.replace(/{(\w+)}/g, (match, key) => variables[key] || match);
+}
+
+export function commandBan(command: string, args: string): string | null {
+    if (["vim", "vi", "nano", "git"].includes(command)) {
+        return `Command ${command} is banned because it's interactive`;
+    }
+    if (["python", "python3", "sh", "bash"].includes(command) && !args.trim()) {
+        return `Command ${command} cannot be run in interactive mode (without arguments)`;
+    }
+    return null;
 }

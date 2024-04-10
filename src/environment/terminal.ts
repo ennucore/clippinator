@@ -2,7 +2,7 @@
 
 import { Terminal, TerminalTab } from './environment';
 import { spawn, IPty } from 'node-pty';
-import { trimString } from '../utils';
+import { removePrefix, removeSuffix, trimString } from '../utils';
 
 class TerminalTabPty implements TerminalTab {
     history: string[];
@@ -35,7 +35,7 @@ export class SimpleTerminal implements Terminal {
             } catch (e: any) {
                 return (e.stdout || "").toString() + (e.stderr || "").toString();
             }
-            
+
         }
         // Determine the tab index
         let selectedTabIndex: number;
@@ -60,6 +60,7 @@ export class SimpleTerminal implements Terminal {
         // Create a new entry in the tab's history for the command output
         const outputIndex = selectedTab.history.length;
         selectedTab.history.push('');
+        selectedTab.pty.clear();
 
         // Write the command to the pty process
         selectedTab.pty.write(`${command}\r`);
@@ -67,6 +68,7 @@ export class SimpleTerminal implements Terminal {
         // Return a promise that resolves after the specified timeout
         return new Promise<string>((resolve, reject) => {
             let output = '';
+            let finished = false;
 
             // Set a timeout to resolve the promise after the specified duration
             const timeoutId = setTimeout(() => {
@@ -79,13 +81,28 @@ export class SimpleTerminal implements Terminal {
 
             // Handle data events from the pty process
             selectedTab.pty.onData((data: string) => {
+                if (finished) {
+                    return;
+                }
                 output += data;
+                output = output.split(command + '\r\n')[output.split(command + '\r\n').length - 1];
                 // Update the corresponding entry in the tab's history
-                selectedTab.history[outputIndex] += data;
+                selectedTab.history[outputIndex] = output;
+                if (output.includes('<COMMAND-DONE/>')) {
+                    // console.log(JSON.stringify(output))
+                    finished = true;
+                    output = output.split('PreExec')[output.split('PreExec').length - 1].split('<COMMAND-DONE/>')[0].split('\x1b')[0].replace(/[\x00-\x07]/g, '').replace(/$[^\n]+\r/, '');
+                    clearTimeout(timeoutId);
+                    selectedTab.history[outputIndex] = trimString(selectedTab.history[outputIndex], 10000);
+                    resolve(trimString(output, 30000));
+                }
             });
 
             // Handle exit event from the pty process
             selectedTab.pty.onExit((res) => {
+                if (finished) {
+                    return;
+                }
                 const exitCode = res.exitCode;
                 clearTimeout(timeoutId);
                 if (exitCode !== 0) {
@@ -103,12 +120,12 @@ export class SimpleTerminal implements Terminal {
 
     private createPtyProcess(): IPty {
         // Create a new pty process
-        return spawn(process.env.SHELL || 'bash', [], {
+        return spawn('bash', [], {
             name: 'xterm-color',
             cols: 80,
             rows: 30,
             cwd: this.rootPath,
-            env: process.env,
+            env: { ...process.env, PROMPT_COMMAND: 'echo "<COMMAND-DONE/>"', PS1: '<COMMAND-START>' },
         });
     }
 }

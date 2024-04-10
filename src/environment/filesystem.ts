@@ -1,6 +1,6 @@
 import * as fs from 'fs';
-import * as path from 'path';
-import { FileSystemTree, FileSystem } from './environment';
+import * as fspath from 'path';
+import { FileSystemTree, FileSystem, Environment } from './environment';
 import { skip_ext, skip_paths } from '../utils';
 
 function constructFileSystem(startPath: string, removePrefix: string = ""): FileSystemTree {
@@ -11,7 +11,7 @@ function constructFileSystem(startPath: string, removePrefix: string = ""): File
             // handle skip_ext, skip_paths
             if (skip_paths.includes(childPath.split('/').pop() || '')) return new FileSystemTree(childPath, true, null);
             if (skip_ext.includes(childPath.split('.').pop() || '')) return new FileSystemTree(childPath, false, null);
-            return constructFileSystem(path.join(startPath, childPath), removePrefix);
+            return constructFileSystem(fspath.join(startPath, childPath), removePrefix);
         }).filter(child => child !== null); // Filter out null values representing skipped files
         if (removePrefix) {
             return new FileSystemTree(startPath.replace(removePrefix, ''), true, null, children);
@@ -56,12 +56,32 @@ export class DefaultFileSystem implements FileSystem {
         this.rootPath = rootPath;
     }
 
+    wrapRootPath(path: string): string {
+        if (!path.startsWith(this.rootPath)) {
+            path = fspath.join(this.rootPath, path);
+        }
+        console.log(path)
+        return path;
+    }
+
     async getFileSystem(): Promise<FileSystemTree> {
         this.root = constructFileSystem(this.rootPath, this.rootPath);
         return this.root;
     }
 
-    async writeFile(path: string, content: string): Promise<void> {
+    async readFile(env: Environment, path: string): Promise<string> {
+        try {
+            return fs.readFileSync(this.wrapRootPath(path), 'utf-8');
+        } catch (e) {
+            return `Error reading file: ${e}`
+        }
+    }
+
+    async exists(path: string): Promise<boolean> {
+        return fs.existsSync(this.wrapRootPath(path));
+    }
+
+    async writeFile(env: Environment, path: string, content: string): Promise<void> {
         console.log('writing to', this.rootPath + path);
         // create directories if they don't exist
         const dirs = path.split('/');
@@ -84,7 +104,7 @@ export class DefaultFileSystem implements FileSystem {
         }
     }
 
-    async deleteFile(path: string): Promise<void> {
+    async deleteFile(env: Environment, path: string): Promise<void> {
         fs.unlinkSync(this.rootPath + path);
     }
 }

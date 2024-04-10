@@ -1,5 +1,6 @@
 import { program } from 'commander';
 import { Clipinator } from './clippinator';
+import { ClipinatorTerm } from './term_agent';
 
 program
   .name('clippinator')
@@ -32,6 +33,21 @@ program.command('simple')
     }
     const clipinator = new Clipinator(objective, path);
     await clipinator.simpleApproach();
+  });
+
+
+program.command('term')
+  .description('Clippinator: Tell it what to do, and it will do it')
+  .argument('<objective>', 'The objective of the Clippinator')
+  .argument('[path]', 'The path to the working directory', '.')
+  .action(async (objective, path) => {
+    // if objective starts with "file:", we replace it with the contents of the file
+    if (objective.startsWith('file:')) {
+      const fs = require('fs');
+      objective = fs.readFileSync(objective.slice(5), 'utf8');
+    }
+    const clipinator = new ClipinatorTerm(objective, path);
+    await clipinator.mainLoop();
   });
 
 program.parse(process.argv);

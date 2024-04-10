@@ -13,7 +13,7 @@ interface PromptsXml {
   write_files_prompt: string;
 }
 
-const promptsYaml = fs.readFileSync('src/prompts_xml.yaml', 'utf8');
+const promptsYaml = fs.readFileSync('src/prompts/prompts_xml.yaml', 'utf8');
 const prompts: PromptsXml = yaml.load(promptsYaml) as PromptsXml;
 
 export const planning_examples = prompts.planning_examples;

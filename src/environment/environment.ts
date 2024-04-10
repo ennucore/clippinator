@@ -23,14 +23,19 @@ export class Environment {
         return this.terminal.getTerminalState();
     }
     async writeFile(path: string, content: string): Promise<void> {
-        return await this.fileSystem.writeFile(path, content);
+        return await this.fileSystem.writeFile(this, path, content);
     }
-
     async deleteFile(path: string): Promise<void> {
-        await this.fileSystem.deleteFile(path);
+        await this.fileSystem.deleteFile(this, path);
     }
-    async runCommand(command: string, tabIndex?: number | "new"): Promise<string> {
-        return this.terminal.runCommand(command, tabIndex);
+    async readFile(path: string): Promise<string> {
+        return await this.fileSystem.readFile(this, path);
+    }
+    async pathExists(path: string): Promise<boolean> {
+        return await this.fileSystem.exists(path);
+    }
+    async runCommand(command: string, tabIndex?: number | "new", timeout?: number, isHardTimeout?: boolean): Promise<string> {
+        return this.terminal.runCommand(command, tabIndex, timeout, isHardTimeout);
     }
     async openUrl(url: string, tabIndex?: number): Promise<string> {
         return this.browser.openUrl(url, tabIndex);
@@ -46,6 +51,9 @@ export class Environment {
     }
     async getLinterOutput(): Promise<string> {
         return await this.linter.getOutput();
+    }
+    async lintFile(path: string): Promise<{ output: string, is_ok: boolean }> {
+        return await this.linter.lintFile(path);
     }
 }
 
@@ -81,9 +89,13 @@ export class FileSystemTree {
 }
 
 export interface FileSystem {
+    rootPath: string;
+
     getFileSystem(): Promise<FileSystemTree>;
-    writeFile(path: string, content: string): Promise<void>;
-    deleteFile(path: string): Promise<void>;
+    writeFile(env: Environment, path: string, content: string): Promise<void>;
+    deleteFile(env: Environment, path: string): Promise<void>;
+    readFile(env: Environment, path: string): Promise<string>;
+    exists(path: string): Promise<boolean>;
 }
 
 interface BrowserTab {
@@ -91,7 +103,7 @@ interface BrowserTab {
     html: string;
 }
 
-interface Browser {
+export interface Browser {
     getBrowserState(): Promise<BrowserTab[]>;
     openUrl(url: string, tabIndex?: number): Promise<string>;
 }
@@ -105,9 +117,9 @@ export interface Terminal {
     runCommand(command: string, tabIndex?: number | "new", timeout?: number, isHardTimeout?: boolean): Promise<string>;   // returns the tab index
 }
 
-interface Linter {
+export interface Linter {
     getOutput(): Promise<string>;
-    lineFile(path: string): Promise<{ output: string, is_ok: boolean }>;
+    lintFile(path: string): Promise<{ output: string, is_ok: boolean }>;
 }
 
 export class DummyTerminal implements Terminal {
@@ -159,7 +171,7 @@ export class TrunkLinter implements Linter {
         } catch (e: any) {
             console.log(e.stdout.toString());
         }
-        
+
         this.repo_path = repo_path;
     }
 
@@ -181,14 +193,14 @@ export class TrunkLinter implements Linter {
     }
 
     // use Flake8 for LintFile
-    async lineFile(path: string): Promise<{ output: string, is_ok: boolean }> {
+    async lintFile(path: string): Promise<{ output: string, is_ok: boolean }> {
         let res;
         try {
-            res = (require('child_process').execSync(`flake8 ${path}`, { cwd: this.repo_path })).toString();
+            res = (require('child_process').execSync(`flake8 --select=F821,F822,F831,E111,E112,E113,E999,E902 ${path}`, { cwd: this.repo_path })).toString();
         } catch (e: any) {
             res = e.stdout.toString();
         }
-        return { output: res, is_ok: res.trim() === "" };
+        return { output: res.trim(), is_ok: res.trim() === "" };
     }
 }
 

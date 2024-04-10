@@ -1,4 +1,5 @@
-import { ContextManagerXml, Message } from "./context/context_management";
+import { MessageBase } from "./context/context_management";
+import { ContextManagerXml } from './context/context_manager_xml';
 import { Environment, CLIUserInterface, DummyBrowser, DummyTerminal, TrunkLinter } from "./environment/environment";
 import { SimpleTerminal } from './environment/terminal';
 import { DefaultFileSystem } from "./environment/filesystem";
@@ -152,7 +153,7 @@ ${task_prompts}
             }
             additionalContext += '\n';
         }
-        this.contextManager.history.push({ type: "system", content: `Executing the task: "${currentTask}"` } as Message);
+        this.contextManager.history.push({ type: "system", content: `Executing the task: "${currentTask}"` } as MessageBase);
         await this.run(
             `Please, execute the following task: "${currentTask}". After everything is finished, write <DONE/>.`,
             undefined,

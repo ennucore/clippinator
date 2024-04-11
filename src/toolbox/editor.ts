@@ -17,8 +17,8 @@ export class TermEnvironment extends Environment {
         super(fileSystem, browser, terminal, user_interface, linter);
     }
 
-    async runCommand(command: string, tabIndex?: number | "new" | "no", timeout?: number, isHardTimeout?: boolean): Promise<string> {
-        return super.runCommand(command, 0, timeout, isHardTimeout);
+    async runCommand(command: string, tabIndex?: number | "new", timeout?: number, isHardTimeout?: boolean): Promise<string> {
+        return super.runCommand(command, tabIndex === undefined ? 0 : tabIndex, timeout, isHardTimeout);
     }
 
     async Workdir(): Promise<string> {
@@ -51,7 +51,7 @@ export class TermToolbox extends TermEnvironment {
             this.cursorPos = lines.length - (NUM_LINES / 2);
             res += `Setting cursor position to ${this.cursorPos}.\n`;
         }
-        if (this.cursorPos < 1) { 
+        if (this.cursorPos < 1) {
             res += `Warning: Line number ${this.cursorPos} is out of bounds. Setting it to 1.\n`;
             this.cursorPos = 1;
         }
@@ -188,7 +188,7 @@ export class TermToolbox extends TermEnvironment {
             this.scroll_down,
             this.create,
             this.edit,
-        ].map(turnIntoTool);
+        ].map(f => turnIntoTool(f));
     }
 }
 
@@ -294,12 +294,22 @@ export const doclines: Record<string, string> = {
     scroll_down: `Scroll down in the current file by ${NUM_LINES} lines.`,
     create: 'Create a new file by path. Optionally, you can provide the content of the new file (it has to end with END).',
     edit: 'Edit the current file. Provide line numbers with start:end (1-indexed, inclusive) and the new content (it has to end with END).',
+    search_class: 'Search for a class in the project directory.',
+    search_class_in_file: 'Search for a class in a file.',
+    search_function: 'Search for a function/method in the project directory.',
+    search_function_in_file: 'Search for a function/method in a file.',
+    search_function_in_class: 'Search for a function/method in a given class.',
+    search_string: 'Search for a string in the project directory.',
 }
 
 export const submitTool: TermTool = {
     name: 'submit',
     function: async (args: Record<string, any>, ctx: ContextManagerTerm, env: TermToolbox) => {
-        ctx.done = true;
+        if (!ctx.search_done) {
+            ctx.search_done = true;
+        } else {
+            ctx.done = true;
+        }
         console.log('Done');
         return 'Done';
     },
@@ -328,38 +338,62 @@ export function fmtDescription(tool: TermTool) {
     if (custom_usage[tool.name]) {
         usage_string = custom_usage[tool.name];
     }
-    return `**${tool.name}**\n${tool.description}\n\nUsage: \`${usage_string}\``;
+    return `**${tool.name}**\n${tool.description}\nUsage: \`${usage_string}\`\n`;
 }
 
 const paramMap: Record<string, { name: string, type: string, required: boolean, default_value: any }[]> = {
     "open": [
-      { "name": "path", "type": "string", "required": true, "default_value": null },
-      { "name": "cursorPos", "type": "number", "required": false, "default_value": 1 }
+        { "name": "path", "type": "string", "required": true, "default_value": null },
+        { "name": "cursorPos", "type": "number", "required": false, "default_value": 1 }
     ],
     "goto": [
-      { "name": "line", "type": "number", "required": true, "default_value": null }
+        { "name": "line", "type": "number", "required": true, "default_value": null }
     ],
     "scroll_up": [
-      { "name": "lines", "type": "number", "required": true, "default_value": null }
+        { "name": "lines", "type": "number", "required": true, "default_value": null }
     ],
     "scroll_down": [
-      { "name": "lines", "type": "number", "required": true, "default_value": null }
+        { "name": "lines", "type": "number", "required": true, "default_value": null }
     ],
     "create": [
-      { "name": "path", "type": "string", "required": true, "default_value": null },
-      { "name": "content", "type": "string", "required": false, "default_value": "" }
+        { "name": "path", "type": "string", "required": true, "default_value": null },
+        { "name": "content", "type": "string", "required": false, "default_value": "" }
     ],
     "edit": [
-      { "name": "start_line", "type": "string", "required": true, "default_value": null },
-      { "name": "end_line", "type": "string", "required": true, "default_value": null },
-      { "name": "replacement_text", "type": "string", "required": true, "default_value": null }
-    ]
-  }
-  
+        { "name": "start_line", "type": "string", "required": true, "default_value": null },
+        { "name": "end_line", "type": "string", "required": true, "default_value": null },
+        { "name": "replacement_text", "type": "string", "required": true, "default_value": null }
+    ],
+    "search_class": [
+        { "name": "cls", "type": "string", "required": true, "default_value": null },
+        { "name": "path", "type": "string", "required": false, "default_value": "." }
+    ],
+    "search_class_in_file": [
+        { "name": "cls", "type": "string", "required": true, "default_value": null },
+        { "name": "file", "type": "string", "required": true, "default_value": "." }
+    ],
+    "search_function": [
+        { "name": "func", "type": "string", "required": true, "default_value": null },
+        { "name": "path", "type": "string", "required": false, "default_value": "." }
+    ],
+    "search_function_in_file": [
+        { "name": "func", "type": "string", "required": true, "default_value": null },
+        { "name": "file", "type": "string", "required": true, "default_value": "." }
+    ],
+    "search_function_in_class": [
+        { "name": "func", "type": "string", "required": true, "default_value": null },
+        { "name": "cls", "type": "string", "required": true, "default_value": null }
+    ],
+    "search_string": [
+        { "name": "query", "type": "string", "required": true, "default_value": null },
+        { "name": "path", "type": "string", "required": false, "default_value": "." }
+    ],
+}
+
 
 
 // take a function object from the environment and parse its arguments
-function turnIntoTool(func: CallableFunction): TermTool {
+export function turnIntoTool(func: CallableFunction, params?: { name: string, type: string, required: boolean, default_value: any }[], is_env: boolean = true): TermTool {
     // let params = func.toString().split('(')[1].split(')')[0].split(',').map((param) => {
     //     let [name, type, default_value] = param.split(/(=|: )/).map((x) => x.trim());
     //     console.log(param, name, type, default_value)
@@ -368,11 +402,11 @@ function turnIntoTool(func: CallableFunction): TermTool {
     //     return { name, type, required, default_value };
     // });
     // params = params.filter((param) => param.name !== 'ctx' && param.name !== 'this');
-    let params = paramMap[func.name];
+    params = params || paramMap[func.name];
     return {
         name: func.name,
         parameters: params,
-        function: (args: Record<string, any>, ctx: ContextManagerTerm, env: TermToolbox) => (env as any)[func.name](...params.map((param) => args[param.name] || param.default_value || ""), ctx),
+        function: (args: Record<string, any>, ctx: ContextManagerTerm, env: TermToolbox) => (env as any)[func.name](...{...params.map((param) => args[param.name] || param.default_value || ""), ctx, env: is_env? env : undefined}),
         description: doclines[func.name] || '',
         parse_args: customParsers[func.name] || ((args: string) => parseArgsDefault(args, params)),
     } as TermTool;

@@ -43,7 +43,7 @@ export class ContextManagerBase {
         // const workspace = getWorkspaceStructure(await env.getFileSystem(), 30000);
         // let fs_str = formatObject(workspace);
         let fs_str = fmtTree((await simplifyTree(await env.getFileSystem(), 80000, async (cmd) => await env.runCommand(cmd))) as any);
-        fs_str += '$ tree -L 3 .\n' + await env.runCommand('tree -L 3 .') + '\n';
+        fs_str += /*'$ tree -L 3 .\n' +*/ await env.runCommand('tree -L 3 .') + '\n';
         let term_state = await env.getTerminalState();
         let term_str = '';
         if (term_state.length > 0 && term_state[0].history.length > 0) {

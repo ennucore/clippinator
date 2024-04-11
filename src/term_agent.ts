@@ -1,4 +1,5 @@
 import { TermTool, TermToolbox, fmtDescription, parseBashCall, submitTool } from "./toolbox/editor";
+import { searchSubmitTool } from "./toolbox/analysis";
 
 import { ContextManagerTerm, Event, parseAIResponse } from "./context/context_manager_term";
 import { Environment, CLIUserInterface, DummyBrowser, DummyTerminal, TrunkLinter } from "./environment/environment";
@@ -8,6 +9,7 @@ import { Tool, ToolCall, clearLineNums, final_result_tool, tool_functions, tools
 import { APIMessage, callLLM, callLLMFast, callLLMTools, haiku_model, opus_model, sonnet_model } from "./llm";
 import { buildRepoInfo, extractTag, filterAdvice, fullAdvice, haiku_simple_additional_prompt, helpful_commands_prompt, planning_examples, simple_approach_additional_advice, task_prompts, write_files_prompt } from "./prompts/promptsXml";
 import { commandBan, formatFileContent, runCommands, trimString } from "./utils";
+import { analysisTools } from "./toolbox/analysis";
 var clc = require("cli-color");
 
 
@@ -20,14 +22,18 @@ export class ClipinatorTerm {
     constructor(objective: string = "", path: string = ".") {
         this.contextManager = new ContextManagerTerm(objective);
         this.env = new TermToolbox(new DefaultFileSystem(path), new DummyBrowser(), new SimpleTerminal(path), new CLIUserInterface(), new TrunkLinter(path));
-        this.tools = [...this.env.getTools(), submitTool];
+        this.tools = [...this.env.getTools(), ...analysisTools, submitTool, searchSubmitTool];
         this.commandDesc = this.tools.map(fmtDescription).join('\n');
     }
 
     async getNextMessage(postfix: Event[] = []): Promise<Event> {
-        let messages = [...(await this.contextManager.getHistoryPrefix(this.env, this.commandDesc)),
+        console.log(this.tools)
+        let commandDesc = this.contextManager.filterTools(this.tools).map(fmtDescription).join('\n');
+        let messages = [...(await this.contextManager.getHistoryPrefix(this.env, commandDesc)),
         ...this.contextManager.history, ...postfix
         ];
+        console.log(clc.yellow(messages.map(val => val.content).join('\n')));
+        console.log(this.contextManager.search_done);
         let result = await callLLM(messages.map(val => { return { role: val.type, content: val.content } as APIMessage }), 'openai/gpt-4-turbo-2024-04-09');
         let parsed = parseAIResponse(result);
         if (typeof parsed === 'string') {

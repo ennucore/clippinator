@@ -17,7 +17,7 @@ export class TermEnvironment extends Environment {
         super(fileSystem, browser, terminal, user_interface, linter);
     }
 
-    async runCommand(command: string, tabIndex?: number | "new", timeout?: number, isHardTimeout?: boolean): Promise<string> {
+    async runCommand(command: string, tabIndex?: number | "new" | "no", timeout?: number, isHardTimeout?: boolean): Promise<string> {
         return super.runCommand(command, tabIndex === undefined ? 0 : tabIndex, timeout, isHardTimeout);
     }
 
@@ -64,17 +64,19 @@ export class TermToolbox extends TermEnvironment {
         return res;
     }
 
-    async open(path: string, cursorPos: number = 1): Promise<string> {
+    async open({path, cursorPos, env}: {path: string, cursorPos?: number, env?: TermToolbox}): Promise<string> {
+        env = env || this;
+        cursorPos = cursorPos || 1;
         // check if the file by relative path exists
-        if (await this.pathExists(path)) {
-            this.openedFile = path;
-        } else if (await this.pathExists(fspath.join(await this.Workdir(), path))) {
-            this.openedFile = fspath.join(await this.Workdir(), path);
+        if (await env.pathExists(path)) {
+            env.openedFile = path;
+        } else if (await env.pathExists(fspath.join(await env.Workdir(), path))) {
+            env.openedFile = fspath.join(await env.Workdir(), path);
         } else {
             return `File not found: ${path}`;
         }
-        this.cursorPos = cursorPos;
-        return await this.getFormatedCurrentFileContent();
+        env.cursorPos = cursorPos;
+        return await env.getFormatedCurrentFileContent();
     }
 
     async getSummary(path: string): Promise<string> {
@@ -87,46 +89,52 @@ export class TermToolbox extends TermEnvironment {
         return summary;
     }
 
-    async goto(line: number): Promise<string> {
-        if (!this.openedFile) {
+    async goto({line, env}: {line: number, env?: TermToolbox}): Promise<string> {
+        env = env || this;
+        if (!env.openedFile) {
             return 'No file opened.';
         }
-        this.cursorPos = line;
-        return await this.getFormatedCurrentFileContent();
+        env.cursorPos = line;
+        return await env.getFormatedCurrentFileContent();
     }
 
-    async scroll_up(lines: number): Promise<string> {
-        if (!this.openedFile) {
+    async scroll_up({lines, env}: {lines: number, env?: TermToolbox}): Promise<string> {
+        env = env || this;
+        if (!env.openedFile) {
             return 'No file opened.';
         }
-        this.cursorPos = Math.max(0, this.cursorPos - lines);
-        return await this.getFormatedCurrentFileContent();
+        env.cursorPos = Math.max(0, env.cursorPos - lines);
+        return await env.getFormatedCurrentFileContent();
     }
 
-    async scroll_down(lines: number): Promise<string> {
-        if (!this.openedFile) {
+    async scroll_down({lines, env}: {lines: number, env?: TermToolbox}): Promise<string> {
+        env = env || this;
+        if (!env.openedFile) {
             return 'No file opened.';
         }
-        this.cursorPos += lines;
-        return await this.getFormatedCurrentFileContent();
+        env.cursorPos += lines;
+        return await env.getFormatedCurrentFileContent();
     }
 
-    async create(path: string, content: string = ''): Promise<string> {
-        path = fspath.join(await this.Workdir(), path);
-        if (await this.pathExists(path)) {
+    async create({path, content, env}: {path: string, content?: string, env?: TermToolbox}): Promise<string> {
+        env = env || this;
+        content = content || '';
+        path = fspath.join(await env.Workdir(), path);
+        if (await env.pathExists(path)) {
             return 'File already exists.';
         }
-        await this.writeFile(path, '' || content);
+        await env.writeFile(path, '' || content);
         let postfix = content ? `and wrote ${content.split('\n').length} lines` : '';
-        this.openedFile = path;
+        env.openedFile = path;
         return `Created file ${path}${postfix} and opened it.`;
     }
 
-    async edit(start_line: string, end_line: string, replacement_text: string): Promise<string> {
-        if (!this.openedFile) {
+    async edit({start_line, end_line, replacement_text, env}: {start_line: string, end_line: string, replacement_text: string, env?: TermToolbox}): Promise<string> {
+        env = env || this;
+        if (!env.openedFile) {
             return 'No file opened.';
         }
-        let content = await this.GetCurrentFileContent();
+        let content = await env.GetCurrentFileContent();
         if (content === null) {
             return 'The file does not exist.';
         }
@@ -148,8 +156,8 @@ export class TermToolbox extends TermEnvironment {
             ...new_lines,
             ...lines.slice(end),
         ];
-        let { output: output_before } = await this.lintFile(this.openedFile!);
-        await this.writeFile(this.openedFile!, patchedLines.join('\n'));
+        let { output: output_before } = await env.lintFile(env.openedFile!);
+        await env.writeFile(env.openedFile!, patchedLines.join('\n'));
         let oldNeighboringLines = [];
         let neighboringLines = [];
         for (let i = start - 10; i < end + 5 || i < start + new_lines.length + 5; i++) {
@@ -167,16 +175,16 @@ export class TermToolbox extends TermEnvironment {
             }
         }
         let diff = `Old content:\n${oldNeighboringLines.join('\n')}\nNew content:\n${neighboringLines.join('\n')}`;
-        let { output, is_ok } = await this.lintFile(this.openedFile!);
+        let { output, is_ok } = await env.lintFile(env.openedFile!);
         if (is_ok || output.split('\n').length <= output_before.split('\n').length) {
             let l = '';
             if (!is_ok) {
                 l = `\n\nThe linter output is:\n\`\`\`\n${output}\n\`\`\``;
             }
-            return `Edited file ${this.openedFile!} from line ${start} to ${end} with new content. ${diff}${l}`;
+            return `Edited file ${env.openedFile!} from line ${start} to ${end} with new content. ${diff}${l}`;
         } else {
             // revert the changes
-            await this.writeFile(this.openedFile!, content);
+            await env.writeFile(env.openedFile!, content);
             return `Your proposed edit would introduce syntax errors. The changes were not applied. Here is how your patch would look like:\nDiff:\n\`\`\`\n${diff}\n\`\`\`\n\nLinter output:\n\`\`\`\n${output}\n\`\`\``;
         }
     }
@@ -222,7 +230,7 @@ export function parseArgsDefault(args: string, parms: { name: string, type: stri
             res['rest'] = arg_list.slice(i).join(' ');
             break;
         }
-        res[parm.name] = arg;
+        res[parm.name] = arg.trim();
     }
     for (let parm of parms) {
         if (!res[parm.name]) {
@@ -393,7 +401,7 @@ const paramMap: Record<string, { name: string, type: string, required: boolean, 
 
 
 // take a function object from the environment and parse its arguments
-export function turnIntoTool(func: CallableFunction, params?: { name: string, type: string, required: boolean, default_value: any }[], is_env: boolean = true): TermTool {
+export function turnIntoTool(func: CallableFunction, params?: { name: string, type: string, required: boolean, default_value: any }[]): TermTool {
     // let params = func.toString().split('(')[1].split(')')[0].split(',').map((param) => {
     //     let [name, type, default_value] = param.split(/(=|: )/).map((x) => x.trim());
     //     console.log(param, name, type, default_value)
@@ -406,7 +414,16 @@ export function turnIntoTool(func: CallableFunction, params?: { name: string, ty
     return {
         name: func.name,
         parameters: params,
-        function: (args: Record<string, any>, ctx: ContextManagerTerm, env: TermToolbox) => (env as any)[func.name](...{...params.map((param) => args[param.name] || param.default_value || ""), ctx, env: is_env? env : undefined}),
+        function: (args: Record<string, any>, ctx: ContextManagerTerm, env: TermToolbox) => ((env as any)[func.name] || func)(
+            {
+                ...params.reduce((acc: any, param) => {
+                    acc[param.name] = args[param.name] || param.default_value || "";
+                    return acc;
+                }, {}),
+                ctx,
+                env
+            }
+        ),
         description: doclines[func.name] || '',
         parse_args: customParsers[func.name] || ((args: string) => parseArgsDefault(args, params)),
     } as TermTool;

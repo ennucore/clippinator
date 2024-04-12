@@ -48,7 +48,7 @@ export class ContextManagerTerm extends ContextManagerBase {
     }
 
     async fmtToolOutput(output: string, env: TermToolbox) {
-        let content = this.promptManager.getPrompt('output', { output, workdir: await env.Workdir(), opened_file: env.openedFile || 'none' })
+        let content = this.promptManager.getPrompt('output', { output, workdir: await env.Workdir(), search: !this.search_done, opened_file: env.openedFile || 'none' })
         let event: Event = { type: "user", content, output };
         return event;
     }

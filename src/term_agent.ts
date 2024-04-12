@@ -27,7 +27,6 @@ export class ClipinatorTerm {
     }
 
     async getNextMessage(postfix: Event[] = []): Promise<Event> {
-        console.log(this.tools)
         let commandDesc = this.contextManager.filterTools(this.tools).map(fmtDescription).join('\n');
         let messages = [...(await this.contextManager.getHistoryPrefix(this.env, commandDesc)),
         ...this.contextManager.history, ...postfix

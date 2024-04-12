@@ -34,7 +34,7 @@ export class Environment {
     async pathExists(path: string): Promise<boolean> {
         return await this.fileSystem.exists(path);
     }
-    async runCommand(command: string, tabIndex?: number | "new", timeout?: number, isHardTimeout?: boolean): Promise<string> {
+    async runCommand(command: string, tabIndex?: number | "new" | "no", timeout?: number, isHardTimeout?: boolean): Promise<string> {
         return this.terminal.runCommand(command, tabIndex, timeout, isHardTimeout);
     }
     async openUrl(url: string, tabIndex?: number): Promise<string> {
@@ -114,7 +114,7 @@ export interface TerminalTab {
 
 export interface Terminal {
     getTerminalState(): Promise<TerminalTab[]>;
-    runCommand(command: string, tabIndex?: number | "new", timeout?: number, isHardTimeout?: boolean): Promise<string>;   // returns the tab index
+    runCommand(command: string, tabIndex?: number | "new" | "no", timeout?: number, isHardTimeout?: boolean): Promise<string>;   // returns the tab index
 }
 
 export interface Linter {

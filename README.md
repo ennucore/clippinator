@@ -6,6 +6,10 @@ _A code assistant_
 
 _Formerly known as Clippy_
 
+[![GitHub Repo stars](https://img.shields.io/github/stars/ennucore/clippinator?style=social)](https://github.com/ennucore/clippinator)
+[![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/ennucore/clippinator)](https://github.com/ennucore/clippinator/issues)
+[![Twitter Follow](https://img.shields.io/twitter/follow/ennucore?style=social)](https://twitter.com/ennucore)
+
 [Twitter thread](https://twitter.com/ennucore/status/1680971027931693063)
 
 ### Getting started
